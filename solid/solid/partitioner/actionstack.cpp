@@ -64,6 +64,11 @@ QList< Action* > ActionStack::redo()
     return d->actions;
 }
 
+bool ActionStack::contains(Action* a) const
+{
+    return d->actions.contains(a);
+}
+
 bool ActionStack::empty() const
 {
     return d->actions.isEmpty();

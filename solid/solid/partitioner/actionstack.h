@@ -23,6 +23,7 @@ namespace Solid
 
             bool empty() const;
             bool undoEmpty() const;
+            bool contains(Action *) const;
             
             QList<Action *> list() const;
             QList<Action *> undoList() const;

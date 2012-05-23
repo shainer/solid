@@ -1,11 +1,29 @@
-#include "volumemanager.h"
-#include "devices/storagevolumemodified.h"
-#include "devices/storagedrivemodified.h"
-#include <kglobal.h>
-#include <solid/storagedrive.h>
-#include <solid/deviceinterface.h>
-#include <QtCore/QDebug>
+/*
+    Copyright 2012 Lisa Vitolo <shainer@chakra-project.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) version 3, or any
+    later version accepted by the membership of KDE e.V. (or its
+    successor approved by the membership of KDE e.V.), which shall
+    act as a proxy defined in Section 6 of version 3 of the license.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library. If not, see <http://www.gnu.org/licenses/>.
+*/
+#include <solid/partitioner/volumemanager.h>
+#include <solid/partitioner/devices/storagevolumemodified.h>
+#include <solid/partitioner/devices/storagedrivemodified.h>
+#include <solid/partitioner/actions/formatpartitionaction.h>
+#include <solid/partitioner/actions/action.h>
 #include <solid/device.h>
+#include <kglobal.h>
 
 namespace Solid
 {   
@@ -52,6 +70,10 @@ VolumeManager* VolumeManager::instance()
 
 void VolumeManager::detectDevices()
 {
+    /*
+     * Detection of drives.
+     * A new tree is created for each disk on the system.
+     */
     foreach(Device dev, Device::listFromType(DeviceInterface::StorageDrive)) {
         QString udi = dev.udi();
         Solid::StorageDrive *drive = dev.as<Solid::StorageDrive>();
@@ -66,6 +88,14 @@ void VolumeManager::detectDevices()
         }
     }
     
+    /*
+     * Detection of partitions.
+     * Detection of partition type (primary, logical or extended) is done separately because udisks doesn't provide
+     * this specific information.
+     * 
+     * Each partition is a child of the disk it belongs to, except logical partitions; those are children of the
+     * correspondent extended partition.
+     */
     QList<Devices::StorageVolumeModified *> partitions;
     foreach(Device dev, Device::listFromType(DeviceInterface::StorageVolume)) {
         StorageVolume* volume = dev.as<StorageVolume>();
@@ -103,11 +133,63 @@ void VolumeManager::detectDevices()
         tree.addNode(parentName, volume);
     }
     
+    /*
+     * Detection of blocks of free space.
+     */
     foreach (VolumeTree disk, volumeTrees.values()) {
         foreach (Devices::FreeSpace* space, Device::freeSpaceOfDisk(disk)) {
             disk.addNode(space->parentName(), space);
         }        
     }
+}
+
+bool VolumeManager::registerAction(Actions::Action* action)
+{
+    /* A duplicate isn't accepted */
+    if (actionstack.contains(action)) {
+        return false;
+    }
+    
+    switch (action->actionType()) {
+        case Action::FormatPartition: {
+            Actions::FormatPartitionAction* fpa = dynamic_cast<Actions::FormatPartitionAction *>(action);
+            DeviceModified* p = searchDeviceByName(fpa->partition());
+            
+            if (!p || !p->deviceType() == DeviceModified::StorageVolumeType) {
+                qDebug() << "errore, nome non valido";
+                return false;
+            }
+            
+            StorageVolumeModified* volume = dynamic_cast<StorageVolumeModified *>(p);
+            volume->setFilesystem(fpa->filesystem()); /* FIXME: check if the filesystem is supported */
+            break;
+        }
+        
+        default:
+            break;
+    }
+    
+    return true;
+}
+
+bool VolumeManager::undo()
+{
+    return true;
+}
+
+bool VolumeManager::redo()
+{
+    return true;
+}
+
+QList< VolumeTree > VolumeManager::allDiskTrees() const
+{
+    return volumeTrees.values();
+}
+
+VolumeTree VolumeManager::diskTree(const QString& diskName) const
+{
+    return volumeTrees[diskName];
 }
 
 bool VolumeManager::apply()
@@ -122,6 +204,21 @@ bool VolumeManager::apply()
     delete e2;
     
     return true;
+}
+
+DeviceModified* VolumeManager::searchDeviceByName(const QString& name)
+{
+    DeviceModified* dev = 0;
+    
+    foreach (const VolumeTree& tree, volumeTrees.values()) {
+        dev = tree.searchNode(name);
+        
+        if (dev) {
+            break;
+        }
+    }
+    
+    return dev;
 }
 
 }

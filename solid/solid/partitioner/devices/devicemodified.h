@@ -29,7 +29,7 @@ namespace Solid
                 bool existent;
             };
             
-            class DeviceModified
+            class SOLID_EXPORT DeviceModified
             {
             public:
                 enum DeviceModifiedType

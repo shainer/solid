@@ -12,7 +12,7 @@ namespace Solid
             
             class StorageDriveModifiedPrivate;
             
-            class StorageDriveModified : public DeviceModified
+            class SOLID_EXPORT StorageDriveModified : public DeviceModified
             {
             public:
                 explicit StorageDriveModified(StorageDrive *);

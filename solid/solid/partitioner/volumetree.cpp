@@ -155,6 +155,26 @@ VolumeTreeItem* VolumeTree::extendedNode() const
     return NULL;
 }
 
+DeviceModified* VolumeTree::searchNode(const QString& name) const
+{
+    QList< VolumeTreeItem* > stack;
+    stack.push_front(d->root);
+    
+    while (!stack.isEmpty()) {
+        VolumeTreeItem* currentNode = stack.takeFirst();
+        
+        if (currentNode->volume()->name() == name) {
+            return currentNode->volume();
+        }
+        
+        foreach (VolumeTreeItem* child, currentNode->children()) {
+            stack.push_front(child);
+        }
+    }
+    
+    return NULL;
+}
+
 void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child)
 {
     addNode(parentUdi, child, d->root);

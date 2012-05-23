@@ -140,6 +140,8 @@ set(solid_LIB_SRCS
    partitioner/devices/storagevolumemodified.cpp
    partitioner/devices/storagedrivemodified.cpp
    partitioner/devices/freespace.cpp
+
+   partitioner/actions/formatpartitionaction.cpp
 )
 
 if(NOT APPLE)
@@ -405,7 +407,9 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
                networking.h video.h serialinterface.h smartcardreader.h internetgateway.h
                networkshare.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid COMPONENT Devel)
 install( FILES partitioner/volumemanager.h partitioner/volumetree.h partitioner/actionexecuter.h partitioner/actionstack.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
-install( FILES partitioner/actions/action.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/actions COMPONENT Devel)
+install( FILES partitioner/actions/action.h
+               partitioner/actions/formatpartitionaction.h
+         DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/actions COMPONENT Devel)
 install( FILES partitioner/devices/storagevolumemodified.h
                partitioner/devices/devicemodified.h
                partitioner/devices/storagedrivemodified.h

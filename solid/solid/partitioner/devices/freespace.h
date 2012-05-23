@@ -30,7 +30,7 @@ namespace Solid
                 qulonglong size;
             };
             
-            class FreeSpace : public DeviceModified
+            class SOLID_EXPORT FreeSpace : public DeviceModified
             {
             public:
                 explicit FreeSpace(qulonglong, qulonglong, const QString&);

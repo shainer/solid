@@ -12,7 +12,7 @@ namespace Solid
         {
             class StorageVolumeModifiedPrivate;
             
-            class StorageVolumeModified : public DeviceModified
+            class SOLID_EXPORT StorageVolumeModified : public DeviceModified
             {
             public:
                 enum PartitionType

@@ -3,6 +3,7 @@
 
 #include <solid/storagevolume.h>
 #include <solid/storagedrive.h>
+#include <solid/solid_export.h>
 #include "devices/devicemodified.h"
 #include "devices/storagevolumemodified.h"
 #include <QtCore/QDebug>
@@ -28,7 +29,7 @@ namespace Solid
          * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
          */
-        class VolumeTreeItem
+        class SOLID_EXPORT VolumeTreeItem
         {
         public:
             
@@ -64,7 +65,7 @@ namespace Solid
             QSharedDataPointer<VolumeTreeItemPrivate> d;
         };
         
-        class VolumeTree
+        class SOLID_EXPORT VolumeTree
         {        
         public:
             VolumeTree(VolumeTreeItem *);
@@ -80,6 +81,7 @@ namespace Solid
 
             void addNode(const QString &, DeviceModified *);
             void addNode(const QString &, DeviceModified *, VolumeTreeItem *);
+            DeviceModified* searchNode(const QString &) const;
             void print() const;
             
         private:
