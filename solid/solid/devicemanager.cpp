@@ -168,9 +168,9 @@ QList<Solid::Device> Solid::Device::listFromQuery(const Predicate &predicate,
     return list;
 }
 
-QList<Solid::Partitioner::Devices::FreeSpace> Solid::Device::allFreeSpace(const QList<Solid::Partitioner::VolumeTree> &trees)
+QList<Solid::Partitioner::Devices::FreeSpace *> Solid::Device::freeSpaceOfDisk(const Solid::Partitioner::VolumeTree &layout)
 {
-    QList<Solid::Partitioner::Devices::FreeSpace> spaces;
+    QList<Solid::Partitioner::Devices::FreeSpace *> spaces;
     QList<QObject *> backends = globalDeviceStorage->managerBackends();
     
     foreach (QObject *backendObj, backends) {
@@ -180,11 +180,8 @@ QList<Solid::Partitioner::Devices::FreeSpace> Solid::Device::allFreeSpace(const 
             continue;
         }
         
-        Solid::Backends::UDisks::UDisksManager *udManager = dynamic_cast<Solid::Backends::UDisks::UDisksManager *>(backend);
-        
-        foreach (const Solid::Partitioner::VolumeTree &tree, trees) {
-            spaces += udManager->freeSpaceOfDisk(tree);
-        }
+        Solid::Backends::UDisks::UDisksManager *udisks = dynamic_cast<Solid::Backends::UDisks::UDisksManager *>(backend);
+        spaces += udisks->freeSpaceOfDisk(layout);
     }
     
     return spaces;

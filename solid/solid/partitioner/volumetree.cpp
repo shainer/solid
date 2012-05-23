@@ -22,9 +22,7 @@ VolumeTreeItemPrivate::VolumeTreeItemPrivate(const VolumeTreeItemPrivate& other)
 {}
 
 VolumeTreeItemPrivate::~VolumeTreeItemPrivate()
-{
-    delete volume;
-}
+{}
     
 VolumeTreeItem::VolumeTreeItem(DeviceModified* volume, QList< VolumeTreeItem *> children, VolumeTreeItem* parent)
     : d( new VolumeTreeItemPrivate(volume, children, parent) )
@@ -55,7 +53,21 @@ VolumeTreeItem* VolumeTreeItem::parent() const
 void VolumeTreeItem::addChild(DeviceModified* child)
 {
     VolumeTreeItem* item = new VolumeTreeItem(child, QList<VolumeTreeItem *>(), this);
-    d->children.append(item);
+    bool inserted = false;
+        
+    for (int i = 0; i < d->children.size(); i++) {
+        DeviceModified* device = d->children[i]->volume();
+        
+        if (device->offset() > child->offset()) {
+            d->children.insert(i, item);
+            inserted = true;
+            break;
+        }
+    }
+    
+    if (!inserted) {
+        d->children.append(item);
+    }
 }
 
 bool VolumeTreeItem::operator==(const VolumeTreeItem& other) const
@@ -74,6 +86,36 @@ VolumeTreePrivate::VolumeTreePrivate(const VolumeTreePrivate &other)
 
 VolumeTreePrivate::~VolumeTreePrivate()
 {}
+
+void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child, VolumeTreeItem* r)
+{
+    if (r->volume()->name() == parentUdi) {
+        r->addChild(child);
+        return;
+    }
+    
+    foreach (VolumeTreeItem* c, r->children()) {
+        addNode(parentUdi, child, c);
+    }
+}
+
+void VolumeTreePrivate::print(VolumeTreeItem* r) const
+{
+    qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno");
+    
+    foreach (VolumeTreeItem *c, r->children()) {
+        print(c);
+    }
+}
+
+void VolumeTreePrivate::destroy(VolumeTreeItem* node)
+{
+    foreach (VolumeTreeItem* child, node->children()) {
+        destroy(child);
+    }
+    
+    delete node;
+}
 
 VolumeTree::VolumeTree(VolumeTreeItem* rootItem)
     : d( new VolumeTreePrivate(rootItem) )
@@ -118,30 +160,9 @@ void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child)
     addNode(parentUdi, child, d->root);
 }
 
-void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child, VolumeTreeItem* r)
-{
-    if (r->volume()->udi() == parentUdi) {
-        r->addChild(child);
-        return;
-    }
-    
-    foreach (VolumeTreeItem* c, r->children()) {
-        addNode(parentUdi, child, c);
-    }
-}
-
 void VolumeTree::print() const
 {
-    print(d->root);
-}
-
-void VolumeTree::print(VolumeTreeItem* r) const
-{
-    qDebug() << r->volume()->udi() << "parent" << (r->parent() ? r->parent()->volume()->udi() : "nessuno");
-    
-    foreach (VolumeTreeItem *c, r->children()) {
-        print(c);
-    }
+    d->print(d->root);
 }
 
 }

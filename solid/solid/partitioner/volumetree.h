@@ -79,13 +79,11 @@ namespace Solid
             VolumeTreeItem* extendedNode() const;
 
             void addNode(const QString &, DeviceModified *);
+            void addNode(const QString &, DeviceModified *, VolumeTreeItem *);
             void print() const;
             
         private:
             QSharedDataPointer<VolumeTreePrivate> d;
-            
-            void addNode(const QString &, DeviceModified *, VolumeTreeItem *);
-            void print(VolumeTreeItem *) const;
         };
         
         class VolumeTreeItemPrivate : public QSharedData
@@ -106,6 +104,9 @@ namespace Solid
             VolumeTreePrivate(VolumeTreeItem *);
             VolumeTreePrivate(const VolumeTreePrivate& other);
             ~VolumeTreePrivate();
+
+            void print(VolumeTreeItem *) const;
+            void destroy(VolumeTreeItem *);
             
             VolumeTreeItem* root;
         };

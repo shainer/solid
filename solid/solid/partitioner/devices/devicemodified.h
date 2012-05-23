@@ -24,8 +24,8 @@ namespace Solid
                 {}
                 
                 DeviceInterface* iface;
-                QString udi;
-                QString parentUdi;
+                QString name;
+                QString parentName;
                 bool existent;
             };
             
@@ -45,12 +45,15 @@ namespace Solid
                 virtual ~DeviceModified();
                 
                 virtual DeviceModifiedType deviceType() const = 0;
-                bool existent() const;
-                QString udi() const;
-                QString parentUdi() const;
+                virtual qulonglong offset() const;
+                virtual qulonglong size() const = 0;
                 
-                void setUdi(const QString &);
-                void setParentUdi(const QString &);
+                bool existent() const;
+                QString name() const;
+                QString parentName() const;
+                
+                void setName(const QString &);
+                void setParentName(const QString &);
                 void setExistent(bool);
                 
             private:

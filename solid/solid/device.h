@@ -95,7 +95,7 @@ namespace Solid
                                            const QString &parentUdi = QString());
         
         
-        static QList<Partitioner::Devices::FreeSpace> allFreeSpace(const QList<Solid::Partitioner::VolumeTree> &);
+        static QList<Partitioner::Devices::FreeSpace *> freeSpaceOfDisk(const Solid::Partitioner::VolumeTree &);
 
 
         /**

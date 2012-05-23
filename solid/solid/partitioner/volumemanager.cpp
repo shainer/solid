@@ -59,34 +59,34 @@ void VolumeManager::detectDevices()
         if (drive->driveType() == StorageDrive::HardDisk)
         {
             Devices::StorageDriveModified* driveModified = new Devices::StorageDriveModified( drive );
-            driveModified->setUdi(udi);
+            driveModified->setName(udi);
             
             VolumeTree tree( driveModified );
-            volumeTrees.insert(udi, tree);
+            volumeTrees.insert(driveModified->name(), tree);
         }
     }
     
-    QMap<qulonglong, Devices::StorageVolumeModified *> partitions;
+    QList<Devices::StorageVolumeModified *> partitions;
     foreach(Device dev, Device::listFromType(DeviceInterface::StorageVolume)) {
         StorageVolume* volume = dev.as<StorageVolume>();
         
         Devices::StorageVolumeModified* volumeModified = new Devices::StorageVolumeModified(volume);
-        volumeModified->setUdi(dev.udi());
-        volumeModified->setParentUdi(dev.parentUdi());
+        volumeModified->setName(dev.udi());
+        volumeModified->setParentName(dev.parentUdi());
         
-        partitions.insert(volumeModified->offset(), volumeModified);
+        partitions.append(volumeModified);
     }
     
     Devices::StorageVolumeModified* extended = NULL;
     
-    foreach (Devices::StorageVolumeModified* volume, partitions.values()) {
-        QString parentUdi = volume->parentUdi();
+    foreach (Devices::StorageVolumeModified* volume, partitions) {
+        QString parentName = volume->parentName();
         
-        if (!volumeTrees.contains(parentUdi)) {
+        if (!volumeTrees.contains(parentName)) {
             continue;
         }
         
-        VolumeTree tree = volumeTrees.value(parentUdi);
+        VolumeTree tree = volumeTrees.value(parentName);
         
         if (volume->uuid().isEmpty()) {
             extended = volume;
@@ -94,13 +94,19 @@ void VolumeManager::detectDevices()
         }
         else if (extended && (volume->offset() >= extended->offset() && volume->rightBoundary() <= extended->rightBoundary())) {
             volume->setPartitionType(StorageVolumeModified::Logical);
-            parentUdi = extended->udi();
+            parentName = extended->name();
         }
         else {
             volume->setPartitionType(StorageVolumeModified::Primary);
         }
         
-        tree.addNode(parentUdi, volume);
+        tree.addNode(parentName, volume);
+    }
+    
+    foreach (VolumeTree disk, volumeTrees.values()) {
+        foreach (Devices::FreeSpace* space, Device::freeSpaceOfDisk(disk)) {
+            disk.addNode(space->parentName(), space);
+        }        
     }
 }
 

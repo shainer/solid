@@ -159,58 +159,115 @@ QStringList UDisksManager::allDevices()
     return m_deviceCache;
 }
 
-QList< FreeSpace > UDisksManager::freeSpaceOfDisk(const Solid::Partitioner::VolumeTree& diskTree)
+QList< FreeSpace* > UDisksManager::freeSpaceOfDisk(const Solid::Partitioner::VolumeTree& diskTree)
 {
     QList< VolumeTreeItem* > primaryPartitions = diskTree.rootNode()->children();
     StorageDriveModified *disk = dynamic_cast<StorageDriveModified *>(diskTree.root());
-    QList< FreeSpace > freeSpace;
+    VolumeTreeItem* extended = diskTree.extendedNode();
     
-    for (int i = -1; i < primaryPartitions.size(); i++) {
+    QList< FreeSpace* > freeSpaces;
+    
+    if (primaryPartitions.isEmpty()) {
+        /* FIXME: va fatto solo se c'e' una tabella delle partizioni sul disco */
+        freeSpaces.append( new FreeSpace(0, disk->size(), disk->name()) );
+        return freeSpaces;
+    }
+    
+    freeSpaces.append( findSpace(primaryPartitions, disk) );
+    
+    if (extended) {
+        freeSpaces.append( findSpace(extended->children(), extended->volume(), true) );
+    }
+    
+    return freeSpaces;
+}
+
+QList< FreeSpace* > UDisksManager::findSpace(QList< VolumeTreeItem* > partitions, DeviceModified* parent, bool logicals)
+{
+    QList< FreeSpace* > freeSpaces;
+    
+    for (int i = -1; i < partitions.size(); i++) {
+        StorageVolumeModified* volume1 = NULL;
+        StorageVolumeModified* volume2 = NULL;
+        FreeSpace *space = NULL;
+        
         if (i == -1) {
-            StorageVolumeModified* volume2 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i+1]->volume());
-            freeSpace.append( spaceBetweenPartitions(NULL, volume2, disk) );
+            volume2 = dynamic_cast<StorageVolumeModified *>(partitions[i+1]->volume());
         }
-        else if (i < primaryPartitions.size() - 1) {
-            StorageVolumeModified* volume1 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i]->volume());
-            StorageVolumeModified* volume2 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i+1]->volume());
-            freeSpace.append( spaceBetweenPartitions(volume1, volume2, disk) );
+        else if (i < partitions.size() - 1) {
+            volume1 = dynamic_cast<StorageVolumeModified *>(partitions[i]->volume());
+            volume2 = dynamic_cast<StorageVolumeModified *>(partitions[i+1]->volume());
         }
         else {
-            StorageVolumeModified* volume1 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i]->volume());
-            freeSpace.append( spaceBetweenPartitions(volume1, NULL, disk) );
+            volume1 = dynamic_cast<StorageVolumeModified *>(partitions[i]->volume());
+        }
+        
+        if (!logicals) {
+            space = spaceBetweenPartitions(volume1, volume2, parent);
+        } else {
+            space = spaceBetweenLogicalPartitions(volume1, volume2, parent);
+        }
+        
+        if (space) {
+            freeSpaces.append(space);
         }
     }
     
-    return freeSpace;
+    return freeSpaces;
 }
 
-QList< FreeSpace > UDisksManager::spaceBetweenPartitions(StorageVolumeModified* partition1,
-                                                         StorageVolumeModified* partition2,
-                                                         StorageDriveModified* disk)
+FreeSpace* UDisksManager::spaceBetweenPartitions(StorageVolumeModified* partition1,
+                                                 StorageVolumeModified* partition2,
+                                                 DeviceModified* disk)
 {
-    QList< FreeSpace > spaces;
+    FreeSpace* sp = 0;
     
     if (!partition1) {
         qulonglong initialOffset = 1024*1024;
         if (partition2->offset() > initialOffset) {
-            FreeSpace sp(initialOffset, partition2->offset() - initialOffset, disk->udi());
-            spaces.append(sp);
+            sp = new FreeSpace(initialOffset, partition2->offset() - initialOffset, disk->name());
         }
     }
     else if (!partition2) {
         if (partition1->rightBoundary() < disk->size()) {
-            FreeSpace sp(partition1->rightBoundary(), disk->size() - partition1->rightBoundary(), disk->udi());
-            spaces.append(sp);
+            sp = new FreeSpace(partition1->rightBoundary(), disk->size() - partition1->rightBoundary(), disk->name());
         }
     }
     else {
         if (partition1->rightBoundary() < partition2->offset()) {
-            FreeSpace sp(partition1->rightBoundary(), partition2->offset() - partition1->rightBoundary(), disk->udi());
-            spaces.append(sp);
+            sp = new FreeSpace(partition1->rightBoundary(), (partition2->offset() - partition1->rightBoundary()), disk->name());
         }
     }
     
-    return spaces;
+    return sp;
+}
+
+FreeSpace* UDisksManager::spaceBetweenLogicalPartitions(StorageVolumeModified* partition1,
+                                                        StorageVolumeModified* partition2,
+                                                        DeviceModified* extended)
+{
+    FreeSpace* sp = 0;
+    unsigned int spaceBetween = 32256;
+    
+    if (!partition1) {
+        qulonglong e_offset = extended->offset() + spaceBetween;
+        if (e_offset < partition2->offset()) {
+            sp = new FreeSpace(e_offset, partition2->offset() - e_offset, extended->name());
+        }
+    }
+    else if (!partition2) {
+        qulonglong e_rightOffset = extended->offset() + extended->size();
+        if (partition1->rightBoundary() < e_rightOffset) {
+            sp = new FreeSpace(partition1->rightBoundary(), e_rightOffset - partition1->rightBoundary(), extended->name());
+        }
+    }
+    else {
+        if (partition1->rightBoundary() + spaceBetween < partition2->offset()) {
+            sp = new FreeSpace(partition1->rightBoundary(), partition2->offset() - partition1->rightBoundary(), extended->name());
+        }
+    }
+    
+    return sp;
 }
 
 QStringList UDisksManager::allDevicesInternal()

@@ -51,7 +51,7 @@ public:
     virtual QObject* createDevice(const QString& udi);
     virtual QStringList devicesFromQuery(const QString& parentUdi, Solid::DeviceInterface::Type type);
     virtual QStringList allDevices();
-    virtual QList<FreeSpace> freeSpaceOfDisk(const Partitioner::VolumeTree &);
+    virtual QList<FreeSpace *> freeSpaceOfDisk(const Partitioner::VolumeTree &);
     virtual QSet< Solid::DeviceInterface::Type > supportedInterfaces() const;
     virtual QString udiPrefix() const;
     virtual ~UDisksManager();
@@ -64,7 +64,10 @@ private Q_SLOTS:
 private:
     const QStringList &deviceCache();
     QStringList allDevicesInternal();
-    QList<FreeSpace> spaceBetweenPartitions(StorageVolumeModified *, StorageVolumeModified *, StorageDriveModified *);
+    
+    QList< FreeSpace* > findSpace(QList< Partitioner::VolumeTreeItem* >, DeviceModified*, bool logicals = false);
+    FreeSpace* spaceBetweenPartitions(StorageVolumeModified *, StorageVolumeModified *, DeviceModified *);
+    FreeSpace* spaceBetweenLogicalPartitions(StorageVolumeModified *, StorageVolumeModified *, DeviceModified *);
     
     QStringList m_knownDrivesWithMedia;  // list of known optical drives which contain a media
     QSet<Solid::DeviceInterface::Type> m_supportedInterfaces;

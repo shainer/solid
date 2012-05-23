@@ -1,4 +1,6 @@
 #include "devicemodified.h"
+#include <QtCore/QStringList>
+#include <QtCore/QDebug>
 
 namespace Solid
 {
@@ -22,14 +24,19 @@ DeviceModified::DeviceModified(const DeviceModified& other)
 DeviceModified::~DeviceModified()
 {}
 
-QString DeviceModified::udi() const
+QString DeviceModified::name() const
 {
-    return d->udi;
+    return d->name;
 }
 
-QString DeviceModified::parentUdi() const
+QString DeviceModified::parentName() const
 {
-    return d->parentUdi;
+    return d->parentName;
+}
+
+qulonglong DeviceModified::offset() const
+{
+    return 0;
 }
 
 bool DeviceModified::existent() const
@@ -42,14 +49,20 @@ void DeviceModified::setExistent(bool ex)
     d->existent = ex;
 }
 
-void DeviceModified::setUdi(const QString& udi)
+void DeviceModified::setName(const QString& udi)
 {
-    d->udi = udi;
+    QString n = udi.split("/").last();
+    n.prepend("/dev/");
+    
+    d->name = n;
 }
 
-void DeviceModified::setParentUdi(const QString& udi)
+void DeviceModified::setParentName(const QString& udi)
 {
-    d->parentUdi = udi;
+    QString n = udi.split("/").last();
+    n.prepend("/dev/");
+    
+    d->parentName = n;
 }
     
 }

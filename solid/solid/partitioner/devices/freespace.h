@@ -11,26 +11,23 @@ namespace Solid
             class FreeSpacePrivate : public QSharedData
             {
             public:
-                FreeSpacePrivate(qulonglong s, qulonglong o, const QString& p)
+                FreeSpacePrivate(qulonglong o, qulonglong s)
                     : QSharedData()
-                    , size(s)
                     , offset(o)
-                    , parentUdi(p)
+                    , size(s)
                 {}
                 
                 FreeSpacePrivate(const FreeSpacePrivate &other)
                     : QSharedData()
-                    , size(other.size)
                     , offset(other.offset)
-                    , parentUdi(other.parentUdi)
+                    , size(other.size)
                 {}
                 
                 ~FreeSpacePrivate()
                 {}
                 
-                qulonglong size;
                 qulonglong offset;
-                QString parentUdi;
+                qulonglong size;
             };
             
             class FreeSpace : public DeviceModified
@@ -43,7 +40,6 @@ namespace Solid
                 virtual DeviceModifiedType deviceType() const;
                 qulonglong size() const;
                 qulonglong offset() const;
-                QString parentUdi() const;
                 
                 void setSize(qulonglong);
                 void setOffset(qulonglong);
