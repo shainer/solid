@@ -45,6 +45,7 @@ public:
     virtual bool isBlank() const;
     virtual bool isRewritable() const;
     virtual qulonglong capacity() const;
+    virtual qulonglong offset() const;
 };
 }
 }

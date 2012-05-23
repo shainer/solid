@@ -94,6 +94,11 @@ Solid::Device &Solid::Device::operator=(const Solid::Device &device)
     return *this;
 }
 
+bool Solid::Device::operator==(const Solid::Device& other) const
+{
+    return udi() == other.udi();
+}
+
 bool Solid::Device::isValid() const
 {
     return d->backendObject()!=0;

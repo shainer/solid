@@ -43,7 +43,6 @@ public:
     virtual QSet<Solid::DeviceInterface::Type> supportedInterfaces() const;
 
     virtual QStringList allDevices();
-
     virtual QStringList devicesFromQuery(const QString &parentUdi,
                                          Solid::DeviceInterface::Type type);
 

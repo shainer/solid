@@ -143,6 +143,13 @@ namespace Solid
          * @return the size of this volume
          */
         qulonglong size() const;
+        
+        /**
+         * Retrieves the starting offset of this volume.
+         * 
+         * @return the offset of this volume inside the drive.
+         **/
+        qulonglong offset() const;
 
         /**
          * Retrieves the crypto container of this volume.

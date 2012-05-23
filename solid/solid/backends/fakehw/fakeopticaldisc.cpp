@@ -157,4 +157,9 @@ qulonglong FakeOpticalDisc::capacity() const
     return fakeDevice()->property("capacity").toULongLong();
 }
 
+qulonglong FakeOpticalDisc::offset() const
+{
+    return Solid::Backends::Fake::FakeVolume::offset();
+}
+
 #include "backends/fakehw/fakeopticaldisc.moc"

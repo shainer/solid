@@ -48,7 +48,6 @@ public:
 
     bool deviceExists(const QString &udi);
     virtual QStringList allDevices();
-
     virtual QStringList devicesFromQuery(const QString &parentUdi,
                                          Solid::DeviceInterface::Type type);
 

@@ -30,6 +30,8 @@
 #include <solid/solid_export.h>
 
 #include <solid/deviceinterface.h>
+#include <solid/partitioner/volumetree.h>
+#include <solid/partitioner/devices/freespace.h>
 
 namespace Solid
 {
@@ -91,6 +93,9 @@ namespace Solid
          */
         static QList<Device> listFromQuery(const QString &predicate,
                                            const QString &parentUdi = QString());
+        
+        
+        static QList<Partitioner::Devices::FreeSpace> allFreeSpace(const QList<Solid::Partitioner::VolumeTree> &);
 
 
         /**
@@ -121,6 +126,13 @@ namespace Solid
          * @return a reference to the device
          */
         Device &operator=(const Device &device);
+        
+        /**
+         * Comparison between two devices.
+         * 
+         * @return true if the two devices share the same UDI.
+         */
+        bool operator==(const Device& other) const;
 
         /**
          * Indicates if this device is valid.

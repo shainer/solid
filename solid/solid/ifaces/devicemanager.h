@@ -26,6 +26,8 @@
 #include <QtCore/QStringList>
 
 #include <solid/deviceinterface.h>
+#include <solid/partitioner/devices/freespace.h>
+#include <solid/partitioner/volumetree.h>
 
 namespace Solid
 {

@@ -115,6 +115,8 @@ public:
         case Solid::DeviceInterface::NetworkShare:
             // Doesn't exist with UPower
             break;
+        case Solid::DeviceInterface::FreeSpace:
+            break;
         case Solid::DeviceInterface::Unknown:
             break;
         case Solid::DeviceInterface::Last:

@@ -28,9 +28,12 @@
 #include <QtDBus/QDBusConnectionInterface>
 
 #include "../shared/rootdevice.h"
+#include <partitioner/devices/storagedrivemodified.h>
 
 using namespace Solid::Backends::UDisks;
 using namespace Solid::Backends::Shared;
+using namespace Solid::Partitioner;
+using namespace Solid::Partitioner::Devices;
 
 UDisksManager::UDisksManager(QObject *parent)
     : Solid::Ifaces::DeviceManager(parent),
@@ -46,7 +49,8 @@ UDisksManager::UDisksManager(QObject *parent)
             << Solid::DeviceInterface::StorageDrive
             << Solid::DeviceInterface::OpticalDrive
             << Solid::DeviceInterface::OpticalDisc
-            << Solid::DeviceInterface::StorageVolume;
+            << Solid::DeviceInterface::StorageVolume
+            << Solid::DeviceInterface::FreeSpace;
 
     qDBusRegisterMetaType<QList<QDBusObjectPath> >();
     qDBusRegisterMetaType<QVariantMap>();
@@ -153,6 +157,60 @@ QStringList UDisksManager::allDevices()
     }
 
     return m_deviceCache;
+}
+
+QList< FreeSpace > UDisksManager::freeSpaceOfDisk(const Solid::Partitioner::VolumeTree& diskTree)
+{
+    QList< VolumeTreeItem* > primaryPartitions = diskTree.rootNode()->children();
+    StorageDriveModified *disk = dynamic_cast<StorageDriveModified *>(diskTree.root());
+    QList< FreeSpace > freeSpace;
+    
+    for (int i = -1; i < primaryPartitions.size(); i++) {
+        if (i == -1) {
+            StorageVolumeModified* volume2 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i+1]->volume());
+            freeSpace.append( spaceBetweenPartitions(NULL, volume2, disk) );
+        }
+        else if (i < primaryPartitions.size() - 1) {
+            StorageVolumeModified* volume1 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i]->volume());
+            StorageVolumeModified* volume2 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i+1]->volume());
+            freeSpace.append( spaceBetweenPartitions(volume1, volume2, disk) );
+        }
+        else {
+            StorageVolumeModified* volume1 = dynamic_cast<StorageVolumeModified *>(primaryPartitions[i]->volume());
+            freeSpace.append( spaceBetweenPartitions(volume1, NULL, disk) );
+        }
+    }
+    
+    return freeSpace;
+}
+
+QList< FreeSpace > UDisksManager::spaceBetweenPartitions(StorageVolumeModified* partition1,
+                                                         StorageVolumeModified* partition2,
+                                                         StorageDriveModified* disk)
+{
+    QList< FreeSpace > spaces;
+    
+    if (!partition1) {
+        qulonglong initialOffset = 1024*1024;
+        if (partition2->offset() > initialOffset) {
+            FreeSpace sp(initialOffset, partition2->offset() - initialOffset, disk->udi());
+            spaces.append(sp);
+        }
+    }
+    else if (!partition2) {
+        if (partition1->rightBoundary() < disk->size()) {
+            FreeSpace sp(partition1->rightBoundary(), disk->size() - partition1->rightBoundary(), disk->udi());
+            spaces.append(sp);
+        }
+    }
+    else {
+        if (partition1->rightBoundary() < partition2->offset()) {
+            FreeSpace sp(partition1->rightBoundary(), partition2->offset() - partition1->rightBoundary(), disk->udi());
+            spaces.append(sp);
+        }
+    }
+    
+    return spaces;
 }
 
 QStringList UDisksManager::allDevicesInternal()

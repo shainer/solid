@@ -115,6 +115,11 @@ qulonglong Volume::size() const
     return m_device->prop("volume.size").toULongLong();
 }
 
+qulonglong Volume::offset() const
+{
+    return m_device->prop("volume.offset").toULongLong();
+}
+
 QString Solid::Backends::Hal::Volume::encryptedContainerUdi() const
 {
     return m_device->prop("volume.crypto_luks.clear.backing_volume").toString();

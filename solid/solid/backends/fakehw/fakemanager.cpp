@@ -141,6 +141,12 @@ QStringList FakeManager::devicesFromQuery(const QString &parentUdi, Solid::Devic
     }
 }
 
+QList< Solid::Partitioner::Devices::FreeSpace > FakeManager::freeSpaceOfDisk(const Solid::Partitioner::VolumeTree& tree)
+{
+    Q_UNUSED(tree)
+    return QList< Solid::Partitioner::Devices::FreeSpace >();
+}
+
 QObject *FakeManager::createDevice(const QString &udi)
 {
     if (d->loadedDevices.contains(udi))

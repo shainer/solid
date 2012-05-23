@@ -155,4 +155,9 @@ qulonglong OpticalDisc::capacity() const
     return m_device->prop("volume.disc.capacity").toULongLong();
 }
 
+qulonglong OpticalDisc::offset() const
+{
+    return Solid::Backends::Hal::Volume::offset();
+}
+
 #include "backends/hal/halopticaldisc.moc"

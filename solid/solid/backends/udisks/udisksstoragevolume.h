@@ -43,6 +43,7 @@ public:
 
     virtual QString encryptedContainerUdi() const;
     virtual qulonglong size() const;
+    virtual qulonglong offset() const;
     virtual QString uuid() const;
     virtual QString label() const;
     virtual QString fsType() const;

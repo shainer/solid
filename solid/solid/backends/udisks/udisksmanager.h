@@ -25,17 +25,23 @@
 #include "udisksdevice.h"
 
 #include "solid/ifaces/devicemanager.h"
+#include <partitioner/volumetree.h>
+#include <partitioner/devices/storagedrivemodified.h>
+#include <partitioner/devices/freespace.h>
 
 #include <QtDBus/QDBusInterface>
 #include <QtCore/QSet>
 
 namespace Solid
 {
+
 namespace Backends
 {
 namespace UDisks
 {
 
+using namespace Solid::Partitioner::Devices;
+    
 class UDisksManager : public Solid::Ifaces::DeviceManager
 {
     Q_OBJECT
@@ -45,6 +51,7 @@ public:
     virtual QObject* createDevice(const QString& udi);
     virtual QStringList devicesFromQuery(const QString& parentUdi, Solid::DeviceInterface::Type type);
     virtual QStringList allDevices();
+    virtual QList<FreeSpace> freeSpaceOfDisk(const Partitioner::VolumeTree &);
     virtual QSet< Solid::DeviceInterface::Type > supportedInterfaces() const;
     virtual QString udiPrefix() const;
     virtual ~UDisksManager();
@@ -57,6 +64,8 @@ private Q_SLOTS:
 private:
     const QStringList &deviceCache();
     QStringList allDevicesInternal();
+    QList<FreeSpace> spaceBetweenPartitions(StorageVolumeModified *, StorageVolumeModified *, StorageDriveModified *);
+    
     QStringList m_knownDrivesWithMedia;  // list of known optical drives which contain a media
     QSet<Solid::DeviceInterface::Type> m_supportedInterfaces;
     QDBusInterface m_manager;

@@ -29,6 +29,7 @@
 #include "ifaces/device.h"
 
 #include "soliddefs_p.h"
+#include "backends/udisks/udisksmanager.h"
 
 SOLID_GLOBAL_STATIC(Solid::DeviceManagerStorage, globalDeviceStorage)
 
@@ -165,6 +166,28 @@ QList<Solid::Device> Solid::Device::listFromQuery(const Predicate &predicate,
     }
 
     return list;
+}
+
+QList<Solid::Partitioner::Devices::FreeSpace> Solid::Device::allFreeSpace(const QList<Solid::Partitioner::VolumeTree> &trees)
+{
+    QList<Solid::Partitioner::Devices::FreeSpace> spaces;
+    QList<QObject *> backends = globalDeviceStorage->managerBackends();
+    
+    foreach (QObject *backendObj, backends) {
+        Solid::Ifaces::DeviceManager *backend = qobject_cast<Ifaces::DeviceManager *>(backendObj);
+        
+        if (!backend || !backend->supportedInterfaces().contains(Solid::DeviceInterface::FreeSpace)) {
+            continue;
+        }
+        
+        Solid::Backends::UDisks::UDisksManager *udManager = dynamic_cast<Solid::Backends::UDisks::UDisksManager *>(backend);
+        
+        foreach (const Solid::Partitioner::VolumeTree &tree, trees) {
+            spaces += udManager->freeSpaceOfDisk(tree);
+        }
+    }
+    
+    return spaces;
 }
 
 Solid::DeviceNotifier *Solid::DeviceNotifier::instance()

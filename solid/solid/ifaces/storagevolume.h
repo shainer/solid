@@ -94,6 +94,13 @@ namespace Ifaces
          * @return the size of this volume
          */
         virtual qulonglong size() const = 0;
+        
+        /**
+         * Retrieves this volume starting offset in bytes.
+         * 
+         * @return the starting offset of this volume.
+         */
+        virtual qulonglong offset() const = 0;
 
         /**
          * Retrieves the crypto container UDI of this volume.

@@ -57,6 +57,7 @@ public:
     virtual QStringList allDevices();
 
     virtual QStringList devicesFromQuery(const QString &parentUdi, Solid::DeviceInterface::Type type);
+    virtual QList<Solid::Partitioner::Devices::FreeSpace> freeSpaceOfDisk(const Solid::Partitioner::VolumeTree &);
 
     virtual QObject *createDevice(const QString &udi);
     virtual FakeDevice *findDevice(const QString &udi);

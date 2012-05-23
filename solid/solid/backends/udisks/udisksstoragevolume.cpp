@@ -45,6 +45,11 @@ qulonglong UDisksStorageVolume::size() const
     return m_device->prop("PartitionSize").toULongLong();
 }
 
+qulonglong UDisksStorageVolume::offset() const
+{
+    return m_device->prop("PartitionOffset").toULongLong();
+}
+
 QString UDisksStorageVolume::uuid() const
 {
     return m_device->prop("IdUuid").toString();
