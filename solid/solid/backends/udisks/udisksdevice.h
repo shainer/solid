@@ -35,14 +35,13 @@ namespace Backends
 {
 namespace UDisks
 {
-
+    
 class UDisksDevice : public Solid::Ifaces::Device
 {
     Q_OBJECT
 public:
     UDisksDevice(const QString &udi);
     virtual ~UDisksDevice();
-
 
     virtual QObject* createDeviceInterface(const Solid::DeviceInterface::Type& type);
     virtual bool queryDeviceInterface(const Solid::DeviceInterface::Type& type) const;

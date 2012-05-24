@@ -320,8 +320,9 @@ QObject *FakeDevice::createDeviceInterface(const Solid::DeviceInterface::Type &t
     case Solid::DeviceInterface::NetworkShare:
         iface = new FakeNetworkShare(this);
         break;
+    
+    case Solid::DeviceInterface::FreeSpace:
     case Solid::DeviceInterface::Unknown:
-        break;
     case Solid::DeviceInterface::Last:
         break;
     }

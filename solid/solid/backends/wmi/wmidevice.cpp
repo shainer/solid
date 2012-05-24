@@ -158,6 +158,7 @@ public:
         case Solid::DeviceInterface::DvbInterface:
             break;        case Solid::DeviceInterface::Video:
             break;
+        case Solid::DeviceInterface::FreeSpace:
         case Solid::DeviceInterface::Unknown:
         case Solid::DeviceInterface::Last:
         default:

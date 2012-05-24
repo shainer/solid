@@ -113,6 +113,7 @@ public:
         case Solid::DeviceInterface::NetworkShare:
             list << "networkshare";
             break;
+        case Solid::DeviceInterface::FreeSpace:
         case Solid::DeviceInterface::Unknown:
             break;
         case Solid::DeviceInterface::Last:

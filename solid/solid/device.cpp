@@ -249,6 +249,7 @@ const Solid::DeviceInterface *Solid::Device::asDeviceInterface(const DeviceInter
                 iface = deviceinterface_cast(Ifaces::NetworkShare, NetworkShare, dev_iface);
                 break;
             case DeviceInterface::Unknown:
+            case DeviceInterface::FreeSpace:
             case DeviceInterface::Last:
                 break;
             }
