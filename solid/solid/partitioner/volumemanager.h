@@ -95,6 +95,7 @@ namespace Solid
             
             /* Searches a device by its name in all trees. Returns NULL if not found. */
             DeviceModified* searchDeviceByName(const QString &);
+            VolumeTree searchTreeWithDevice(const QString &);
             
             QMap<QString, VolumeTree> volumeTrees;
             ActionStack actionstack;

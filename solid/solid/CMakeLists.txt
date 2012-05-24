@@ -143,6 +143,7 @@ set(solid_LIB_SRCS
 
    partitioner/actions/formatpartitionaction.cpp
    partitioner/actions/createpartitionaction.cpp
+   partitioner/actions/removepartitionaction.cpp
 )
 
 if(NOT APPLE)
@@ -414,6 +415,7 @@ install( FILES partitioner/partitioner_enums.h
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h
                partitioner/actions/createpartitionaction.h
+               partitioner/actions/removepartitionaction.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/actions COMPONENT Devel)
 install( FILES partitioner/devices/partition.h
                partitioner/devices/devicemodified.h

@@ -23,6 +23,7 @@
 #include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/action.h>
 #include "actions/createpartitionaction.h"
+#include "actions/removepartitionaction.h"
 #include <solid/device.h>
 #include <kglobal.h>
 
@@ -188,8 +189,6 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             VolumeTree tree = volumeTrees[cpa->disk()];
             
-            tree.print();
-            
             if (!tree.splitCreationContainer(cpa->offset(), cpa->size())) {
                 qDebug() << "could not split";
                 return false;
@@ -197,6 +196,20 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             Partition* newPartition = new Partition(cpa);
             tree.addDevice(cpa->disk(), newPartition);
+        }
+        
+        case Action::RemovePartition: {
+            Actions::RemovePartitionAction* rpa = dynamic_cast<Actions::RemovePartitionAction *>(action);
+            
+            /* FIXME: put this check in the next call without doing the same thing twice */
+            if (!searchDeviceByName(rpa->partition())) {
+                qDebug() << "partition not found";
+                return false;
+            }
+            VolumeTree tree = searchTreeWithDevice(rpa->partition());
+            
+            tree.print();
+            tree.mergeAndDelete(rpa->partition());
             tree.print();
             break;
         }
@@ -254,6 +267,19 @@ DeviceModified* VolumeManager::searchDeviceByName(const QString& name)
     }
     
     return dev;
+}
+
+VolumeTree VolumeManager::searchTreeWithDevice(const QString& name)
+{
+    
+    foreach (VolumeTree tree, volumeTrees.values()) {
+        if (tree.searchDevice(name)) {
+            return tree;
+        }
+    }
+    
+    /* FIXME: exception/error */
+    return VolumeTree();
 }
 
 }

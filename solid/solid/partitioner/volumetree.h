@@ -185,6 +185,14 @@ namespace Solid
             DeviceModified* searchDevice(const QString &) const;
             
             /**
+             * Searches a node in the tree.
+             * @param name the name of the device (identifier).
+             * @note all devices are identified by a name, even free space or partitions that don't exist in the system yet.
+             * @returns the node, or NULL if not found.
+             */
+            VolumeTreeItem* searchNode(const QString &) const;
+            
+            /**
              * @param free include blocks of free space too.
              * @returns a sorted list of primary and extended partitions.
              */
@@ -196,7 +204,23 @@ namespace Solid
              */
             QList<DeviceModified *> logicalPartitions(bool free = false) const;
             
+            /**
+             * When a new partition is requested, checks if a suitable block of free space exists.
+             * If this block is bigger than the new partition, splits it around the partition.
+             * 
+             * @param offset the offset of the new partition.
+             * @param size the size of the new partition.
+             * @returns true if the container was found, false otherwise.
+             */
             bool splitCreationContainer(qulonglong, qulonglong);
+            
+            /**
+             * Deletes a partition from the disk: the space previously occupied by it will become a free space block.
+             * This block is then merged with adjacent blocks, if they are present.
+             * 
+             * @param partitionName the name of the partition.
+             */
+            void mergeAndDelete(const QString &);
 
             /**
              * Adds a new device.
@@ -247,6 +271,18 @@ namespace Solid
 
             void addDevice(const QString &, DeviceModified *, VolumeTreeItem *);
             void removeDevice(const QString &, VolumeTreeItem *);
+            
+            /*
+             * Returns the node immediately to the left of the passed one.
+             * Remember nodes are sorted by initial offset.
+             */
+            VolumeTreeItem* leftSibling(VolumeTreeItem *);
+            
+            /*
+             * Returns the node immediately to the right of the passed one.
+             * Remember nodes are sorted by initial offset.
+             */
+            VolumeTreeItem* rightSibling(VolumeTreeItem *);
             
             void print(VolumeTreeItem *) const;
             void destroy(VolumeTreeItem *);
