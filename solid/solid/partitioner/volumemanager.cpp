@@ -154,9 +154,6 @@ void VolumeManager::detectDevices()
         foreach (Devices::FreeSpace* space, Device::freeSpaceOfDisk(disk)) {
             disk.addDevice(space->parentName(), space);
         }
-        
-        disk.print();
-        disk.clear();
     }
 }
 
@@ -184,16 +181,23 @@ bool VolumeManager::registerAction(Actions::Action* action)
         
         case Action::CreatePartition: {
             Actions::CreatePartitionAction* cpa = dynamic_cast<Actions::CreatePartitionAction *>(action);
+            if (!volumeTrees.contains(cpa->disk())) {
+                qDebug() << "unexistent disk";
+                return false;
+            }
             
-           // FreeSpace* container = findContainer(cpa->offset(), cpa->size());
+            VolumeTree tree = volumeTrees[cpa->disk()];
+            
+            tree.print();
+            
+            if (!tree.splitCreationContainer(cpa->offset(), cpa->size())) {
+                qDebug() << "could not split";
+                return false;
+            }
+            
             Partition* newPartition = new Partition(cpa);
-            qDebug() << newPartition->name();
-            
-            /* trova container */
-            /* crea partizione con nome generato e metti nell'albero */
-            /* rimuovi container e fai lo split */
-            
-            
+            tree.addDevice(cpa->disk(), newPartition);
+            tree.print();
             break;
         }
         
@@ -201,6 +205,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             break;
     }
     
+    actionstack.push(action);
     return true;
 }
 

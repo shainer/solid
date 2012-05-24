@@ -55,6 +55,7 @@ Partition::Partition(Actions::CreatePartitionAction* action)
     , d( new Private(action) )
 {
     DeviceModified::setParentName(action->disk());
+    DeviceModified::setName("New partition");
 }
 
 Partition::~Partition()

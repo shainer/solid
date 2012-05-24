@@ -79,6 +79,11 @@ void DeviceModified::setParentName(const QString& udi)
     
     d->parentName = n;
 }
+
+bool DeviceModified::operator==(const DeviceModified& other) const
+{
+    return d->name == other.name();
+}
     
 }
 }

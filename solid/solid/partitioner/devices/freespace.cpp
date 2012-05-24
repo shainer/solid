@@ -26,6 +26,9 @@ FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUd
     : DeviceModified()
     , d( new Private( offset, size ) )
 {
+    /* FIXME: ci resta il /dev davanti, attenzione */
+    QString uniqueName = "Free space of offset " + QString::number(d->offset) + " and size " + QString::number(d->size);
+    DeviceModified::setName(uniqueName);
     DeviceModified::setParentName(parentUdi);
 }
 
@@ -45,6 +48,11 @@ qulonglong FreeSpace::size() const
 qulonglong FreeSpace::offset() const
 {
     return d->offset;
+}
+
+qulonglong FreeSpace::rightBoundary() const
+{
+    return (d->offset + d->size);
 }
 
 void FreeSpace::setSize(qulonglong s)

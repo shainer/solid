@@ -83,19 +83,25 @@ namespace Solid
             QList<VolumeTreeItem *> children() const;
             
             /**
-             * Comparison operator.
-             * 
-             * @returns true if two items represent the same device.
-             * FIXME da rivedere
-             */
-            bool operator==(const VolumeTreeItem &) const;
-            
-            /**
              * Adds a new child to the current device. Order is maintained.
              * 
              * @param dev the device object to add.
              */
             void addChild(DeviceModified *);
+            
+            /**
+             * Removes the given node from the children list.
+             * 
+             * @param child the node to remove.
+             */
+            void removeChild(VolumeTreeItem *);
+            
+            /**
+             * Comparison operator.
+             * 
+             * @returns true if the two items represent the same device, false otherwise.
+             */
+            bool operator==(const VolumeTreeItem &) const;
             
         private:
             class Private;
@@ -190,15 +196,31 @@ namespace Solid
              */
             QList<DeviceModified *> logicalPartitions(bool free = false) const;
             
-            void clear();
+            bool splitCreationContainer(qulonglong, qulonglong);
 
             /**
              * Adds a new device.
+             * FIXME: check if the parent exists.
              * 
              * @param parentName the name of the parent.
              * @param device the new object to add.
              */
             void addDevice(const QString &, DeviceModified *);
+            
+            /**
+             * Removes a device. A device inside a tree is uniquely identified by name.
+             * FIXME: come prima.
+             * 
+             * @param deviceName the device name.
+             */
+            void removeDevice(const QString &);
+            
+            /**
+             * Deletes all the nodes in the tree.
+             */
+            void clear();
+            
+            
             void print() const;
             
         private:
@@ -224,6 +246,8 @@ namespace Solid
             ~VolumeTreePrivate();
 
             void addDevice(const QString &, DeviceModified *, VolumeTreeItem *);
+            void removeDevice(const QString &, VolumeTreeItem *);
+            
             void print(VolumeTreeItem *) const;
             void destroy(VolumeTreeItem *);
             

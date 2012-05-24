@@ -19,6 +19,7 @@
 */
 
 #include <solid/partitioner/volumetree.h>
+#include "devices/freespace.h"
 #include <QtCore/QDebug>
 
 namespace Solid
@@ -45,6 +46,10 @@ VolumeTreeItem::VolumeTreeItem(DeviceModified* volume, QList< VolumeTreeItem *> 
 
 VolumeTreeItem::~VolumeTreeItem()
 {
+    foreach (VolumeTreeItem* child, d->children) {
+        delete child;
+    }
+    
     delete d->volume;
 }
 
@@ -83,9 +88,14 @@ void VolumeTreeItem::addChild(DeviceModified* child)
     }
 }
 
+void VolumeTreeItem::removeChild(VolumeTreeItem* child)
+{
+    d->children.removeOne(child);
+}
+
 bool VolumeTreeItem::operator==(const VolumeTreeItem& other) const
 {
-    return d->volume == other.volume();
+    return (d->volume == other.volume());
 }
 
 /******* VolumeTreePrivate *********/
@@ -110,6 +120,23 @@ void VolumeTreePrivate::addDevice(const QString& parentUdi, DeviceModified* chil
     
     foreach (VolumeTreeItem* c, r->children()) {
         addDevice(parentUdi, child, c);
+    }
+}
+
+void VolumeTreePrivate::removeDevice(const QString& deviceName, VolumeTreeItem* currentNode)
+{
+    if (currentNode->volume()->name() == deviceName) {
+        VolumeTreeItem* parent = currentNode->parent();
+        
+        if (parent) {
+            parent->removeChild(currentNode);
+        }
+        
+        delete currentNode;
+    }
+    
+    foreach (VolumeTreeItem* child, currentNode->children()) {
+        removeDevice(deviceName, child);
     }
 }
 
@@ -238,9 +265,60 @@ DeviceModified* VolumeTree::searchDevice(const QString& name) const
     return NULL;
 }
 
+bool VolumeTree::splitCreationContainer(qulonglong offset, qulonglong size)
+{
+    FreeSpace* container = 0;
+    QList< VolumeTreeItem* > stack;
+    stack.push_front(d->root);
+    
+    while (!stack.isEmpty()) {
+        VolumeTreeItem* currentNode = stack.takeFirst();
+        DeviceModified* currentDevice = currentNode->volume();
+       
+        if (currentDevice->deviceType() == DeviceModified::FreeSpaceDevice) {
+            FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
+            
+            if (space->offset() <= offset && space->size() >= size) {
+                container = space;
+            }
+        }
+        
+        foreach (VolumeTreeItem* child, currentNode->children()) {
+            stack.push_front(child);
+        }
+    }
+    
+    if (!container) {
+        return false;
+    }
+    
+    FreeSpace* leftSpace = 0;
+    FreeSpace* rightSpace = 0;
+    qulonglong containerOffset = container->offset();
+    qulonglong containerSize = container->size();
+    
+    if (offset > containerOffset) {
+        leftSpace = new FreeSpace(containerOffset, offset - containerOffset, container->parentName());
+        addDevice(container->parentName(), leftSpace);
+    }
+    
+    if (containerSize > size) {
+        rightSpace = new FreeSpace((offset + size), (container->rightBoundary()) - (offset + size), container->parentName());
+        addDevice(container->parentName(), rightSpace);
+    }
+    
+    delete container;
+    return true;
+}
+
 void VolumeTree::addDevice(const QString& parentUdi, DeviceModified* child)
 {
     d->addDevice(parentUdi, child, d->root);
+}
+
+void VolumeTree::removeDevice(const QString& deviceName)
+{
+    d->removeDevice(deviceName, d->root);
 }
 
 void VolumeTree::print() const
@@ -251,7 +329,7 @@ void VolumeTree::print() const
 
 void VolumeTree::clear()
 {
-    d->destroy(d->root);
+    delete d->root;
 }
 
 }

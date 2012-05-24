@@ -28,12 +28,14 @@ namespace Solid
                 virtual qulonglong size() const = 0;
                 
                 bool existent() const;
-                QString name() const;
-                QString parentName() const;
+                virtual QString name() const;
+                virtual QString parentName() const;
                 
                 void setName(const QString &);
                 void setParentName(const QString &);
                 void setExistent(bool);
+                
+                bool operator==(const DeviceModified &) const;
                 
             private:
                 class Private;
