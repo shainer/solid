@@ -45,6 +45,7 @@ using namespace KAuth;
 class UDisksDevice : public Solid::Ifaces::Device
 {
     Q_OBJECT
+
 public:
     typedef enum {
         ReadCache,
