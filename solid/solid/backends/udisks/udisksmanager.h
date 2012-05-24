@@ -26,7 +26,7 @@
 
 #include "solid/ifaces/devicemanager.h"
 #include <partitioner/volumetree.h>
-#include <partitioner/devices/storagedrivemodified.h>
+#include <partitioner/devices/partition.h>
 #include <partitioner/devices/freespace.h>
 
 #include <QtDBus/QDBusInterface>
@@ -66,8 +66,8 @@ private:
     QStringList allDevicesInternal();
     
     QList< FreeSpace* > findSpace(QList< Partitioner::VolumeTreeItem* >, DeviceModified*, bool logicals = false);
-    FreeSpace* spaceBetweenPartitions(StorageVolumeModified *, StorageVolumeModified *, DeviceModified *);
-    FreeSpace* spaceBetweenLogicalPartitions(StorageVolumeModified *, StorageVolumeModified *, DeviceModified *);
+    FreeSpace* spaceBetweenPartitions(Partition *, Partition *, DeviceModified *);
+    FreeSpace* spaceBetweenLogicalPartitions(Partition *, Partition *, DeviceModified *);
     
     QStringList m_knownDrivesWithMedia;  // list of known optical drives which contain a media
     QSet<Solid::DeviceInterface::Type> m_supportedInterfaces;
