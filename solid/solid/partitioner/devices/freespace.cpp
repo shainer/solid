@@ -7,24 +7,34 @@ namespace Partitioner
 namespace Devices
 {
 
+class FreeSpace::Private
+{
+public:
+    Private(qulonglong o, qulonglong s)
+        : offset(o)
+        , size(s)
+    {}
+    
+    ~Private()
+    {}
+    
+    qulonglong offset;
+    qulonglong size;
+};
+    
 FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUdi)
     : DeviceModified()
-    , d( new FreeSpacePrivate( offset, size ) )
+    , d( new Private( offset, size ) )
 {
     DeviceModified::setParentName(parentUdi);
 }
-
-FreeSpace::FreeSpace(const FreeSpace& other)
-    : DeviceModified()
-    , d( other.d )
-{}
 
 FreeSpace::~FreeSpace()
 {}
 
 DeviceModified::DeviceModifiedType FreeSpace::deviceType() const
 {
-    return FreeSpaceType;
+    return FreeSpaceDevice;
 }
 
 qulonglong FreeSpace::size() const

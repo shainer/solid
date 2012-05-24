@@ -137,11 +137,12 @@ set(solid_LIB_SRCS
    partitioner/actionstack.cpp
 
    partitioner/devices/devicemodified.cpp
-   partitioner/devices/storagevolumemodified.cpp
-   partitioner/devices/storagedrivemodified.cpp
+   partitioner/devices/disk.cpp
+   partitioner/devices/partition.cpp
    partitioner/devices/freespace.cpp
 
    partitioner/actions/formatpartitionaction.cpp
+   partitioner/actions/createpartitionaction.cpp
 )
 
 if(NOT APPLE)
@@ -406,13 +407,17 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
                button.h audiointerface.h dvbinterface.h predicate.h powermanagement.h
                networking.h video.h serialinterface.h smartcardreader.h internetgateway.h
                networkshare.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid COMPONENT Devel)
-install( FILES partitioner/volumemanager.h partitioner/volumetree.h partitioner/actionexecuter.h partitioner/actionstack.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
+install( FILES partitioner/partitioner_enums.h
+               partitioner/volumemanager.h partitioner/volumetree.h
+               partitioner/actionexecuter.h partitioner/actionstack.h
+         DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h
+               partitioner/actions/createpartitionaction.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/actions COMPONENT Devel)
-install( FILES partitioner/devices/storagevolumemodified.h
+install( FILES partitioner/devices/partition.h
                partitioner/devices/devicemodified.h
-               partitioner/devices/storagedrivemodified.h
+               partitioner/devices/disk.h
                partitioner/devices/freespace.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/devices COMPONENT Devel)
 

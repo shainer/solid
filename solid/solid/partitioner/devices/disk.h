@@ -8,16 +8,12 @@ namespace Solid
     namespace Partitioner
     {
         namespace Devices
-        {
-            
-            class StorageDriveModifiedPrivate;
-            
-            class SOLID_EXPORT StorageDriveModified : public DeviceModified
+        {            
+            class SOLID_EXPORT Disk : public DeviceModified
             {
             public:
-                explicit StorageDriveModified(StorageDrive *);
-                StorageDriveModified(const StorageDriveModified& );
-                virtual ~StorageDriveModified();
+                explicit Disk(StorageDrive *);
+                virtual ~Disk();
                 
                 DeviceModifiedType deviceType() const;
                 
@@ -25,7 +21,8 @@ namespace Solid
                 void setSize(qulonglong);
                 
             private:
-                QSharedDataPointer<StorageDriveModifiedPrivate> d;
+                class Private;
+                Private* d;
             };
             
         }

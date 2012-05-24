@@ -2,46 +2,25 @@
 #define SOLID_PARTITIONER_DEVICES_DEVICEMODIFIED_H
 
 #include <solid/deviceinterface.h>
-#include <QtCore/QSharedDataPointer>
 
 namespace Solid
 {
     namespace Partitioner
     {
         namespace Devices
-        {
-            class DeviceModifiedPrivate : public QSharedData
-            {
-            public:
-                DeviceModifiedPrivate(DeviceInterface* i)
-                    : iface(i)
-                    , existent(i->isValid())
-                {}
-                
-                DeviceModifiedPrivate()
-                    : iface(0)
-                    , existent(false)
-                {}
-                
-                DeviceInterface* iface;
-                QString name;
-                QString parentName;
-                bool existent;
-            };
-            
+        {            
             class SOLID_EXPORT DeviceModified
             {
             public:
                 enum DeviceModifiedType
                 {
-                    StorageDriveType,
-                    StorageVolumeType,
-                    FreeSpaceType
+                    DiskDevice,
+                    PartitionDevice,
+                    FreeSpaceDevice
                 };
                 
                 explicit DeviceModified(DeviceInterface *);
                 DeviceModified();
-                DeviceModified(const DeviceModified &);
                 virtual ~DeviceModified();
                 
                 virtual DeviceModifiedType deviceType() const = 0;
@@ -57,7 +36,8 @@ namespace Solid
                 void setExistent(bool);
                 
             private:
-                QSharedDataPointer<DeviceModifiedPrivate> d;
+                class Private;
+                Private* d;
             };
             
         }

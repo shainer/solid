@@ -18,10 +18,11 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include <solid/partitioner/volumemanager.h>
-#include <solid/partitioner/devices/storagevolumemodified.h>
-#include <solid/partitioner/devices/storagedrivemodified.h>
+#include <solid/partitioner/devices/partition.h>
+#include <solid/partitioner/devices/disk.h>
 #include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/action.h>
+#include "actions/createpartitionaction.h"
 #include <solid/device.h>
 #include <kglobal.h>
 
@@ -80,7 +81,7 @@ void VolumeManager::detectDevices()
         
         if (drive->driveType() == StorageDrive::HardDisk)
         {
-            Devices::StorageDriveModified* driveModified = new Devices::StorageDriveModified( drive );
+            Devices::Disk* driveModified = new Devices::Disk( drive );
             driveModified->setName(udi);
             
             VolumeTree tree( driveModified );
@@ -96,41 +97,54 @@ void VolumeManager::detectDevices()
      * Each partition is a child of the disk it belongs to, except logical partitions; those are children of the
      * correspondent extended partition.
      */
-    QList<Devices::StorageVolumeModified *> partitions;
+    QMultiMap<QString, Devices::Partition *> partitions;
     foreach(Device dev, Device::listFromType(DeviceInterface::StorageVolume)) {
         StorageVolume* volume = dev.as<StorageVolume>();
         
-        Devices::StorageVolumeModified* volumeModified = new Devices::StorageVolumeModified(volume);
+        Devices::Partition* volumeModified = new Devices::Partition(volume);
         volumeModified->setName(dev.udi());
         volumeModified->setParentName(dev.parentUdi());
         
-        partitions.append(volumeModified);
+        if (!volumeModified->name().contains("loop")) {
+            partitions.insertMulti(volumeModified->parentName(), volumeModified);
+        }
     }
     
-    Devices::StorageVolumeModified* extended = NULL;
-    
-    foreach (Devices::StorageVolumeModified* volume, partitions) {
-        QString parentName = volume->parentName();
+    foreach (const QString& parent, partitions.uniqueKeys()) {
+        Devices::Partition* extended = NULL;
+        VolumeTree tree = volumeTrees.value(parent);
         
-        if (!volumeTrees.contains(parentName)) {
-            continue;
+        foreach (Devices::Partition* volume, partitions.values(parent)) {
+            if (volume->uuid().isEmpty()) {
+                volume->setPartitionType(Extended);
+                
+                tree.addDevice(volume->parentName(), volume);
+                extended = volume;
+            }
         }
         
-        VolumeTree tree = volumeTrees.value(parentName);
-        
-        if (volume->uuid().isEmpty()) {
-            extended = volume;
-            extended->setPartitionType(StorageVolumeModified::Extended);
+        foreach (Devices::Partition* volume, partitions.values(parent)) {
+            QString parentName = parent;
+            
+            if (!volumeTrees.contains(parentName)) {
+                continue;
+            }
+            
+            VolumeTree tree = volumeTrees.value(parentName);
+            
+            if (volume->partitionType() == Extended) {
+                continue;
+            }
+            else if (extended && (volume->offset() >= extended->offset() && volume->rightBoundary() <= extended->rightBoundary())) {
+                volume->setPartitionType(Logical);
+                parentName = extended->name();
+            }
+            else {
+                volume->setPartitionType(Primary);
+            }
+            
+            tree.addDevice(parentName, volume);
         }
-        else if (extended && (volume->offset() >= extended->offset() && volume->rightBoundary() <= extended->rightBoundary())) {
-            volume->setPartitionType(StorageVolumeModified::Logical);
-            parentName = extended->name();
-        }
-        else {
-            volume->setPartitionType(StorageVolumeModified::Primary);
-        }
-        
-        tree.addNode(parentName, volume);
     }
     
     /*
@@ -138,8 +152,11 @@ void VolumeManager::detectDevices()
      */
     foreach (VolumeTree disk, volumeTrees.values()) {
         foreach (Devices::FreeSpace* space, Device::freeSpaceOfDisk(disk)) {
-            disk.addNode(space->parentName(), space);
-        }        
+            disk.addDevice(space->parentName(), space);
+        }
+        
+        disk.print();
+        disk.clear();
     }
 }
 
@@ -155,13 +172,28 @@ bool VolumeManager::registerAction(Actions::Action* action)
             Actions::FormatPartitionAction* fpa = dynamic_cast<Actions::FormatPartitionAction *>(action);
             DeviceModified* p = searchDeviceByName(fpa->partition());
             
-            if (!p || !p->deviceType() == DeviceModified::StorageVolumeType) {
+            if (!p || !p->deviceType() == DeviceModified::PartitionDevice) {
                 qDebug() << "errore, nome non valido";
                 return false;
             }
             
-            StorageVolumeModified* volume = dynamic_cast<StorageVolumeModified *>(p);
+            Partition* volume = dynamic_cast<Partition *>(p);
             volume->setFilesystem(fpa->filesystem()); /* FIXME: check if the filesystem is supported */
+            break;
+        }
+        
+        case Action::CreatePartition: {
+            Actions::CreatePartitionAction* cpa = dynamic_cast<Actions::CreatePartitionAction *>(action);
+            
+           // FreeSpace* container = findContainer(cpa->offset(), cpa->size());
+            Partition* newPartition = new Partition(cpa);
+            qDebug() << newPartition->name();
+            
+            /* trova container */
+            /* crea partizione con nome generato e metti nell'albero */
+            /* rimuovi container e fai lo split */
+            
+            
             break;
         }
         
@@ -172,14 +204,12 @@ bool VolumeManager::registerAction(Actions::Action* action)
     return true;
 }
 
-bool VolumeManager::undo()
+void VolumeManager::undo()
 {
-    return true;
 }
 
-bool VolumeManager::redo()
+void VolumeManager::redo()
 {
-    return true;
 }
 
 QList< VolumeTree > VolumeManager::allDiskTrees() const
@@ -211,7 +241,7 @@ DeviceModified* VolumeManager::searchDeviceByName(const QString& name)
     DeviceModified* dev = 0;
     
     foreach (const VolumeTree& tree, volumeTrees.values()) {
-        dev = tree.searchNode(name);
+        dev = tree.searchDevice(name);
         
         if (dev) {
             break;

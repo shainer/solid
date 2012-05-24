@@ -2,30 +2,22 @@
 #define SOLID_PARTITIONER_DEVICES_STORAGEVOLUMEMODIFIED_H
 
 #include "devicemodified.h"
+#include <solid/partitioner/actions/createpartitionaction.h>
+#include <solid/partitioner/partitioner_enums.h>
 #include <solid/storagevolume.h>
 
 namespace Solid
 {
     namespace Partitioner
-    {
+    {        
         namespace Devices
-        {
-            class StorageVolumeModifiedPrivate;
-            
-            class SOLID_EXPORT StorageVolumeModified : public DeviceModified
+        {            
+            class SOLID_EXPORT Partition : public DeviceModified
             {
-            public:
-                enum PartitionType
-                {
-                    None,
-                    Primary,
-                    Logical,
-                    Extended
-                };
-                
-                explicit StorageVolumeModified(StorageVolume* );
-                StorageVolumeModified(const StorageVolumeModified &);
-                virtual ~StorageVolumeModified();
+            public:                
+                explicit Partition(StorageVolume *);
+                Partition(Actions::CreatePartitionAction *);
+                virtual ~Partition();
                 
                 DeviceModified::DeviceModifiedType deviceType() const;
                 
@@ -35,7 +27,7 @@ namespace Solid
                 QString label() const;
                 QString uuid() const;
                 qulonglong size() const;
-                qulonglong offset() const;
+                virtual qulonglong offset() const;
                 qulonglong rightBoundary() const;
                 PartitionType partitionType() const;
                 
@@ -46,9 +38,10 @@ namespace Solid
                 void setSize(qulonglong);
                 void setOffset(qulonglong);
                 void setPartitionType(PartitionType);
-                
+                                
             private:
-                QSharedDataPointer<StorageVolumeModifiedPrivate> d;
+                class Private;
+                Private* d;
             };
             
         }

@@ -1,3 +1,23 @@
+/*
+    Copyright 2012 Lisa Vitolo <shainer@chakra-project.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) version 3, or any
+    later version accepted by the membership of KDE e.V. (or its
+    successor approved by the membership of KDE e.V.), which shall
+    act as a proxy defined in Section 6 of version 3 of the license.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <solid/partitioner/volumetree.h>
 #include <QtCore/QDebug>
 
@@ -8,32 +28,25 @@ namespace Partitioner
 
 using namespace Devices;
 
-VolumeTreeItemPrivate::VolumeTreeItemPrivate(DeviceModified* v, QList< VolumeTreeItem *> c, VolumeTreeItem* p)
+/******* VolumeTreeItemPrivate *********/
+VolumeTreeItem::Private::Private(DeviceModified* v, QList< VolumeTreeItem *> c, VolumeTreeItem* p)
     : volume(v)
     , children(c)
     , parent(p)
 {}
 
-VolumeTreeItemPrivate::VolumeTreeItemPrivate(const VolumeTreeItemPrivate& other)
-    : QSharedData(other)
-    , volume(other.volume)
-    , children(other.children)
-    , parent(other.parent)
+VolumeTreeItem::Private::~Private()
 {}
 
-VolumeTreeItemPrivate::~VolumeTreeItemPrivate()
-{}
-    
+/******* VolumeTreeItem *********/
 VolumeTreeItem::VolumeTreeItem(DeviceModified* volume, QList< VolumeTreeItem *> children, VolumeTreeItem* parent)
-    : d( new VolumeTreeItemPrivate(volume, children, parent) )
+    : d( new Private(volume, children, parent) )
 {}
 
 VolumeTreeItem::~VolumeTreeItem()
-{}
-
-VolumeTreeItem::VolumeTreeItem(const VolumeTreeItem& other)
-    : d( other.d )
-{}
+{
+    delete d->volume;
+}
 
 DeviceModified* VolumeTreeItem::volume() const
 {
@@ -75,6 +88,7 @@ bool VolumeTreeItem::operator==(const VolumeTreeItem& other) const
     return d->volume == other.volume();
 }
 
+/******* VolumeTreePrivate *********/
 VolumeTreePrivate::VolumeTreePrivate(VolumeTreeItem *r)
     : root(r)
 {}
@@ -87,7 +101,7 @@ VolumeTreePrivate::VolumeTreePrivate(const VolumeTreePrivate &other)
 VolumeTreePrivate::~VolumeTreePrivate()
 {}
 
-void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child, VolumeTreeItem* r)
+void VolumeTreePrivate::addDevice(const QString& parentUdi, DeviceModified* child, VolumeTreeItem* r)
 {
     if (r->volume()->name() == parentUdi) {
         r->addChild(child);
@@ -95,13 +109,13 @@ void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child, Volume
     }
     
     foreach (VolumeTreeItem* c, r->children()) {
-        addNode(parentUdi, child, c);
+        addDevice(parentUdi, child, c);
     }
 }
 
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
-    qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno");
+    qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "size" << r->volume()->size();
     
     foreach (VolumeTreeItem *c, r->children()) {
         print(c);
@@ -117,6 +131,7 @@ void VolumeTreePrivate::destroy(VolumeTreeItem* node)
     delete node;
 }
 
+/******* VolumeTree *********/
 VolumeTree::VolumeTree(VolumeTreeItem* rootItem)
     : d( new VolumeTreePrivate(rootItem) )
 {}
@@ -145,9 +160,9 @@ VolumeTreeItem* VolumeTree::rootNode() const
 VolumeTreeItem* VolumeTree::extendedNode() const
 {
     foreach (VolumeTreeItem* child, d->root->children()) {
-        StorageVolumeModified* part = dynamic_cast<StorageVolumeModified *>(child->volume());
+        Partition* part = dynamic_cast<Partition *>(child->volume());
         
-        if (part->partitionType() == StorageVolumeModified::Extended) {
+        if (part->partitionType() == Extended) {
             return child;
         }
     }
@@ -155,7 +170,55 @@ VolumeTreeItem* VolumeTree::extendedNode() const
     return NULL;
 }
 
-DeviceModified* VolumeTree::searchNode(const QString& name) const
+DeviceModified* VolumeTree::extendedPartition() const
+{
+    VolumeTreeItem* ex = extendedNode();
+    if (!ex) {
+        return NULL;
+    }
+    
+    return ex->volume();
+}
+
+QList< DeviceModified* > VolumeTree::partitions(bool free) const
+{
+    QList< DeviceModified* > devices;
+    
+    foreach (VolumeTreeItem* item, d->root->children()) {
+        DeviceModified* device = item->volume();
+        
+        if (!free && device->deviceType() == DeviceModified::FreeSpaceDevice) {
+            continue;
+        }
+        
+        devices.append(device);
+    }
+    
+    return devices;
+}
+
+QList< DeviceModified* > VolumeTree::logicalPartitions(bool free) const
+{
+    QList< DeviceModified *> logicals;
+    VolumeTreeItem* ex = extendedNode();
+    
+
+    if (ex) {
+        foreach (VolumeTreeItem* item, ex->children()) {
+            DeviceModified* device = item->volume();
+            
+            if (!free && device->deviceType() == DeviceModified::FreeSpaceDevice) {
+                continue;
+            }
+            
+            logicals.append(device);
+        }
+    }
+        
+    return logicals;
+}
+
+DeviceModified* VolumeTree::searchDevice(const QString& name) const
 {
     QList< VolumeTreeItem* > stack;
     stack.push_front(d->root);
@@ -175,14 +238,20 @@ DeviceModified* VolumeTree::searchNode(const QString& name) const
     return NULL;
 }
 
-void VolumeTree::addNode(const QString& parentUdi, DeviceModified* child)
+void VolumeTree::addDevice(const QString& parentUdi, DeviceModified* child)
 {
-    addNode(parentUdi, child, d->root);
+    d->addDevice(parentUdi, child, d->root);
 }
 
 void VolumeTree::print() const
 {
     d->print(d->root);
+    qDebug() << "---";
+}
+
+void VolumeTree::clear()
+{
+    d->destroy(d->root);
 }
 
 }

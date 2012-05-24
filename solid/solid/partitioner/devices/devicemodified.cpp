@@ -8,17 +8,32 @@ namespace Partitioner
 {
 namespace Devices
 {
+
+class DeviceModified::Private
+{
+public:
+    Private(DeviceInterface* i)
+        : iface(i)
+        , existent(i->isValid())
+    {}
+    
+    Private()
+        : iface(0)
+        , existent(true)
+    {}
+    
+    DeviceInterface* iface;
+    QString name;
+    QString parentName;
+    bool existent;
+};
     
 DeviceModified::DeviceModified(DeviceInterface* iface)
-    : d(new DeviceModifiedPrivate(iface))
+    : d( new Private(iface) )
 {}
 
 DeviceModified::DeviceModified()
-    : d(new DeviceModifiedPrivate)
-{}
-
-DeviceModified::DeviceModified(const DeviceModified& other)
-    : d(other.d)
+    : d( new Private )
 {}
 
 DeviceModified::~DeviceModified()

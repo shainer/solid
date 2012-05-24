@@ -56,17 +56,15 @@ namespace Solid
             
             /**
              * Undoes the last action registered.
-             * 
-             * @returns false if there was no action to undo, true otherwise.
+             * If no action was registered, nothing happens.
              */
-            bool undo();
+            void undo();
             
             /**
              * Redoes the last action undone.
-             * 
-             * @returns false if there was no action to redo, true otherwise.
+             * If no action was undone, nothing happens.
              */
-            bool redo();
+            void redo();
             
             /**
              * Applies a list of actions to the hardware.
