@@ -37,7 +37,9 @@ DeviceModified::DeviceModified()
 {}
 
 DeviceModified::~DeviceModified()
-{}
+{
+    delete d;
+}
 
 QString DeviceModified::name() const
 {

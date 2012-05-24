@@ -25,7 +25,9 @@ Disk::Disk(StorageDrive* drive)
 {}
 
 Disk::~Disk()
-{}
+{
+    delete d;
+}
 
 DeviceModified::DeviceModifiedType Disk::deviceType() const
 {

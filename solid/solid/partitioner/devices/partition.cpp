@@ -59,7 +59,9 @@ Partition::Partition(Actions::CreatePartitionAction* action)
 }
 
 Partition::~Partition()
-{}
+{
+    delete d;
+}
 
 DeviceModified::DeviceModifiedType Partition::deviceType() const
 {

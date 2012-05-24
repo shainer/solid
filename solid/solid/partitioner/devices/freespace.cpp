@@ -33,7 +33,9 @@ FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUd
 }
 
 FreeSpace::~FreeSpace()
-{}
+{
+    delete d;
+}
 
 DeviceModified::DeviceModifiedType FreeSpace::deviceType() const
 {
