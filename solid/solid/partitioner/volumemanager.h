@@ -90,19 +90,8 @@ namespace Solid
         private:
             VolumeManager();
             
-            /* Detection of drives, partitions, and free space */
-            void detectDevices();
-            
-            /* Searches a device by its name in all trees. Returns NULL if not found. */
-            DeviceModified* searchDeviceByName(const QString &);
-            VolumeTree searchTreeWithDevice(const QString &);
-            
-            void resizePartition(Partition *, qlonglong, DeviceModified *, VolumeTree &);
-            void movePartition(Partition *, qlonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
-            
-            QMap<QString, VolumeTree> volumeTrees;
-            ActionStack actionstack;
-            ActionExecuter* executer;
+            class Private;
+            Private* d;
         };
 
     }

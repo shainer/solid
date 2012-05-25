@@ -34,7 +34,32 @@ namespace Partitioner
 {
 
 using namespace Devices;
+
+class VolumeManager::Private
+{
+public:
+    Private()
+        : executer(0)
+    {}
     
+    ~Private()
+    {}
+            
+    /* Detection of drives, partitions, and free space */
+    void detectDevices();
+    
+    /* Searches a device by its name in all trees. Returns NULL if not found. */
+    DeviceModified* searchDeviceByName(const QString &);
+    VolumeTree searchTreeWithDevice(const QString &);
+    
+    void resizePartition(Partition *, qlonglong, DeviceModified *, VolumeTree &);
+    void movePartition(Partition *, qlonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
+    
+    QMap<QString, VolumeTree> volumeTrees;
+    ActionStack actionstack;
+    ActionExecuter* executer;
+};
+
 class VolumeManagerHelper
 {
 public:
@@ -53,16 +78,18 @@ public:
 K_GLOBAL_STATIC(VolumeManagerHelper, s_volumemanager);
 
 VolumeManager::VolumeManager()
-    : executer(0)
+    : d( new Private )
 {
     Q_ASSERT(!s_volumemanager->q);
     s_volumemanager->q = this;
     
-    detectDevices();
+    d->detectDevices();
 }
 
 VolumeManager::~VolumeManager()
-{}
+{
+    delete d;
+}
 
 VolumeManager* VolumeManager::instance()
 {
@@ -73,7 +100,167 @@ VolumeManager* VolumeManager::instance()
     return s_volumemanager->q;
 }
 
-void VolumeManager::detectDevices()
+bool VolumeManager::registerAction(Actions::Action* action)
+{
+    /* A duplicate isn't accepted */
+    if (d->actionstack.contains(action)) {
+        return false;
+    }
+    
+    switch (action->actionType()) {
+        case Action::FormatPartition: {
+            Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
+            DeviceModified* p = d->searchDeviceByName(fpa->partition());
+            
+            if (!p || !p->deviceType() == DeviceModified::PartitionDevice) {
+                qDebug() << "errore, nome non valido";
+                return false;
+            }
+            
+            Partition* volume = dynamic_cast<Partition *>(p);
+            volume->setFilesystem(fpa->filesystem()); /* FIXME: check if the filesystem is supported */
+            break;
+        }
+        
+        case Action::CreatePartition: {
+            Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);
+            if (!d->volumeTrees.contains(cpa->disk())) {
+                qDebug() << "unexistent disk";
+                return false;
+            }
+            
+            VolumeTree tree = d->volumeTrees[cpa->disk()];
+            
+            if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
+                qDebug() << "could not split";
+                return false;
+            }
+            
+            Partition* newPartition = new Partition(cpa);
+            tree.addDevice(cpa->disk(), newPartition);
+        }
+        
+        case Action::RemovePartition: {
+            Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
+            
+            /* FIXME: put this check in the next call without doing the same thing twice */
+            if (!d->searchDeviceByName(rpa->partition())) {
+                qDebug() << "partition not found";
+                return false;
+            }
+            VolumeTree tree = d->searchTreeWithDevice(rpa->partition());
+            tree.d->mergeAndDelete(rpa->partition());
+            break;
+        }
+        
+        case Action::ResizePartition: {
+            Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
+            
+            VolumeTree tree = d->searchTreeWithDevice(rpa->partition());
+            VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());
+            
+            if (!itemToResize) {
+                qDebug() << "partition doesn't exist";
+            }
+            
+            Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
+            DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
+            DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
+            
+            qlonglong boundary = 0;
+            
+            if (rpa->newSize() == 0) {
+                qDebug() << "resizing to zero isn't allowed";
+                return false;
+            }
+            
+            if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+                boundary = toResize->rightBoundary();
+            } else {
+                boundary = rightDevice->offset() + rightDevice->size();
+            }
+            
+            if ((toResize->offset() + rpa->newSize()) >= boundary) {
+                qlonglong difference = toResize->offset() + rpa->newSize() - boundary;
+                
+                if ((toResize->offset() - rpa->newOffset()) < difference) {
+                    qDebug() << "out of bounds";
+                    return false;
+                }
+                
+                d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
+                d->resizePartition(toResize, rpa->newSize(), rightDevice, tree);
+            }
+            else if (rpa->newOffset() + toResize->size() >= boundary) {
+                qlonglong difference = rpa->newOffset() + toResize->size() - boundary; /* of how much? */
+                
+                /*
+                 * If the size is reduced of at least that quantity
+                 * then the partition will stay in its limit, therefore the operation is allowed.
+                 * Otherwise, the exception below is thrown.
+                 */
+                if ((toResize->size() - rpa->newSize()) < difference) {
+                    qDebug() << "out of bounds";
+                    return false;
+                }
+                
+                /*
+                 * To avoid problems with further calculations, first change the size and then the offset,
+                 * so no limit is surpassed even temporarily.
+                 */
+                d->resizePartition(toResize, rpa->newSize(), rightDevice, tree);
+                d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
+            }
+            else {
+                d->resizePartition(toResize, rpa->newSize(), rightDevice, tree);
+                d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
+            }
+            
+            break;
+        }
+        
+        default:
+            break;
+    }
+    
+    d->actionstack.push(action);
+    return true;
+}
+
+void VolumeManager::undo()
+{
+}
+
+void VolumeManager::redo()
+{
+}
+
+
+QList< VolumeTree > VolumeManager::allDiskTrees() const
+{
+    return d->volumeTrees.values();
+}
+
+VolumeTree VolumeManager::diskTree(const QString& diskName) const
+{
+    return d->volumeTrees[diskName];
+}
+
+bool VolumeManager::apply()
+{
+    d->executer = new ActionExecuter(d->actionstack.list());
+    qDebug() << d->executer->valid();
+    
+    ActionExecuter* e2 = new ActionExecuter(d->actionstack.list());
+    qDebug() << e2->valid();
+    
+    delete d->executer;
+    delete e2;
+    
+    return true;
+}
+
+void VolumeManager::Private::detectDevices()
 {
     /*
      * Detection of drives.
@@ -161,142 +348,7 @@ void VolumeManager::detectDevices()
     }
 }
 
-bool VolumeManager::registerAction(Actions::Action* action)
-{
-    /* A duplicate isn't accepted */
-    if (actionstack.contains(action)) {
-        return false;
-    }
-    
-    switch (action->actionType()) {
-        case Action::FormatPartition: {
-            Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
-            DeviceModified* p = searchDeviceByName(fpa->partition());
-            
-            if (!p || !p->deviceType() == DeviceModified::PartitionDevice) {
-                qDebug() << "errore, nome non valido";
-                return false;
-            }
-            
-            Partition* volume = dynamic_cast<Partition *>(p);
-            volume->setFilesystem(fpa->filesystem()); /* FIXME: check if the filesystem is supported */
-            break;
-        }
-        
-        case Action::CreatePartition: {
-            Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);
-            if (!volumeTrees.contains(cpa->disk())) {
-                qDebug() << "unexistent disk";
-                return false;
-            }
-            
-            VolumeTree tree = volumeTrees[cpa->disk()];
-            
-            if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
-                qDebug() << "could not split";
-                return false;
-            }
-            
-            Partition* newPartition = new Partition(cpa);
-            tree.addDevice(cpa->disk(), newPartition);
-        }
-        
-        case Action::RemovePartition: {
-            Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
-            
-            /* FIXME: put this check in the next call without doing the same thing twice */
-            if (!searchDeviceByName(rpa->partition())) {
-                qDebug() << "partition not found";
-                return false;
-            }
-            VolumeTree tree = searchTreeWithDevice(rpa->partition());
-            tree.d->mergeAndDelete(rpa->partition());
-            break;
-        }
-        
-        case Action::ResizePartition: {
-            Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
-            
-            VolumeTree tree = searchTreeWithDevice(rpa->partition());
-            VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());
-            
-            if (!itemToResize) {
-                qDebug() << "partition doesn't exist";
-            }
-            
-            Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
-            DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
-            DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
-            
-            qlonglong boundary = 0;
-            
-            if (rpa->newSize() == 0) {
-                qDebug() << "resizing to zero isn't allowed";
-                return false;
-            }
-            
-            if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
-                boundary = toResize->rightBoundary();
-            } else {
-                boundary = rightDevice->offset() + rightDevice->size();
-            }
-            
-            if ((toResize->offset() + rpa->newSize()) >= boundary) {
-                qlonglong difference = toResize->offset() + rpa->newSize() - boundary;
-                
-                if ((toResize->offset() - rpa->newOffset()) < difference) {
-                    qDebug() << "out of bounds";
-                    return false;
-                }
-                
-                movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
-                resizePartition(toResize, rpa->newSize(), rightDevice, tree);
-            }
-            else if (rpa->newOffset() + toResize->size() >= boundary) {
-                qlonglong difference = rpa->newOffset() + toResize->size() - boundary; /* of how much? */
-                
-                /*
-                 * If the size is reduced of at least that quantity
-                 * then the partition will stay in its limit, therefore the operation is allowed.
-                 * Otherwise, the exception below is thrown.
-                 */
-                if ((toResize->size() - rpa->newSize()) < difference) {
-                    qDebug() << "out of bounds";
-                    return false;
-                }
-                
-                /*
-                 * To avoid problems with further calculations, first change the size and then the offset,
-                 * so no limit is surpassed even temporarily.
-                 */
-                resizePartition(toResize, rpa->newSize(), rightDevice, tree);
-                movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
-            }
-            else {
-                resizePartition(toResize, rpa->newSize(), rightDevice, tree);
-                movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
-            }
-            
-            break;
-        }
-        
-        default:
-            break;
-    }
-    
-    actionstack.push(action);
-    return true;
-}
-
-void VolumeManager::undo()
-{
-}
-
-void VolumeManager::redo()
-{
-}
-
-void VolumeManager::resizePartition(Partition* partition,
+void VolumeManager::Private::resizePartition(Partition* partition,
                                     qlonglong ns,
                                     DeviceModified* rightDevice,
                                     VolumeTree& tree)
@@ -331,7 +383,7 @@ void VolumeManager::resizePartition(Partition* partition,
     partition->setSize(newSize);
 }
 
-void VolumeManager::movePartition(Partition* partition,
+void VolumeManager::Private::movePartition(Partition* partition,
                                   qlonglong no,
                                   DeviceModified* leftDevice,
                                   DeviceModified* rightDevice,
@@ -421,31 +473,8 @@ void VolumeManager::movePartition(Partition* partition,
     }
 }
 
-QList< VolumeTree > VolumeManager::allDiskTrees() const
-{
-    return volumeTrees.values();
-}
 
-VolumeTree VolumeManager::diskTree(const QString& diskName) const
-{
-    return volumeTrees[diskName];
-}
-
-bool VolumeManager::apply()
-{
-    executer = new ActionExecuter(actionstack.list());
-    qDebug() << executer->valid();
-    
-    ActionExecuter* e2 = new ActionExecuter(actionstack.list());
-    qDebug() << e2->valid();
-    
-    delete executer;
-    delete e2;
-    
-    return true;
-}
-
-DeviceModified* VolumeManager::searchDeviceByName(const QString& name)
+DeviceModified* VolumeManager::Private::searchDeviceByName(const QString& name)
 {
     DeviceModified* dev = 0;
     
@@ -460,7 +489,7 @@ DeviceModified* VolumeManager::searchDeviceByName(const QString& name)
     return dev;
 }
 
-VolumeTree VolumeManager::searchTreeWithDevice(const QString& name)
+VolumeTree VolumeManager::Private::searchTreeWithDevice(const QString& name)
 {
     
     foreach (VolumeTree tree, volumeTrees.values()) {

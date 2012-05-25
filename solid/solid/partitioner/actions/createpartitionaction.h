@@ -30,10 +30,23 @@ namespace Solid
     namespace Partitioner
     {
         namespace Actions
-        {           
+        {
+            /**
+             * @class CreatePartitionAction
+             * @extends Action
+             * @brief Action for creating a new partition
+             */
             class SOLID_EXPORT CreatePartitionAction : public Action
             {
             public:
+                /**
+                 * Constructs a new action object.
+                 * 
+                 * @param disk the name of the disk the partition will be created on.
+                 * @param offset the offset (in bytes) of the new partition.
+                 * @param size the size (in bytes) of the new partition.
+                 * @param ptype the type of the new partition (primary, logical or extended).
+                 */
                 explicit CreatePartitionAction(const QString& disk,
                                                qulonglong offset,
                                                qulonglong size,
@@ -42,16 +55,30 @@ namespace Solid
                 virtual ~CreatePartitionAction();
                 
                 virtual ActionType actionType() const;
+                
+                /**
+                 * @returns the name of the disk the partition will be created on.
+                 */
                 QString disk() const;
+                
+                /**
+                 * @returns the offset (in bytes) of the new partition.
+                 */
                 qulonglong offset() const;
+                
+                /**
+                 * @returns the size (in bytes) of the new partition.
+                 */
                 qulonglong size() const;
+                
+                /**
+                 * @returns the partition type.
+                 */
                 PartitionType partitionType() const;
                 
             private:
-                QString m_disk;
-                qulonglong m_offset;
-                qulonglong m_size;
-                PartitionType m_partitionType;
+                class Private;
+                Private* d;
             };
         }
     }

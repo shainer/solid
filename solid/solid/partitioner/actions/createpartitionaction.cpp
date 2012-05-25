@@ -17,7 +17,6 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #include "createpartitionaction.h"
 
 namespace Solid
@@ -26,19 +25,37 @@ namespace Partitioner
 {
 namespace Actions
 {
+    
+class CreatePartitionAction::Private
+{
+public:
+    Private(const QString &d, qulonglong o, qulonglong s, PartitionType t)
+        : disk(d)
+        , offset(o)
+        , size(s)
+        , partitionType(t)
+    {}
+    
+    ~Private()
+    {}
+    
+    QString disk;
+    qulonglong offset;
+    qulonglong size;
+    PartitionType partitionType;
+};
 
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
                                              PartitionType ptype)
-    : m_disk(disk)
-    , m_offset(offset)
-    , m_size(size)
-    , m_partitionType(ptype)
+    : d( new Private(disk, offset, size, ptype) )
 {}
 
 CreatePartitionAction::~CreatePartitionAction()
-{}
+{
+    delete d;
+}
 
 Action::ActionType CreatePartitionAction::actionType() const
 {
@@ -47,22 +64,22 @@ Action::ActionType CreatePartitionAction::actionType() const
 
 QString CreatePartitionAction::disk() const
 {
-    return m_disk;
+    return d->disk;
 }
 
 qulonglong CreatePartitionAction::offset() const
 {
-    return m_offset;
+    return d->offset;
 }
 
 qulonglong CreatePartitionAction::size() const
 {
-    return m_size;
+    return d->size;
 }
 
 PartitionType CreatePartitionAction::partitionType() const
 {
-    return m_partitionType;
+    return d->partitionType;
 }
     
 }
