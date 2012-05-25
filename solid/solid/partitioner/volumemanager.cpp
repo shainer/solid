@@ -146,6 +146,12 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             VolumeTree tree = d->volumeTrees[cpa->disk()];
             
+            if (tree.partitions().count() == 4 && cpa->partitionType() != Logical) {
+                d->error.setType(PartitioningError::ExceedingPrimariesError);
+                d->error.arg( cpa->disk() );
+                return false;
+            }
+            
             if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
                 d->error.setType(PartitioningError::ContainerNotFoundError);
                 d->error.arg(QString::number(cpa->offset()));

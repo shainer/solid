@@ -110,6 +110,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case ExceedingPrimariesError: {
+            d->description = "Disk %0 has reached the limit of 4 primary partitions.";
+            d->markersLeft = 1;
+            break;
+        }
+        
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";
             d->markersLeft = 1;
