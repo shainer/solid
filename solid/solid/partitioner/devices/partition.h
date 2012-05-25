@@ -1,5 +1,5 @@
-#ifndef SOLID_PARTITIONER_DEVICES_STORAGEVOLUMEMODIFIED_H
-#define SOLID_PARTITIONER_DEVICES_STORAGEVOLUMEMODIFIED_H
+#ifndef SOLID_PARTITIONER_DEVICES_PARTITION_H
+#define SOLID_PARTITIONER_DEVICES_PARTITION_H
 
 #include "devicemodified.h"
 #include <solid/partitioner/actions/createpartitionaction.h>
@@ -30,6 +30,8 @@ namespace Solid
                 virtual qulonglong offset() const;
                 qulonglong rightBoundary() const;
                 PartitionType partitionType() const;
+                bool bootable() const;
+                bool required() const;
                 
                 void setIgnored(bool);
                 void setUsage(StorageVolume::UsageType);
@@ -38,6 +40,8 @@ namespace Solid
                 void setSize(qulonglong);
                 void setOffset(qulonglong);
                 void setPartitionType(PartitionType);
+                void setBootable(bool);
+                void setRequired(bool);
                                 
             private:
                 class Private;

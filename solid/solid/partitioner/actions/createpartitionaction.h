@@ -23,7 +23,7 @@
 
 #include <solid/partitioner/actions/action.h>
 #include <solid/partitioner/partitioner_enums.h>
-#include <QtCore/QString>
+#include <QtCore/QStringList>
 
 namespace Solid
 {
@@ -46,11 +46,15 @@ namespace Solid
                  * @param offset the offset (in bytes) of the new partition.
                  * @param size the size (in bytes) of the new partition.
                  * @param ptype the type of the new partition (primary, logical or extended).
+                 * @param label the partition label.
+                 * @param flags partition flags.
                  */
                 explicit CreatePartitionAction(const QString& disk,
                                                qulonglong offset,
                                                qulonglong size,
-                                               PartitionType ptype
+                                               PartitionType ptype,
+                                               const QString& label,
+                                               const QStringList& flags
                                               );
                 virtual ~CreatePartitionAction();
                 
@@ -76,6 +80,21 @@ namespace Solid
                  * @returns the partition type.
                  */
                 PartitionType partitionType() const;
+                
+                /**
+                 * @returns the partition label.
+                 */
+                QString label() const;
+                
+                /**
+                 * @returns true if the partition will be bootable.
+                 */
+                bool bootable() const;
+                
+                /**
+                 * @returns true if the partition will be required (GPT context).
+                 */
+                bool required() const;
                 
             private:
                 class Private;

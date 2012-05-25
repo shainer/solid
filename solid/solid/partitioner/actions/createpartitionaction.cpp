@@ -29,11 +29,13 @@ namespace Actions
 class CreatePartitionAction::Private
 {
 public:
-    Private(const QString &d, qulonglong o, qulonglong s, PartitionType t)
+    Private(const QString &d, qulonglong o, qulonglong s, PartitionType t, const QString& l, const QStringList& f)
         : disk(d)
         , offset(o)
         , size(s)
         , partitionType(t)
+        , label(l)
+        , flags(f)
     {}
     
     ~Private()
@@ -43,13 +45,18 @@ public:
     qulonglong offset;
     qulonglong size;
     PartitionType partitionType;
+    QString label;
+    QStringList flags;
 };
 
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
-                                             PartitionType ptype)
-    : d( new Private(disk, offset, size, ptype) )
+                                             PartitionType ptype,
+                                             const QString& label,
+                                             const QStringList& flags
+                                            )
+    : d( new Private(disk, offset, size, ptype, label, flags) )
 {}
 
 CreatePartitionAction::~CreatePartitionAction()
@@ -89,6 +96,21 @@ qulonglong CreatePartitionAction::size() const
 PartitionType CreatePartitionAction::partitionType() const
 {
     return d->partitionType;
+}
+
+QString CreatePartitionAction::label() const
+{
+    return d->label;
+}
+
+bool CreatePartitionAction::bootable() const
+{
+    return d->flags.contains("boot");
+}
+
+bool CreatePartitionAction::required() const
+{
+    return d->flags.contains("required");
 }
     
 }

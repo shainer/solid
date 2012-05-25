@@ -25,6 +25,7 @@
 #include <solid/partitioner/actions/createpartitionaction.h>
 #include <solid/partitioner/actions/removepartitionaction.h>
 #include <solid/partitioner/actions/resizepartitionaction.h>
+#include "actions/modifypartitionaction.h"
 #include <solid/partitioner/partitioningerror.h>
 #include <solid/device.h>
 #include <kglobal.h>
@@ -152,6 +153,9 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 return false;
             }
             
+            /*
+             * FIXME: controlla la validita' dei flag rispetto al tipo di ptable.
+             */
             Partition* newPartition = new Partition(cpa);
             tree.d->addDevice(cpa->disk(), newPartition);
         }
@@ -159,7 +163,6 @@ bool VolumeManager::registerAction(Actions::Action* action)
         case Action::RemovePartition: {
             Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
             
-            /* FIXME: put this check in the next call without doing the same thing twice */
             VolumeTree tree = d->searchTreeWithDevice(rpa->partition());
             if (!tree.d) {
                 d->error.setType(PartitioningError::PartitionNotFoundError);
@@ -248,6 +251,35 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
             }
             
+            break;
+        }
+        
+        case Action::ModifyPartition: {
+            Actions::ModifyPartitionAction* mpa = dynamic_cast< Actions::ModifyPartitionAction* >(action);
+            DeviceModified* device = d->searchDeviceByName(mpa->partition());
+            
+            if (!device) {
+                d->error.setType(PartitioningError::PartitionNotFoundError);
+                d->error.arg(mpa->partition());
+                return false;
+            }
+            
+            if (device->deviceType() != DeviceModified::PartitionDevice) {
+                d->error.setType(PartitioningError::WrongDeviceTypeError);
+                d->error.arg("partition");
+                return false;
+            }
+            
+            Partition* p = dynamic_cast< Partition* >(device);
+            
+            /* FIXME: check the ptable context for flags */
+            if (mpa->isLabelChanged()) {
+                p->setLabel( mpa->label() );
+            }
+            if (mpa->isFlagChanged()) {
+                p->setBootable( mpa->bootable() );
+                p->setRequired( mpa->required() );
+            }
             break;
         }
         

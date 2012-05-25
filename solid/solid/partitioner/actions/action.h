@@ -49,7 +49,8 @@ namespace Solid
                     CreatePartition,
                     RemovePartition,
                     FormatPartition,
-                    ResizePartition
+                    ResizePartition,
+                    ModifyPartition
                 };
                 
                 explicit Action();
@@ -72,7 +73,7 @@ namespace Solid
                  * 
                  * @returns true if two actions have the same description.
                  */
-                virtual bool operator==(const Action &) const;
+                virtual bool operator==(Action *) const;
             };
         }
     }

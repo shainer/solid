@@ -22,6 +22,8 @@ public:
         , uuid(v->uuid())
         , size(v->size())
         , offset(v->offset())
+        , bootable(false)
+        , required(false)
     {}
     
     Private(Actions::CreatePartitionAction *action)
@@ -30,7 +32,10 @@ public:
         , usage(StorageVolume::FileSystem)
         , size(action->size())
         , offset(action->offset())
+        , label(action->label())
         , partitionType(action->partitionType())
+        , bootable(action->bootable())
+        , required(action->required())
     {}
     
     StorageVolume *iface;
@@ -43,6 +48,8 @@ public:
     qulonglong size;
     qulonglong offset;
     PartitionType partitionType;
+    bool bootable;
+    bool required;
 };
     
 Partition::Partition(StorageVolume* volume)
@@ -113,6 +120,16 @@ qulonglong Partition::rightBoundary() const
     return (d->offset + d->size);
 }
 
+bool Partition::bootable() const
+{
+    return d->bootable;
+}
+
+bool Partition::required() const
+{
+    return d->required;
+}
+
 void Partition::setIgnored(bool ign)
 {
     d->ignored = ign;
@@ -146,6 +163,16 @@ void Partition::setSize(qulonglong size)
 void Partition::setOffset(qulonglong offset)
 {
     d->offset = offset;
+}
+
+void Partition::setBootable(bool b)
+{
+    d->bootable = b;
+}
+
+void Partition::setRequired(bool r)
+{
+    d->required = r;
 }
 
 }

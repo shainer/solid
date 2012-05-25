@@ -18,6 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include <solid/partitioner/actions/action.h>
+#include <QtCore/QDebug>
 
 namespace Solid
 {
@@ -32,9 +33,10 @@ Action::Action()
 Action::~Action()
 {}
 
-bool Action::operator==(const Action& other) const
+bool Action::operator==(Action *other) const
 {
-    return description() == other.description();
+    qDebug() << "vengo chiamato";
+    return description() == other->description();
 }
     
 } 
