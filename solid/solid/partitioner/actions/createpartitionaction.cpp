@@ -62,6 +62,15 @@ Action::ActionType CreatePartitionAction::actionType() const
     return Action::CreatePartition;
 }
 
+QString CreatePartitionAction::description() const
+{
+    QString desc( "Creating a new partition with size %0 on %1" );
+    desc = desc.arg(QString::number(d->size), d->disk);
+    
+    return QObject::tr(desc.toUtf8().data());
+}
+
+
 QString CreatePartitionAction::disk() const
 {
     return d->disk;

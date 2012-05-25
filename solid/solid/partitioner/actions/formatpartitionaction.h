@@ -46,6 +46,7 @@ namespace Solid
                 virtual ~FormatPartitionAction();
                 
                 virtual Action::ActionType actionType() const;
+                virtual QString description() const;
                 
                 /**
                  * @returns the partition to be formatted.

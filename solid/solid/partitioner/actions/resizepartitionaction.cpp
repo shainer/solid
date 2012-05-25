@@ -62,6 +62,14 @@ Action::ActionType ResizePartitionAction::actionType() const
     return ResizePartition;
 }
 
+QString ResizePartitionAction::description() const
+{
+    QString desc( "Changing %0 to offset %1 and size %2" );
+    desc = desc.arg(d->partition, QString::number(d->newOffset), QString::number(d->newSize));
+    
+    return QObject::tr(desc.toUtf8().data());
+}
+
 QString ResizePartitionAction::partition() const
 {
     return d->partition;

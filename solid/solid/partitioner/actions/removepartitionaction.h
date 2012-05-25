@@ -45,7 +45,8 @@ namespace Solid
                 explicit RemovePartitionAction(const QString &);
                 virtual ~RemovePartitionAction();
                 
-                ActionType actionType() const;
+                virtual ActionType actionType() const;
+                virtual QString description() const;
                 
                 /**
                  * @returns the name of the partition to remove.

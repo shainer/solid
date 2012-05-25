@@ -55,6 +55,7 @@ namespace Solid
                 virtual ~CreatePartitionAction();
                 
                 virtual ActionType actionType() const;
+                virtual QString description() const;
                 
                 /**
                  * @returns the name of the disk the partition will be created on.

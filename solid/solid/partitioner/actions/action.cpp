@@ -17,8 +17,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "formatpartitionaction.h"
+#include <solid/partitioner/actions/action.h>
 
 namespace Solid
 {
@@ -26,55 +25,18 @@ namespace Partitioner
 {
 namespace Actions
 {
-    
-class FormatPartitionAction::Private
-{
-public:
-    Private(const QString &p, const QString &fs)
-        : partition(p)
-        , filesystem(fs)
-    {}
-    
-    ~Private()
-    {}
-    
-    QString partition;
-    QString filesystem;
-};
-    
-FormatPartitionAction::FormatPartitionAction(const QString& partition, const QString& fs)
-    : d( new Private(partition, fs) )
+
+Action::Action()
 {}
 
-FormatPartitionAction::~FormatPartitionAction()
-{
-    delete d;
-}
+Action::~Action()
+{}
 
-Action::ActionType FormatPartitionAction::actionType() const
+bool Action::operator==(const Action& other) const
 {
-    return Action::FormatPartition;
+    return description() == other.description();
 }
-
-QString FormatPartitionAction::description() const
-{
-    QString desc( "Changing filesystem of partition %0 to %1" );
-    desc = desc.arg(d->partition, d->filesystem);
     
-    return QObject::tr(desc.toUtf8().data());
-}
-
-
-QString FormatPartitionAction::partition() const
-{
-    return d->partition;
-}
-
-QString FormatPartitionAction::filesystem() const
-{
-    return d->filesystem;
-}
-
-}
+} 
 }
 }

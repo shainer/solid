@@ -54,6 +54,15 @@ Action::ActionType RemovePartitionAction::actionType() const
     return Action::RemovePartition;
 }
 
+QString RemovePartitionAction::description() const
+{
+    QString desc( "Removing partition %0." );
+    desc = desc.arg(d->partition);
+    
+    return QObject::tr(desc.toUtf8().data());
+}
+
+
 QString RemovePartitionAction::partition() const
 {
     return d->partition;

@@ -22,6 +22,7 @@
 
 #include <solid/solid_export.h>
 #include <QtCore/QString>
+#include <QtCore/QObject>
 
 namespace Solid
 {
@@ -51,8 +52,8 @@ namespace Solid
                     ResizePartition
                 };
                 
-                explicit Action() {}
-                virtual ~Action() {}
+                explicit Action();
+                virtual ~Action();
                 
                 /**
                  * Retrieves the type of the object.
@@ -60,6 +61,18 @@ namespace Solid
                  * @returns the most derived class a generic Action object is instance of.
                  */
                 virtual Action::ActionType actionType() const = 0;
+                
+                /**
+                 * @returns a localized string depicting the action.
+                 */
+                virtual QString description() const = 0;
+                
+                /**
+                 * Comparison operator.
+                 * 
+                 * @returns true if two actions have the same description.
+                 */
+                virtual bool operator==(const Action &) const;
             };
         }
     }
