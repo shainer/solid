@@ -39,6 +39,22 @@ qulonglong Disk::size() const
     return d->size;
 }
 
+qulonglong Disk::offset() const
+{
+    /* FIXME: sistema per GPT */
+    return (1024*1024);
+}
+
+qulonglong Disk::rightBoundary() const
+{
+    return d->size;
+}
+
+void Disk::setOffset(qulonglong offset)
+{
+    Q_UNUSED(offset)
+}
+
 void Disk::setSize(qulonglong s)
 {
     d->size = s;

@@ -203,24 +203,6 @@ namespace Solid
              * @returns a sorted list of logical partitions.
              */
             QList<DeviceModified *> logicalPartitions(bool free = false) const;
-            
-            /**
-             * When a new partition is requested, checks if a suitable block of free space exists.
-             * If this block is bigger than the new partition, splits it around the partition.
-             * 
-             * @param offset the offset of the new partition.
-             * @param size the size of the new partition.
-             * @returns true if the container was found, false otherwise.
-             */
-            bool splitCreationContainer(qulonglong, qulonglong);
-            
-            /**
-             * Deletes a partition from the disk: the space previously occupied by it will become a free space block.
-             * This block is then merged with adjacent blocks, if they are present.
-             * 
-             * @param partitionName the name of the partition.
-             */
-            void mergeAndDelete(const QString &);
 
             /**
              * Adds a new device.
@@ -248,6 +230,7 @@ namespace Solid
             void print() const;
             
         private:
+            friend class VolumeManager;
             QSharedDataPointer<VolumeTreePrivate> d;
         };
         
@@ -270,7 +253,22 @@ namespace Solid
             ~VolumeTreePrivate();
 
             void addDevice(const QString &, DeviceModified *, VolumeTreeItem *);
+            VolumeTreeItem* searchNode(const QString &) const;
             void removeDevice(const QString &, VolumeTreeItem *);
+            
+            /*
+             * When a new partition is requested, checks if a suitable block of free space exists.
+             * If this block is bigger than the new partition, splits it around the partition.
+             * Parameters are offset and the size of the new partition; returns true if it was able
+             * to find a suitable container (that means the split happened), false otherwise.
+             */
+            bool splitCreationContainer(qulonglong, qulonglong);
+            
+            /*
+             * Deletes a partition from the disk: the space previously occupied by it will become a free space block.
+             * This block is then merged with adjacent blocks, if they are present.
+             */
+            void mergeAndDelete(const QString &);
             
             /*
              * Returns the node immediately to the left of the passed one.
@@ -283,6 +281,9 @@ namespace Solid
              * Remember nodes are sorted by initial offset.
              */
             VolumeTreeItem* rightSibling(VolumeTreeItem *);
+            
+            DeviceModified* leftDevice(VolumeTreeItem *);
+            DeviceModified* rightDevice(VolumeTreeItem *);
             
             void print(VolumeTreeItem *) const;
             void destroy(VolumeTreeItem *);

@@ -26,6 +26,7 @@ namespace Solid
                 virtual DeviceModifiedType deviceType() const = 0;
                 virtual qulonglong offset() const;
                 virtual qulonglong size() const = 0;
+                virtual qulonglong rightBoundary() const = 0;
                 
                 bool existent() const;
                 virtual QString name() const;
@@ -34,6 +35,8 @@ namespace Solid
                 void setName(const QString &);
                 void setParentName(const QString &);
                 void setExistent(bool);
+                virtual void setSize(qulonglong) = 0;
+                virtual void setOffset(qulonglong) = 0;
                 
                 bool operator==(const DeviceModified &) const;
                 

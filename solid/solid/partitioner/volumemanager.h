@@ -97,6 +97,9 @@ namespace Solid
             DeviceModified* searchDeviceByName(const QString &);
             VolumeTree searchTreeWithDevice(const QString &);
             
+            void resizePartition(Partition *, qulonglong, DeviceModified *, VolumeTree &);
+            void movePartition(Partition *, qulonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
+            
             QMap<QString, VolumeTree> volumeTrees;
             ActionStack actionstack;
             ActionExecuter* executer;

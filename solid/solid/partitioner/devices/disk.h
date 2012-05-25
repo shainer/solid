@@ -18,7 +18,11 @@ namespace Solid
                 DeviceModifiedType deviceType() const;
                 
                 qulonglong size() const;
+                qulonglong offset() const;
+                qulonglong rightBoundary() const;
+                
                 void setSize(qulonglong);
+                void setOffset(qulonglong);
                 
             private:
                 class Private;

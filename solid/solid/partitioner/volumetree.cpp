@@ -46,7 +46,6 @@ VolumeTreeItem::VolumeTreeItem(DeviceModified* volume, QList< VolumeTreeItem *> 
 
 VolumeTreeItem::~VolumeTreeItem()
 {
-    qDebug() << "cancellare" << d->volume->name();
     if (d->parent) {
         d->parent->removeChild(this);
     }
@@ -56,6 +55,7 @@ VolumeTreeItem::~VolumeTreeItem()
     }
     
     delete d->volume;
+    delete d;
 }
 
 DeviceModified* VolumeTreeItem::volume() const
@@ -116,6 +116,26 @@ VolumeTreePrivate::VolumeTreePrivate(const VolumeTreePrivate &other)
 VolumeTreePrivate::~VolumeTreePrivate()
 {}
 
+VolumeTreeItem* VolumeTreePrivate::searchNode(const QString& name) const
+{
+    QList< VolumeTreeItem* > stack;
+    stack.push_front(root);
+    
+    while (!stack.isEmpty()) {
+        VolumeTreeItem* currentNode = stack.takeFirst();
+        
+        if (currentNode->volume()->name() == name) {
+            return currentNode;
+        }
+        
+        foreach (VolumeTreeItem* child, currentNode->children()) {
+            stack.push_front(child);
+        }
+    }
+    
+    return NULL;
+}
+
 void VolumeTreePrivate::addDevice(const QString& parentUdi, DeviceModified* child, VolumeTreeItem* r)
 {
     if (r->volume()->name() == parentUdi) {
@@ -138,6 +158,7 @@ void VolumeTreePrivate::removeDevice(const QString& deviceName, VolumeTreeItem* 
         }
         
         delete currentNode;
+        return;
     }
     
     foreach (VolumeTreeItem* child, currentNode->children()) {
@@ -177,9 +198,111 @@ VolumeTreeItem* VolumeTreePrivate::rightSibling(VolumeTreeItem* node)
     return NULL;
 }
 
+DeviceModified* VolumeTreePrivate::leftDevice(VolumeTreeItem* node)
+{
+    VolumeTreeItem* left = leftSibling(node);
+    
+    if (!left) {
+        return NULL;
+    }
+    
+    return left->volume();
+}
+
+DeviceModified* VolumeTreePrivate::rightDevice(VolumeTreeItem* node)
+{
+    VolumeTreeItem* right = rightSibling(node);
+    
+    if (!right) {
+        return NULL;
+    }
+    
+    return right->volume();
+}
+
+bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong size)
+{
+    FreeSpace* container = 0;
+    QList< VolumeTreeItem* > stack;
+    stack.push_front(root);
+    
+    while (!stack.isEmpty()) {
+        VolumeTreeItem* currentNode = stack.takeFirst();
+        DeviceModified* currentDevice = currentNode->volume();
+       
+        if (currentDevice->deviceType() == DeviceModified::FreeSpaceDevice) {
+            FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
+            
+            if (space->offset() <= offset && space->size() >= size) {
+                container = space;
+            }
+        }
+        
+        foreach (VolumeTreeItem* child, currentNode->children()) {
+            stack.push_front(child);
+        }
+    }
+    
+    if (!container) {
+        return false;
+    }
+    
+    FreeSpace* leftSpace = 0;
+    FreeSpace* rightSpace = 0;
+    qulonglong containerOffset = container->offset();
+    qulonglong containerSize = container->size();
+    
+    if (offset > containerOffset) {
+        leftSpace = new FreeSpace(containerOffset, offset - containerOffset, container->parentName());
+        addDevice(container->parentName(), leftSpace, root);
+    }
+    
+    if (containerSize > size) {
+        rightSpace = new FreeSpace((offset + size), (container->rightBoundary()) - (offset + size), container->parentName());
+        addDevice(container->parentName(), rightSpace, root);
+    }
+    
+    delete container;
+    return true;
+}
+
+void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
+{
+    VolumeTreeItem* partitionNode = searchNode(partitionName);
+    
+    VolumeTreeItem* leftNode = leftSibling(partitionNode);
+    VolumeTreeItem* rightNode = rightSibling(partitionNode);
+    DeviceModified* leftSibling = leftNode->volume();
+    DeviceModified* rightSibling = rightNode->volume();
+    
+    qulonglong size = partitionNode->volume()->size();
+    qulonglong offset = partitionNode->volume()->offset();
+    QString parentName = partitionNode->volume()->parentName();
+    
+    delete partitionNode;
+    
+    /*
+     * If there's free space to the left and/or right of the deleted partition, merge
+     * all the free space in one single block.
+     */
+    if (leftSibling && leftSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
+        offset = leftSibling->offset();
+        size += leftSibling->size();
+        delete leftNode;
+    }
+    
+    if (rightSibling && rightSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
+        size += rightSibling->size();
+        delete rightNode;
+    }
+    
+    FreeSpace* newSpace = new FreeSpace(offset, size, parentName);
+    addDevice(parentName, newSpace, root);
+}
+
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
-    qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "size" << r->volume()->size();
+    qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "offset" << r->volume()->offset() << "size" << r->volume()->size();
     
     foreach (VolumeTreeItem *c, r->children()) {
         print(c);
@@ -284,22 +407,7 @@ QList< DeviceModified* > VolumeTree::logicalPartitions(bool free) const
 
 VolumeTreeItem* VolumeTree::searchNode(const QString& name) const
 {
-    QList< VolumeTreeItem* > stack;
-    stack.push_front(d->root);
-    
-    while (!stack.isEmpty()) {
-        VolumeTreeItem* currentNode = stack.takeFirst();
-        
-        if (currentNode->volume()->name() == name) {
-            return currentNode;
-        }
-        
-        foreach (VolumeTreeItem* child, currentNode->children()) {
-            stack.push_front(child);
-        }
-    }
-    
-    return NULL;
+    return d->searchNode(name);
 }
 
 DeviceModified* VolumeTree::searchDevice(const QString& name) const
@@ -311,86 +419,6 @@ DeviceModified* VolumeTree::searchDevice(const QString& name) const
     }
     
     return node->volume();
-}
-
-bool VolumeTree::splitCreationContainer(qulonglong offset, qulonglong size)
-{
-    FreeSpace* container = 0;
-    QList< VolumeTreeItem* > stack;
-    stack.push_front(d->root);
-    
-    while (!stack.isEmpty()) {
-        VolumeTreeItem* currentNode = stack.takeFirst();
-        DeviceModified* currentDevice = currentNode->volume();
-       
-        if (currentDevice->deviceType() == DeviceModified::FreeSpaceDevice) {
-            FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
-            
-            if (space->offset() <= offset && space->size() >= size) {
-                container = space;
-            }
-        }
-        
-        foreach (VolumeTreeItem* child, currentNode->children()) {
-            stack.push_front(child);
-        }
-    }
-    
-    if (!container) {
-        return false;
-    }
-    
-    FreeSpace* leftSpace = 0;
-    FreeSpace* rightSpace = 0;
-    qulonglong containerOffset = container->offset();
-    qulonglong containerSize = container->size();
-    
-    if (offset > containerOffset) {
-        leftSpace = new FreeSpace(containerOffset, offset - containerOffset, container->parentName());
-        addDevice(container->parentName(), leftSpace);
-    }
-    
-    if (containerSize > size) {
-        rightSpace = new FreeSpace((offset + size), (container->rightBoundary()) - (offset + size), container->parentName());
-        addDevice(container->parentName(), rightSpace);
-    }
-    
-    delete container;
-    return true;
-}
-
-void VolumeTree::mergeAndDelete(const QString& partitionName)
-{
-    VolumeTreeItem* partitionNode = searchNode(partitionName);
-    
-    VolumeTreeItem* leftNode = d->leftSibling(partitionNode);
-    VolumeTreeItem* rightNode = d->rightSibling(partitionNode);
-    DeviceModified* leftSibling = leftNode->volume();
-    DeviceModified* rightSibling = rightNode->volume();
-    
-    qulonglong size = partitionNode->volume()->size();
-    qulonglong offset = partitionNode->volume()->offset();
-    QString parentName = partitionNode->volume()->parentName();
-    
-    delete partitionNode;
-    
-    /*
-     * If there's free space to the left and/or right of the deleted partition, merge
-     * all the free space in one single block.
-     */
-    if (leftSibling && leftSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
-        offset = leftSibling->offset();
-        size += leftSibling->size();
-        delete leftNode;
-    }
-    
-    if (rightSibling && rightSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
-        size += rightSibling->size();
-        delete rightNode;
-    }
-    
-    FreeSpace* newSpace = new FreeSpace(offset, size, parentName);
-    addDevice(parentName, newSpace);
 }
 
 void VolumeTree::addDevice(const QString& parentUdi, DeviceModified* child)

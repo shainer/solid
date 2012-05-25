@@ -24,6 +24,7 @@
 #include <solid/partitioner/actions/action.h>
 #include "actions/createpartitionaction.h"
 #include "actions/removepartitionaction.h"
+#include "actions/resizepartitionaction.h"
 #include <solid/device.h>
 #include <kglobal.h>
 
@@ -31,6 +32,8 @@ namespace Solid
 {   
 namespace Partitioner
 {
+
+using namespace Devices;
     
 class VolumeManagerHelper
 {
@@ -167,7 +170,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
     
     switch (action->actionType()) {
         case Action::FormatPartition: {
-            Actions::FormatPartitionAction* fpa = dynamic_cast<Actions::FormatPartitionAction *>(action);
+            Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
             DeviceModified* p = searchDeviceByName(fpa->partition());
             
             if (!p || !p->deviceType() == DeviceModified::PartitionDevice) {
@@ -181,7 +184,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
         }
         
         case Action::CreatePartition: {
-            Actions::CreatePartitionAction* cpa = dynamic_cast<Actions::CreatePartitionAction *>(action);
+            Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);
             if (!volumeTrees.contains(cpa->disk())) {
                 qDebug() << "unexistent disk";
                 return false;
@@ -189,7 +192,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             VolumeTree tree = volumeTrees[cpa->disk()];
             
-            if (!tree.splitCreationContainer(cpa->offset(), cpa->size())) {
+            if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
                 qDebug() << "could not split";
                 return false;
             }
@@ -199,7 +202,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
         }
         
         case Action::RemovePartition: {
-            Actions::RemovePartitionAction* rpa = dynamic_cast<Actions::RemovePartitionAction *>(action);
+            Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
             
             /* FIXME: put this check in the next call without doing the same thing twice */
             if (!searchDeviceByName(rpa->partition())) {
@@ -207,10 +210,73 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 return false;
             }
             VolumeTree tree = searchTreeWithDevice(rpa->partition());
+            tree.d->mergeAndDelete(rpa->partition());
+            break;
+        }
+        
+        case Action::ResizePartition: {
+            Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
             
-            tree.print();
-            tree.mergeAndDelete(rpa->partition());
-            tree.print();
+            VolumeTree tree = searchTreeWithDevice(rpa->partition());
+            VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());
+            
+            if (!itemToResize) {
+                qDebug() << "partition doesn't exist";
+            }
+            
+            Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
+            DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
+            DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
+            
+            qulonglong boundary = 0;
+            
+            if (rpa->newSize() == 0) {
+                qDebug() << "resizing to zero isn't allowed";
+                return false;
+            }
+            
+            if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+                boundary = toResize->rightBoundary();
+            } else {
+                boundary = rightDevice->offset() + rightDevice->size();
+            }
+            
+            if ((toResize->offset() + rpa->newSize()) >= boundary) {
+                qulonglong difference = toResize->offset() + rpa->newSize() - boundary;
+                
+                if ((toResize->offset() - rpa->newOffset()) < difference) {
+                    qDebug() << "out of bounds";
+                    return false;
+                }
+                
+                movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
+                resizePartition(toResize, rpa->newSize(), rightDevice, tree);
+            }
+            else if (rpa->newOffset() + toResize->size() >= boundary) {
+                qulonglong difference = rpa->newOffset() + toResize->size() - boundary; /* of how much? */
+                
+                /*
+                 * If the size is reduced of at least that quantity
+                 * then the partition will stay in its limit, therefore the operation is allowed.
+                 * Otherwise, the exception below is thrown.
+                 */
+                if ((toResize->size() - rpa->newSize()) < difference) {
+                    qDebug() << "out of bounds";
+                    return false;
+                }
+                
+                /*
+                 * To avoid problems with further calculations, first change the size and then the offset,
+                 * so no limit is surpassed even temporarily.
+                 */
+                resizePartition(toResize, rpa->newSize(), rightDevice, tree);
+                movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
+            }
+            else {
+                resizePartition(toResize, rpa->newSize(), rightDevice, tree);
+                movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
+            }
+            
             break;
         }
         
@@ -228,6 +294,125 @@ void VolumeManager::undo()
 
 void VolumeManager::redo()
 {
+}
+
+void VolumeManager::resizePartition(Partition* partition,
+                                    qulonglong newSize,
+                                    DeviceModified* rightDevice,
+                                    VolumeTree& tree)
+{
+    if (newSize == partition->size()) {
+        return;
+    }
+    
+    if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+        qulonglong spaceOffset = partition->offset() + newSize;
+        qulonglong spaceSize = partition->size() - newSize;
+        FreeSpace* freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
+        qDebug() << "RESIZE: creato a destra spazio di dimensione" << spaceSize;
+        tree.addDevice(partition->parentName(), freeSpaceRight);
+    } else {
+        FreeSpace* spaceRight = dynamic_cast< FreeSpace* >(rightDevice);
+        qulonglong rightOffset = partition->offset() + newSize;
+        qulonglong rightSize = spaceRight->size() - (newSize - partition->size());
+        
+        qDebug() << "RESIZE: a destra lo spazio passa da offset=" << spaceRight->offset() << "e size=" << spaceRight->size() << "a" << rightOffset << "e" << rightSize;
+        
+        if (rightSize == 0) {
+            tree.removeDevice(spaceRight->name());
+        } else {
+            spaceRight->setOffset(rightOffset);
+            spaceRight->setSize(rightSize);
+        }
+    }
+    
+    qDebug() << "partition resized from" << partition->size() << "to" << newSize;
+    partition->setSize(newSize);
+}
+
+void VolumeManager::movePartition(Partition* partition,
+                                  qulonglong newOffset,
+                                  DeviceModified* leftDevice,
+                                  DeviceModified* rightDevice,
+                                  DeviceModified* parent,
+                                  VolumeTree& tree)
+{
+    qulonglong oldOffset = partition->offset();
+    FreeSpace *freeSpaceRight = 0;
+    FreeSpace *freeSpaceLeft = 0;
+    
+    if (!leftDevice || leftDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+        
+        /* This is an error for sure */
+        if (newOffset < oldOffset) {
+            qDebug() << "out of bounds";
+            return;
+        }
+        
+        /*
+         * Creates a new Device object for the space left on the left (no pun intended)
+         * If this will be the first Device in the disk pays attention to leave the first MB reserved for MBR
+         * (later we should see how this works for GPT too)
+         */
+        qulonglong spaceOffset = (leftDevice) ? (leftDevice->rightBoundary()) : parent->offset();
+        qulonglong spaceSize = newOffset - oldOffset;
+        freeSpaceLeft = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
+    } else { /* there's some free space immediately before: changes its size accordingly */
+        
+        /* This one too */
+        if (newOffset < leftDevice->offset()) {
+            qDebug() << "out of bounds";
+        }
+        
+        qulonglong leftSize = leftDevice->size() - (oldOffset - newOffset);
+        
+        /*
+         * In this case we completely filled up the space available
+         */
+        if (leftSize == 0) {
+            tree.removeDevice(leftDevice->name());
+        } else {
+            leftDevice->setSize(leftSize);
+        }
+    }
+    
+    /*
+     * Moving a partition around affects of course the device on the right too
+     * NOTE for future developers: we can't use resizePartition for this because in this case
+     * the size isn't changing, just the position of the partition.
+     */
+    if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+        qulonglong spaceOffset = newOffset + partition->size();
+        qulonglong spaceSize = oldOffset - newOffset;
+        
+        qDebug() << "MOVE: created on the right a new device with offset=" << spaceOffset << "and size=" << spaceSize;
+        
+        freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
+        tree.addDevice(partition->parentName(), freeSpaceRight);
+    } else {
+        qulonglong rightOffset = newOffset + partition->size();
+        qulonglong rightSize = rightDevice->size() - (newOffset - oldOffset);
+        qDebug() << "MOVE: the unallocated space on the left changed size from" << rightDevice->size() << "to" << rightSize;
+        qDebug() << "MOVE: the unallocated space on the left changed from offset" << rightDevice->offset() << "to" << rightOffset;
+        
+        if (rightSize == 0) {
+            tree.removeDevice(rightDevice->name());
+        } else {
+            rightDevice->setOffset(rightOffset);
+            rightDevice->setSize(rightSize);
+        }
+    }
+    
+    partition->setOffset(newOffset);
+    
+    /*
+     * NOTE: the device must be added here and not right after it has been created because
+     * its position in the list is determined based on its offset (to have a sorted list of devices).
+     * But the offset of "partition" has changed above so we may have errors in the sorting.
+     */
+    if (freeSpaceLeft) {
+        tree.addDevice(partition->parentName(), freeSpaceLeft);
+    }
 }
 
 QList< VolumeTree > VolumeManager::allDiskTrees() const

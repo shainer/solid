@@ -16,7 +16,8 @@ namespace Solid
                 enum ActionType {
                     CreatePartition,
                     RemovePartition,
-                    FormatPartition
+                    FormatPartition,
+                    ResizePartition
                 };
                 
                 explicit Action() {}
