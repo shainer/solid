@@ -140,7 +140,7 @@ namespace Solid
             /**
              * Constructs an empty tree.
              */
-            VolumeTree() {}
+            VolumeTree();
             
             /**
              * Copy constructor.
@@ -202,30 +202,7 @@ namespace Solid
              * @param free include blocks of free space too.
              * @returns a sorted list of logical partitions.
              */
-            QList<DeviceModified *> logicalPartitions(bool free = false) const;
-
-            /**
-             * Adds a new device.
-             * FIXME: check if the parent exists.
-             * 
-             * @param parentName the name of the parent.
-             * @param device the new object to add.
-             */
-            void addDevice(const QString &, DeviceModified *);
-            
-            /**
-             * Removes a device. A device inside a tree is uniquely identified by name.
-             * FIXME: come prima.
-             * 
-             * @param deviceName the device name.
-             */
-            void removeDevice(const QString &);
-            
-            /**
-             * Deletes all the nodes in the tree.
-             */
-            void clear();
-            
+            QList<DeviceModified *> logicalPartitions(bool free = false) const;            
             
             void print() const;
             
@@ -251,10 +228,28 @@ namespace Solid
             VolumeTreePrivate(VolumeTreeItem *);
             VolumeTreePrivate(const VolumeTreePrivate& other);
             ~VolumeTreePrivate();
+            
+            /**
+             * Adds a new device.
+             * 
+             * @param parentName the name of the parent.
+             * @param device the new object to add.
+             */
+            void addDevice(const QString &, DeviceModified *);
+            
+            /**
+             * Removes a device. A device inside a tree is uniquely identified by name.
+             * 
+             * @param deviceName the device name.
+             */
+            void removeDevice(const QString &);
+            
+            /**
+             * Deletes all the nodes in the tree.
+             */
+            void clear();
 
-            void addDevice(const QString &, DeviceModified *, VolumeTreeItem *);
             VolumeTreeItem* searchNode(const QString &) const;
-            void removeDevice(const QString &, VolumeTreeItem *);
             
             /*
              * When a new partition is requested, checks if a suitable block of free space exists.

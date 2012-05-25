@@ -137,7 +137,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             Partition* newPartition = new Partition(cpa);
-            tree.addDevice(cpa->disk(), newPartition);
+            tree.d->addDevice(cpa->disk(), newPartition);
         }
         
         case Action::RemovePartition: {
@@ -309,7 +309,7 @@ void VolumeManager::Private::detectDevices()
             if (volume->uuid().isEmpty()) {
                 volume->setPartitionType(Extended);
                 
-                tree.addDevice(volume->parentName(), volume);
+                tree.d->addDevice(volume->parentName(), volume);
                 extended = volume;
             }
         }
@@ -334,7 +334,7 @@ void VolumeManager::Private::detectDevices()
                 volume->setPartitionType(Primary);
             }
             
-            tree.addDevice(parentName, volume);
+            tree.d->addDevice(parentName, volume);
         }
     }
     
@@ -343,7 +343,7 @@ void VolumeManager::Private::detectDevices()
      */
     foreach (VolumeTree disk, volumeTrees.values()) {
         foreach (Devices::FreeSpace* space, Device::freeSpaceOfDisk(disk)) {
-            disk.addDevice(space->parentName(), space);
+            disk.d->addDevice(space->parentName(), space);
         }
     }
 }
@@ -363,7 +363,7 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         qulonglong spaceSize = partition->size() - newSize;
         FreeSpace* freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
         qDebug() << "RESIZE: creato a destra spazio di dimensione" << spaceSize;
-        tree.addDevice(partition->parentName(), freeSpaceRight);
+        tree.d->addDevice(partition->parentName(), freeSpaceRight);
     } else {
         FreeSpace* spaceRight = dynamic_cast< FreeSpace* >(rightDevice);
         qulonglong rightOffset = partition->offset() + newSize;
@@ -372,7 +372,7 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         qDebug() << "RESIZE: a destra lo spazio passa da offset=" << spaceRight->offset() << "e size=" << spaceRight->size() << "a" << rightOffset << "e" << rightSize;
         
         if (rightSize == 0) {
-            tree.removeDevice(spaceRight->name());
+            tree.d->removeDevice(spaceRight->name());
         } else {
             spaceRight->setOffset(rightOffset);
             spaceRight->setSize(rightSize);
@@ -428,7 +428,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
          * In this case we completely filled up the space available
          */
         if (leftSize == 0) {
-            tree.removeDevice(leftDevice->name());
+            tree.d->removeDevice(leftDevice->name());
         } else {
             leftDevice->setSize(leftSize);
         }
@@ -446,7 +446,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         qDebug() << "MOVE: created on the right a new device with offset=" << spaceOffset << "and size=" << spaceSize;
         
         freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
-        tree.addDevice(partition->parentName(), freeSpaceRight);
+        tree.d->addDevice(partition->parentName(), freeSpaceRight);
     } else {
         qulonglong rightOffset = newOffset + partition->size();
         qulonglong rightSize = rightDevice->size() - (newOffset - oldOffset);
@@ -454,7 +454,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         qDebug() << "MOVE: the unallocated space on the left changed from offset" << rightDevice->offset() << "to" << rightOffset;
         
         if (rightSize == 0) {
-            tree.removeDevice(rightDevice->name());
+            tree.d->removeDevice(rightDevice->name());
         } else {
             rightDevice->setOffset(rightOffset);
             rightDevice->setSize(rightSize);
@@ -469,7 +469,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
      * But the offset of "partition" has changed above so we may have errors in the sorting.
      */
     if (freeSpaceLeft) {
-        tree.addDevice(partition->parentName(), freeSpaceLeft);
+        tree.d->addDevice(partition->parentName(), freeSpaceLeft);
     }
 }
 
