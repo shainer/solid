@@ -11,18 +11,19 @@ namespace Solid
             class SOLID_EXPORT ResizePartitionAction : public Action
             {
             public:
-                explicit ResizePartitionAction(const QString &, qulonglong, qulonglong);
+                explicit ResizePartitionAction(const QString& partition, qlonglong newOffset, qlonglong newSize = -1);
+                explicit ResizePartitionAction(const QString& partition, qlonglong newSize);
                 virtual ~ResizePartitionAction();
                 
                 ActionType actionType() const;
                 QString partition() const;
-                qulonglong newSize() const;
-                qulonglong newOffset() const;
+                qlonglong newSize() const;
+                qlonglong newOffset() const;
                 
             private:
                 QString m_partition;
-                qulonglong m_newOffset;
-                qulonglong m_newSize;
+                qlonglong m_newOffset;
+                qlonglong m_newSize;
             };
         }
     }

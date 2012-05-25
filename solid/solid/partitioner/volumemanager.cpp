@@ -228,7 +228,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
             DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
             
-            qulonglong boundary = 0;
+            qlonglong boundary = 0;
             
             if (rpa->newSize() == 0) {
                 qDebug() << "resizing to zero isn't allowed";
@@ -242,7 +242,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             if ((toResize->offset() + rpa->newSize()) >= boundary) {
-                qulonglong difference = toResize->offset() + rpa->newSize() - boundary;
+                qlonglong difference = toResize->offset() + rpa->newSize() - boundary;
                 
                 if ((toResize->offset() - rpa->newOffset()) < difference) {
                     qDebug() << "out of bounds";
@@ -253,7 +253,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 resizePartition(toResize, rpa->newSize(), rightDevice, tree);
             }
             else if (rpa->newOffset() + toResize->size() >= boundary) {
-                qulonglong difference = rpa->newOffset() + toResize->size() - boundary; /* of how much? */
+                qlonglong difference = rpa->newOffset() + toResize->size() - boundary; /* of how much? */
                 
                 /*
                  * If the size is reduced of at least that quantity
@@ -297,13 +297,14 @@ void VolumeManager::redo()
 }
 
 void VolumeManager::resizePartition(Partition* partition,
-                                    qulonglong newSize,
+                                    qlonglong ns,
                                     DeviceModified* rightDevice,
                                     VolumeTree& tree)
-{
-    if (newSize == partition->size()) {
+{  
+    if (ns == -1) {
         return;
     }
+    qulonglong newSize = (qulonglong)ns;
     
     if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
         qulonglong spaceOffset = partition->offset() + newSize;
@@ -331,12 +332,17 @@ void VolumeManager::resizePartition(Partition* partition,
 }
 
 void VolumeManager::movePartition(Partition* partition,
-                                  qulonglong newOffset,
+                                  qlonglong no,
                                   DeviceModified* leftDevice,
                                   DeviceModified* rightDevice,
                                   DeviceModified* parent,
                                   VolumeTree& tree)
 {
+    if (no == -1) {
+        return;
+    }
+    
+    qulonglong newOffset = (qulonglong)no;
     qulonglong oldOffset = partition->offset();
     FreeSpace *freeSpaceRight = 0;
     FreeSpace *freeSpaceLeft = 0;
