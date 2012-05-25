@@ -86,6 +86,13 @@ namespace Solid
              * @returns a pointer of the associated tree.
              */
             VolumeTree diskTree(const QString &) const;
+            
+            /**
+             * Retrieves the latest error occurred.
+             * 
+             * @returns a description of the error.
+             */
+            QString errorDescription() const;
                     
         private:
             VolumeManager();

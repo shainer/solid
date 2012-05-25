@@ -1,0 +1,144 @@
+/*
+    Copyright 2012 Lisa Vitolo <shainer@chakra-project.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) version 3, or any
+    later version accepted by the membership of KDE e.V. (or its
+    successor approved by the membership of KDE e.V.), which shall
+    act as a proxy defined in Section 6 of version 3 of the license.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <solid/partitioner/partitioningerror.h>
+#include <QtCore/QObject>
+#include <QtCore/QDebug>
+
+namespace Solid
+{
+namespace Partitioner
+{
+ 
+class PartitioningError::Private
+{
+public:
+    Private()
+    {}
+    
+    ~Private()
+    {}
+    
+    ErrorType type;
+    QString description;
+    int markersLeft;
+};
+    
+PartitioningError::PartitioningError(PartitioningError::ErrorType type)
+    : d( new Private )
+{
+    setType(type);
+}
+
+PartitioningError::~PartitioningError()
+{
+    delete d;
+}
+
+PartitioningError::ErrorType PartitioningError::type() const
+{
+    return d->type;
+}
+
+void PartitioningError::setType(PartitioningError::ErrorType type)
+{
+    d->type = type;
+    
+    switch (type) {
+        case None: {
+            d->description = "Success.";
+            d->markersLeft = 0;
+            break;
+        }
+        
+        case PartitionNotFoundError: {
+            d->description = "Partition with name \"%0\" not found.";
+            d->markersLeft = 1;
+            break;
+        }
+        
+        case DiskNotFoundError: {
+            d->description = "Disk with name \"%0\" not found.";
+            d->markersLeft = 1;
+            break;
+        }
+        
+        case ContainerNotFoundError: {
+            d->description = "There is no suitable free space to create a new partition with offset %0 and size %1.";
+            d->markersLeft = 2;
+            break;
+        }
+        
+        case WrongDeviceTypeError: {
+            d->description = "A %0 was expected, got another device type instead.";
+            d->markersLeft = 1;
+            break;
+        }
+        
+        case ResizingToZeroError: {
+            d->description = "Could not change a partition to have 0 size.";
+            d->markersLeft = 0;
+            break;
+        }
+        
+        case ResizingToTheSameError: {
+            d->description = "Both new offset and new size for %0 match the previous value.";
+            d->markersLeft = 1;
+            break;
+        }
+        
+        case ResizeOutOfBoundsError: {
+            d->description = "Resizing out of bounds.";
+            d->markersLeft = 0;
+            break;
+        }
+        
+        case DuplicateActionError: {
+            d->description = "The action \"%0\" was already registered.";
+            d->markersLeft = 1;
+            break;
+        }
+        
+        default:
+            break;
+    }
+}
+
+void PartitioningError::arg(const QString& value)
+{
+    if (d->markersLeft == 0) {
+        return;
+    }
+    
+    d->description = d->description.arg(value);
+    d->markersLeft--;
+}
+
+QString PartitioningError::description() const
+{
+    if (d->markersLeft > 0) {
+        return QString();
+    }
+    
+    return QObject::tr(d->description.toUtf8().data());
+}
+    
+}
+}

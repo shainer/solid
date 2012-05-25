@@ -229,26 +229,24 @@ namespace Solid
             VolumeTreePrivate(const VolumeTreePrivate& other);
             ~VolumeTreePrivate();
             
-            /**
-             * Adds a new device.
-             * 
-             * @param parentName the name of the parent.
-             * @param device the new object to add.
+            /*
+             * Adds a new device given the parent name. 
              */
             void addDevice(const QString &, DeviceModified *);
             
-            /**
+            /*
              * Removes a device. A device inside a tree is uniquely identified by name.
-             * 
-             * @param deviceName the device name.
              */
             void removeDevice(const QString &);
             
-            /**
+            /*
              * Deletes all the nodes in the tree.
              */
             void clear();
-
+            
+            /*
+             * Searches a node inside the tree.
+             */
             VolumeTreeItem* searchNode(const QString &) const;
             
             /*

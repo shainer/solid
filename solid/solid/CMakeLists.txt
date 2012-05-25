@@ -135,12 +135,14 @@ set(solid_LIB_SRCS
    partitioner/volumetree.cpp
    partitioner/actionexecuter.cpp
    partitioner/actionstack.cpp
+   partitioner/partitioningerror.cpp
 
    partitioner/devices/devicemodified.cpp
    partitioner/devices/disk.cpp
    partitioner/devices/partition.cpp
    partitioner/devices/freespace.cpp
 
+   partitioner/actions/action.cpp
    partitioner/actions/formatpartitionaction.cpp
    partitioner/actions/createpartitionaction.cpp
    partitioner/actions/removepartitionaction.cpp
@@ -412,6 +414,7 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
 install( FILES partitioner/partitioner_enums.h
                partitioner/volumemanager.h partitioner/volumetree.h
                partitioner/actionexecuter.h partitioner/actionstack.h
+               partitioner/partitioningerror.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h

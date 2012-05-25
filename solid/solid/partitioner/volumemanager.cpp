@@ -22,9 +22,10 @@
 #include <solid/partitioner/devices/disk.h>
 #include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/action.h>
-#include "actions/createpartitionaction.h"
-#include "actions/removepartitionaction.h"
-#include "actions/resizepartitionaction.h"
+#include <solid/partitioner/actions/createpartitionaction.h>
+#include <solid/partitioner/actions/removepartitionaction.h>
+#include <solid/partitioner/actions/resizepartitionaction.h>
+#include <solid/partitioner/partitioningerror.h>
 #include <solid/device.h>
 #include <kglobal.h>
 
@@ -58,6 +59,8 @@ public:
     QMap<QString, VolumeTree> volumeTrees;
     ActionStack actionstack;
     ActionExecuter* executer;
+    
+    PartitioningError error;
 };
 
 class VolumeManagerHelper
@@ -104,6 +107,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
 {
     /* A duplicate isn't accepted */
     if (d->actionstack.contains(action)) {
+        d->error.setType(PartitioningError::DuplicateActionError);
+        d->error.arg(action->description());
         return false;
     }
     
@@ -112,8 +117,15 @@ bool VolumeManager::registerAction(Actions::Action* action)
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
             DeviceModified* p = d->searchDeviceByName(fpa->partition());
             
-            if (!p || !p->deviceType() == DeviceModified::PartitionDevice) {
-                qDebug() << "errore, nome non valido";
+            if (!p) {
+                d->error.setType(PartitioningError::PartitionNotFoundError);
+                d->error.arg(fpa->partition());
+                return false;
+            }
+            
+            if (p->deviceType() != DeviceModified::PartitionDevice) {
+                d->error.setType(PartitioningError::WrongDeviceTypeError);
+                d->error.arg("partition");
                 return false;
             }
             
@@ -124,15 +136,19 @@ bool VolumeManager::registerAction(Actions::Action* action)
         
         case Action::CreatePartition: {
             Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);
+            
             if (!d->volumeTrees.contains(cpa->disk())) {
-                qDebug() << "unexistent disk";
+                d->error.setType(PartitioningError::DiskNotFoundError);
+                d->error.arg(cpa->disk());
                 return false;
             }
             
             VolumeTree tree = d->volumeTrees[cpa->disk()];
             
             if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
-                qDebug() << "could not split";
+                d->error.setType(PartitioningError::ContainerNotFoundError);
+                d->error.arg(QString::number(cpa->offset()));
+                d->error.arg(QString::number(cpa->size()));
                 return false;
             }
             
@@ -144,11 +160,19 @@ bool VolumeManager::registerAction(Actions::Action* action)
             Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
             
             /* FIXME: put this check in the next call without doing the same thing twice */
-            if (!d->searchDeviceByName(rpa->partition())) {
-                qDebug() << "partition not found";
+            VolumeTree tree = d->searchTreeWithDevice(rpa->partition());
+            if (!tree.d) {
+                d->error.setType(PartitioningError::PartitionNotFoundError);
+                d->error.arg(rpa->partition());
                 return false;
             }
-            VolumeTree tree = d->searchTreeWithDevice(rpa->partition());
+            
+            DeviceModified* dev = d->searchDeviceByName(rpa->partition());
+            if (dev->deviceType() != DeviceModified::PartitionDevice) {
+                d->error.setType(PartitioningError::WrongDeviceTypeError);
+                d->error.arg("partition");
+            }
+            
             tree.d->mergeAndDelete(rpa->partition());
             break;
         }
@@ -157,12 +181,14 @@ bool VolumeManager::registerAction(Actions::Action* action)
             Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
             
             VolumeTree tree = d->searchTreeWithDevice(rpa->partition());
-            VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());
             
-            if (!itemToResize) {
-                qDebug() << "partition doesn't exist";
+            if (!tree.d) {
+                d->error.setType(PartitioningError::PartitionNotFoundError);
+                d->error.arg(rpa->partition());
+                return false;
             }
             
+            VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());            
             Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
             DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
             DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
@@ -170,7 +196,13 @@ bool VolumeManager::registerAction(Actions::Action* action)
             qlonglong boundary = 0;
             
             if (rpa->newSize() == 0) {
-                qDebug() << "resizing to zero isn't allowed";
+                d->error.setType(PartitioningError::ResizingToZeroError);
+                return false;
+            }
+            
+            if (rpa->newSize() == -1 && rpa->newOffset() == -1) {
+                d->error.setType(PartitioningError::ResizingToTheSameError);
+                d->error.arg(rpa->partition());
                 return false;
             }
             
@@ -180,11 +212,11 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 boundary = rightDevice->offset() + rightDevice->size();
             }
             
-            if ((toResize->offset() + rpa->newSize()) >= boundary) {
+            if ((toResize->offset() + rpa->newSize()) > boundary) {
                 qlonglong difference = toResize->offset() + rpa->newSize() - boundary;
                 
                 if ((toResize->offset() - rpa->newOffset()) < difference) {
-                    qDebug() << "out of bounds";
+                    d->error.setType(PartitioningError::ResizeOutOfBoundsError);
                     return false;
                 }
                 
@@ -200,7 +232,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                  * Otherwise, the exception below is thrown.
                  */
                 if ((toResize->size() - rpa->newSize()) < difference) {
-                    qDebug() << "out of bounds";
+                    d->error.setType(PartitioningError::ResizeOutOfBoundsError);
                     return false;
                 }
                 
@@ -258,6 +290,11 @@ bool VolumeManager::apply()
     delete e2;
     
     return true;
+}
+
+QString VolumeManager::errorDescription() const
+{
+    return d->error.description();
 }
 
 void VolumeManager::Private::detectDevices()
@@ -345,6 +382,8 @@ void VolumeManager::Private::detectDevices()
         foreach (Devices::FreeSpace* space, Device::freeSpaceOfDisk(disk)) {
             disk.d->addDevice(space->parentName(), space);
         }
+        
+        disk.print();
     }
 }
 
@@ -403,7 +442,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         
         /* This is an error for sure */
         if (newOffset < oldOffset) {
-            qDebug() << "out of bounds";
+            error.setType(PartitioningError::ResizeOutOfBoundsError);
             return;
         }
         
@@ -419,7 +458,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         
         /* This one too */
         if (newOffset < leftDevice->offset()) {
-            qDebug() << "out of bounds";
+            error.setType(PartitioningError::ResizeOutOfBoundsError);
         }
         
         qulonglong leftSize = leftDevice->size() - (oldOffset - newOffset);
@@ -498,7 +537,6 @@ VolumeTree VolumeManager::Private::searchTreeWithDevice(const QString& name)
         }
     }
     
-    /* FIXME: exception/error */
     return VolumeTree();
 }
 
