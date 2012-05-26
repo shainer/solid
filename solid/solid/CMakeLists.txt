@@ -135,7 +135,6 @@ set(solid_LIB_SRCS
    partitioner/volumetree.cpp
    partitioner/actionexecuter.cpp
    partitioner/actionstack.cpp
-   partitioner/partitioningerror.cpp
 
    partitioner/devices/devicemodified.cpp
    partitioner/devices/disk.cpp
@@ -150,6 +149,7 @@ set(solid_LIB_SRCS
    partitioner/actions/modifypartitionaction.cpp
 
    partitioner/utils/filesystem.cpp
+   partitioner/utils/partitioningerror.cpp
 )
 
 if(NOT APPLE)
@@ -417,7 +417,6 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
 install( FILES partitioner/partitioner_enums.h
                partitioner/volumemanager.h partitioner/volumetree.h
                partitioner/actionexecuter.h partitioner/actionstack.h
-               partitioner/partitioningerror.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h
@@ -432,6 +431,7 @@ install( FILES partitioner/devices/partition.h
                partitioner/devices/freespace.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/devices COMPONENT Devel)
 install( FILES partitioner/utils/filesystem.h
+	       partitioner/utils/partitioningerror.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/utils COMPONENT Devel)
 
 ########### parser build ###############

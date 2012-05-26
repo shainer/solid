@@ -26,7 +26,7 @@
 #include <solid/partitioner/actions/removepartitionaction.h>
 #include <solid/partitioner/actions/resizepartitionaction.h>
 #include "actions/modifypartitionaction.h"
-#include <solid/partitioner/partitioningerror.h>
+#include <solid/partitioner/utils/partitioningerror.h>
 #include <solid/device.h>
 #include <kglobal.h>
 
@@ -36,6 +36,7 @@ namespace Partitioner
 {
 
 using namespace Devices;
+using namespace Utils;
 
 class VolumeManager::Private
 {

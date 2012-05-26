@@ -18,7 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <solid/partitioner/partitioningerror.h>
+#include <solid/partitioner/utils/partitioningerror.h>
 #include <QtCore/QObject>
 #include <QtCore/QDebug>
 
@@ -26,7 +26,9 @@ namespace Solid
 {
 namespace Partitioner
 {
- 
+namespace Utils
+{
+
 class PartitioningError::Private
 {
 public:
@@ -152,5 +154,6 @@ QString PartitioningError::description() const
     return QObject::tr(d->description.toUtf8().data());
 }
     
+}
 }
 }
