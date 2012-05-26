@@ -28,6 +28,7 @@ namespace Partitioner
 {
 
 using namespace Devices;
+using namespace Utils;
 
 /******* VolumeTreeItemPrivate *********/
 VolumeTreeItem::Private::Private(DeviceModified* v, QList< VolumeTreeItem *> c, VolumeTreeItem* p)

@@ -52,6 +52,8 @@ namespace Solid
                     ResizeOutOfBoundsError,
                     ExceedingPrimariesError,
                     FilesystemFlagsError,
+                    PartitionFlagsError,
+                    NoPartitionTableError,
                     DuplicateActionError,
                 };
 

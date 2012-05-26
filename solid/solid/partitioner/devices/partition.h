@@ -3,7 +3,7 @@
 
 #include "devicemodified.h"
 #include <solid/partitioner/actions/createpartitionaction.h>
-#include <solid/partitioner/partitioner_enums.h>
+#include <solid/partitioner/utils/partitioner_enums.h>
 #include <solid/partitioner/utils/filesystem.h>
 #include <solid/storagevolume.h>
 #include <unistd.h>
@@ -13,7 +13,7 @@ namespace Solid
     namespace Partitioner
     {        
         namespace Devices
-        {            
+        {
             class SOLID_EXPORT Partition : public DeviceModified
             {
             public:                
@@ -33,9 +33,8 @@ namespace Solid
                 qulonglong size() const;
                 virtual qulonglong offset() const;
                 qulonglong rightBoundary() const;
-                PartitionType partitionType() const;
-                bool bootable() const;
-                bool required() const;
+                Utils::PartitionType partitionType() const;
+                bool isFlagSet(const QString &) const;
                 
                 void setIgnored(bool);
                 void setUsage(StorageVolume::UsageType);
@@ -43,10 +42,11 @@ namespace Solid
                 void setLabel(const QString &);
                 void setSize(qulonglong);
                 void setOffset(qulonglong);
-                void setPartitionType(PartitionType);
-                void setBootable(bool);
-                void setRequired(bool);
-                                
+                void setPartitionType(Utils::PartitionType);
+                void setFlag(const QString &);
+                void unsetFlag(const QString &);
+                void setFlags(const QStringList &);
+
             private:
                 class Private;
                 Private* d;

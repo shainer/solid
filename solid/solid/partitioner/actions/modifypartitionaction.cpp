@@ -28,50 +28,43 @@ namespace Actions
 
 class ModifyPartitionAction::Private
 {
-public:
-    Private(const QString& p, const QString& l)
-        : isLabelChanged(true)
-        , isFlagChanged(false)
-        , partition(p)
-        , label(l)
-    {}
-    
-    Private(const QString& p, const QStringList& f)
+public:    
+    Private(const QString& p, const QStringList& fs, const QStringList& fu)
         : isLabelChanged(false)
-        , isFlagChanged(true)
         , partition(p)
-        , flags(f)
+        , flagsToSet(fs)
+        , flagsToUnset(fu)
     {}
     
-    Private(const QString& p, const QString& l, const QStringList& f)
+    Private(const QString& p, const QString& l, const QStringList& fs, const QStringList& fu)
         : isLabelChanged(true)
-        , isFlagChanged(true)
         , partition(p)
         , label(l)
-        , flags(f)
+        , flagsToSet(fs)
+        , flagsToUnset(fu)
     {}
     
     ~Private()
     {}
     
     bool isLabelChanged;
-    bool isFlagChanged;
     
     QString partition;
     QString label;
-    QStringList flags;
+    QStringList flagsToSet;
+    QStringList flagsToUnset;
 };
 
-ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QString& label, const QStringList& flags)
-    : d( new Private(partition, label, flags) )
+ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QString& label,
+                                             const QStringList& flagsToSet,
+                                             const QStringList& flagsToUnset)
+    : d( new Private(partition, label, flagsToSet, flagsToUnset) )
 {}
 
-ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QString& label)
-    : d( new Private(partition, label) )
-{}
-
-ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QStringList& flags)
-    : d( new Private(partition, flags) )
+ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
+                                             const QStringList& flagsToSet,
+                                             const QStringList& flagsToUnset)
+    : d( new Private(partition, flagsToSet, flagsToUnset) )
 {}
 
 ModifyPartitionAction::~ModifyPartitionAction()
@@ -86,19 +79,22 @@ Action::ActionType ModifyPartitionAction::actionType() const
 
 QString ModifyPartitionAction::description() const
 {
-    QString desc1 = "Setting flags of %0 = %1";
-    QString desc2 = "Setting label of %0 to %1";
+    QString desc1 = "Setting the following flags for %0: %1.";
+    QString desc2 = "Unsetting the following flags for %0: %1.";
+    QString desc3 = "Setting label of %0 to %1.";
+    QString desc;
     
-    if (d->isLabelChanged && !d->isFlagChanged) {
-        desc2 = desc2.arg(d->partition, d->label);
-        return QObject::tr( desc2.toUtf8().data() );
+    if (d->isLabelChanged) {
+        desc += desc3.arg(d->partition, d->label);
     }
-    if (!d->isLabelChanged && d->isFlagChanged) {
-        desc1 = desc1.arg(d->partition, d->flags.join(", "));
-        return QObject::tr( desc1.toUtf8().data() );
+    else if (!d->flagsToSet.isEmpty()) {
+        desc += desc1.arg(d->partition, d->flagsToSet.join(" "));
     }
-    
-    return desc1 + " and " + desc2;
+    else if (!d->flagsToUnset.isEmpty()) {
+        desc += desc2.arg(d->partition, d->flagsToUnset.join(" "));
+    }
+
+    return desc;
 }
 
 QString ModifyPartitionAction::partition() const
@@ -111,24 +107,19 @@ QString ModifyPartitionAction::label() const
     return d->label;
 }
 
-bool ModifyPartitionAction::bootable() const
-{
-    return d->flags.contains("boot");
-}
-
-bool ModifyPartitionAction::required() const
-{
-    return d->flags.contains("required");
-}
-
 bool ModifyPartitionAction::isLabelChanged() const
 {
     return d->isLabelChanged;
 }
 
-bool ModifyPartitionAction::isFlagChanged() const
+QStringList ModifyPartitionAction::flagsToSet() const
 {
-    return d->isFlagChanged;
+    return d->flagsToSet;
+}
+
+QStringList ModifyPartitionAction::flagsToUnset() const
+{
+    return d->flagsToUnset;
 }
 
 

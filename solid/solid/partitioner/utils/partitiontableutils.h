@@ -1,5 +1,5 @@
 /*
-    Copyright 2006 Kevin Ottens <ervin@kde.org>
+    Copyright 2012 Lisa Vitolo <shainer@chakra-project.org>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -17,38 +17,36 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef SOLID_PARTITIONER_UTILS_PARTITIONTABLEUTILS_H
+#define SOLID_PARTITIONER_UTILS_PARTITIONTABLEUTILS_H
 
-#ifndef SOLID_BACKENDS_HAL_STORAGE_H
-#define SOLID_BACKENDS_HAL_STORAGE_H
-
-#include <solid/ifaces/storagedrive.h>
-#include "halblock.h"
+#include <QtCore/QHash>
+#include <solid/partitioner/utils/partitioner_enums.h>
 
 namespace Solid
 {
-namespace Backends
-{
-namespace Hal
-{
-class Storage : public Block, virtual public Solid::Ifaces::StorageDrive
-{
-    Q_OBJECT
-    Q_INTERFACES(Solid::Ifaces::StorageDrive)
+    namespace Partitioner
+    {
+        namespace Utils
+        {
+            class PartitionTableUtils
+            {
+            public:
+                virtual ~PartitionTableUtils();
+                static PartitionTableUtils* instance();
 
-public:
-    Storage(HalDevice *device);
-    virtual ~Storage();
+                QStringList supportedFlags(PTableType);
 
-    virtual Solid::StorageDrive::Bus bus() const;
-    virtual Solid::StorageDrive::DriveType driveType() const;
+            private:
+                PartitionTableUtils();
 
-    virtual bool isRemovable() const;
-    virtual bool isHotpluggable() const;
-    virtual qulonglong size() const;
-    virtual QString partitionTableScheme() const;
-};
+                class Private;
+                Private* d;
+            };
+
+        }
+    }
+
 }
-}
-}
 
-#endif // SOLID_BACKENDS_HAL_STORAGE_H
+#endif // PARTITIONTABLE_H

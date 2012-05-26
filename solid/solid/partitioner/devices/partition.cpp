@@ -10,6 +10,8 @@ namespace Partitioner
 namespace Devices
 {
 
+using namespace Utils;
+
 class Partition::Private
 {
 public:
@@ -22,8 +24,6 @@ public:
         , uuid(v->uuid())
         , size(v->size())
         , offset(v->offset())
-        , bootable(false)
-        , required(false)
     {}
     
     Private(Actions::CreatePartitionAction *action)
@@ -34,8 +34,7 @@ public:
         , size(action->size())
         , offset(action->offset())
         , partitionType(action->partitionType())
-        , bootable(action->bootable())
-        , required(action->required())
+        , flags(action->flags())
     {}
     
     StorageVolume *iface;
@@ -48,8 +47,7 @@ public:
     qulonglong size;
     qulonglong offset;
     PartitionType partitionType;
-    bool bootable;
-    bool required;
+    QStringList flags;
 };
     
 Partition::Partition(StorageVolume* volume)
@@ -120,14 +118,9 @@ qulonglong Partition::rightBoundary() const
     return (d->offset + d->size);
 }
 
-bool Partition::bootable() const
+bool Partition::isFlagSet(const QString& flag) const
 {
-    return d->bootable;
-}
-
-bool Partition::required() const
-{
-    return d->required;
+    return d->flags.contains(flag);
 }
 
 void Partition::setIgnored(bool ign)
@@ -165,14 +158,19 @@ void Partition::setOffset(qulonglong offset)
     d->offset = offset;
 }
 
-void Partition::setBootable(bool b)
+void Partition::setFlag(const QString& flag)
 {
-    d->bootable = b;
+    d->flags.append(flag);
 }
 
-void Partition::setRequired(bool r)
+void Partition::setFlags(const QStringList& flags)
 {
-    d->required = r;
+    d->flags = flags;
+}
+
+void Partition::unsetFlag(const QString& flag)
+{
+    d->flags.removeOne(flag);
 }
 
 }

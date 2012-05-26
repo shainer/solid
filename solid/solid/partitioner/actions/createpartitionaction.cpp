@@ -25,6 +25,8 @@ namespace Partitioner
 {
 namespace Actions
 {
+
+using namespace Utils;
     
 class CreatePartitionAction::Private
 {
@@ -106,16 +108,6 @@ QString CreatePartitionAction::label() const
 QStringList CreatePartitionAction::flags() const
 {
     return d->flags;
-}
-
-bool CreatePartitionAction::bootable() const
-{
-    return d->flags.contains("boot");
-}
-
-bool CreatePartitionAction::required() const
-{
-    return d->flags.contains("required");
 }
     
 }

@@ -120,4 +120,9 @@ qulonglong FakeStorage::size() const
     return fakeDevice()->property("size").toULongLong();
 }
 
+QString FakeStorage::partitionTableScheme() const
+{
+    return fakeDevice()->property("PartitionTableScheme").toString();
+}
+
 #include "backends/fakehw/fakestorage.moc"

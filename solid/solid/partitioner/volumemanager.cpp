@@ -153,6 +153,14 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             VolumeTree tree = d->volumeTrees[cpa->disk()];
+            Disk* disk = dynamic_cast< Disk* >( tree.searchDevice(cpa->disk()) );
+            Utils::PTableType scheme = disk->partitionTableScheme();
+
+            if (scheme == Utils::None) {
+                d->error.setType(PartitioningError::NoPartitionTableError);
+                d->error.arg( cpa->disk() );
+                return false;
+            }
             
             if (tree.partitions().count() == 4 && cpa->partitionType() != Logical) {
                 d->error.setType(PartitioningError::ExceedingPrimariesError);
@@ -166,10 +174,15 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 d->error.arg(QString::number(cpa->size()));
                 return false;
             }
-            
-            /*
-             * FIXME: controlla la validita' dei flag rispetto al tipo di ptable.
-             */
+
+            foreach (const QString& flagSet, cpa->flags()) {
+                if (!Utils::PartitionTableUtils::instance()->supportedFlags(scheme).contains(flagSet)) {
+                    d->error.setType(PartitioningError::PartitionFlagsError);
+                    d->error.arg(flagSet);
+                    return false;
+                }
+            }
+
             Partition* newPartition = new Partition(cpa);
             tree.d->addDevice(cpa->disk(), newPartition);
         }
@@ -270,7 +283,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
         
         case Action::ModifyPartition: {
             Actions::ModifyPartitionAction* mpa = dynamic_cast< Actions::ModifyPartitionAction* >(action);
-            DeviceModified* device = d->searchDeviceByName(mpa->partition());
+            DeviceModified* device = d->searchDeviceByName( mpa->partition() );
+            VolumeTree tree = d->searchTreeWithDevice( mpa->partition() );
             
             if (!device) {
                 d->error.setType(PartitioningError::PartitionNotFoundError);
@@ -286,13 +300,31 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             Partition* p = dynamic_cast< Partition* >(device);
             
-            /* FIXME: check the ptable context for flags */
             if (mpa->isLabelChanged()) {
                 p->setLabel( mpa->label() );
             }
-            if (mpa->isFlagChanged()) {
-                p->setBootable( mpa->bootable() );
-                p->setRequired( mpa->required() );
+
+            Disk* parent = dynamic_cast< Disk* >( tree.searchNode( mpa->partition() )->parent()->volume() );
+            QStringList supportedFlags = PartitionTableUtils::instance()->supportedFlags( parent->partitionTableScheme() );
+
+            foreach (const QString& flag, mpa->flagsToSet()) {
+                if (!supportedFlags.contains(flag)) {
+                    d->error.setType(PartitioningError::PartitionFlagsError);
+                    d->error.arg(flag);
+                    return false;
+                }
+
+                p->setFlag(flag);
+            }
+
+            foreach (const QString& flag, mpa->flagsToUnset()) {
+                if (!supportedFlags.contains(flag)) {
+                    d->error.setType(PartitioningError::PartitionFlagsError);
+                    d->error.arg(flag);
+                    return false;
+                }
+
+                p->unsetFlag(flag);
             }
             break;
         }

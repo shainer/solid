@@ -42,6 +42,7 @@ public:
     virtual ~UDisksStorageDrive();
 
     virtual qulonglong size() const;
+    virtual QString partitionTableScheme() const;
     virtual bool isHotpluggable() const;
     virtual bool isRemovable() const;
     virtual Solid::StorageDrive::DriveType driveType() const;

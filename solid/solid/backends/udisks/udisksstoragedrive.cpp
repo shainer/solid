@@ -41,6 +41,11 @@ qulonglong UDisksStorageDrive::size() const
     return m_device->prop("DeviceSize").toULongLong();
 }
 
+QString UDisksStorageDrive::partitionTableScheme() const
+{
+    return m_device->prop("PartitionTableScheme").toString();
+}
+
 bool UDisksStorageDrive::isHotpluggable() const
 {
     return m_device->prop("DriveCanDetach").toBool();

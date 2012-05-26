@@ -123,6 +123,18 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             d->markersLeft = 1;
             break;
         }
+
+        case PartitionFlagsError: {
+            d->description = "The following flags aren't supported for this partitioning scheme: %0";
+            d->markersLeft = 1;
+            break;
+        }
+
+        case NoPartitionTableError: {
+            d->description = "Cannot create a partition on disk %0, which is without partition table";
+            d->markersLeft = 1;
+            break;
+        }
         
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";

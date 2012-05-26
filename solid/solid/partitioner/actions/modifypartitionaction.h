@@ -33,25 +33,17 @@ namespace Solid
              * @class ModifyPartitionAction
              * @extends Action
              * @brief Action to modify label and/or flags of a partition.
-             * 
-             * Why do we have three constructors? This action can be used to modify label, flags or both.
-             * But an empty list for flags can mean "we don't want to change the flags" or "the partition had the flag boot
-             * set and now we unset it" (taking the flag "boot" as an example). The same applies to the label (new
-             * label empty vs. the same label as before).
-             * 
-             * To avoid this ambiguation and provide a simple API to the application, there are three different
-             * constructors (and internal flags to remember what the application requested).
              */
-            class ModifyPartitionAction : public Action
+            class SOLID_EXPORT ModifyPartitionAction : public Action
             {
             public:
                 explicit ModifyPartitionAction(const QString& partition,
                                                const QString& label,
-                                               const QStringList& flags);
+                                               const QStringList& flagsToSet = QStringList(),
+                                               const QStringList& flagsToUnset = QStringList());
                 explicit ModifyPartitionAction(const QString& partition,
-                                               const QStringList& flags);
-                explicit ModifyPartitionAction(const QString& partition,
-                                               const QString& label);
+                                               const QStringList& flagsToSet,
+                                               const QStringList& flagsToUnset = QStringList());
                 virtual ~ModifyPartitionAction();
                 
                 virtual ActionType actionType() const;
@@ -60,11 +52,10 @@ namespace Solid
                 QString partition() const;
                 QString label() const;
                 
-                bool bootable() const;
-                bool required() const;
+                QStringList flagsToSet() const;
+                QStringList flagsToUnset() const;
                 
                 bool isLabelChanged() const;
-                bool isFlagChanged() const;
             private:
                 class Private;
                 Private* d;

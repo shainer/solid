@@ -60,6 +60,8 @@ namespace Ifaces
          */
         virtual Solid::StorageDrive::DriveType driveType() const = 0;
 
+        virtual QString partitionTableScheme() const = 0;
+
 
         /**
          * Indicates if the media contained by this drive can be removed.

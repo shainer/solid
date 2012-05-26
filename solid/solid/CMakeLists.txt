@@ -150,6 +150,7 @@ set(solid_LIB_SRCS
 
    partitioner/utils/filesystem.cpp
    partitioner/utils/partitioningerror.cpp
+   partitioner/utils/partitiontableutils.cpp
 )
 
 if(NOT APPLE)
@@ -414,8 +415,7 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
                button.h audiointerface.h dvbinterface.h predicate.h powermanagement.h
                networking.h video.h serialinterface.h smartcardreader.h internetgateway.h
                networkshare.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid COMPONENT Devel)
-install( FILES partitioner/partitioner_enums.h
-               partitioner/volumemanager.h partitioner/volumetree.h
+install( FILES partitioner/volumemanager.h partitioner/volumetree.h
                partitioner/actionexecuter.h partitioner/actionstack.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
@@ -432,6 +432,8 @@ install( FILES partitioner/devices/partition.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/devices COMPONENT Devel)
 install( FILES partitioner/utils/filesystem.h
 	       partitioner/utils/partitioningerror.h
+               partitioner/utils/partitiontableutils.h
+               partitioner/utils/partitioner_enums.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/utils COMPONENT Devel)
 
 ########### parser build ###############

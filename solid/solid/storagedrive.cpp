@@ -74,6 +74,12 @@ qulonglong Solid::StorageDrive::size() const
     return_SOLID_CALL(Ifaces::StorageDrive *, d->backendObject(), false, size());
 }
 
+QString Solid::StorageDrive::partitionTableScheme() const
+{
+    Q_D(const StorageDrive);
+    return_SOLID_CALL(Ifaces::StorageDrive *, d->backendObject(), "", partitionTableScheme());
+}
+
 bool Solid::StorageDrive::isInUse() const
 {
     Q_D(const StorageDrive);

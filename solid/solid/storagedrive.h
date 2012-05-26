@@ -147,6 +147,8 @@ namespace Solid
         */
        qulonglong size() const;
 
+       QString partitionTableScheme() const;
+
        /**
         * Indicates if the storage device is currently in use
         * i.e. if at least one child storage access is
