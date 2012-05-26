@@ -4,7 +4,9 @@
 #include "devicemodified.h"
 #include <solid/partitioner/actions/createpartitionaction.h>
 #include <solid/partitioner/partitioner_enums.h>
+#include <solid/partitioner/utils/filesystem.h>
 #include <solid/storagevolume.h>
+#include <unistd.h>
 
 namespace Solid
 {
@@ -23,7 +25,9 @@ namespace Solid
                 
                 bool ignored() const;
                 StorageVolume::UsageType usage() const;
-                QString filesystem() const;
+                
+                Utils::Filesystem filesystem() const;
+                
                 QString label() const;
                 QString uuid() const;
                 qulonglong size() const;
@@ -35,7 +39,7 @@ namespace Solid
                 
                 void setIgnored(bool);
                 void setUsage(StorageVolume::UsageType);
-                void setFilesystem(const QString &);
+                void setFilesystem(const Utils::Filesystem &);
                 void setLabel(const QString &);
                 void setSize(qulonglong);
                 void setOffset(qulonglong);

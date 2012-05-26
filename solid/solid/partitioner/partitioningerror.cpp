@@ -115,6 +115,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             d->markersLeft = 1;
             break;
         }
+
+        case FilesystemFlagsError: {
+            d->description = "The following flags don't exist for this filesystem type: %0";
+            d->markersLeft = 1;
+            break;
+        }
         
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";

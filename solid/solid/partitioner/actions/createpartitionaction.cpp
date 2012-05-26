@@ -103,6 +103,11 @@ QString CreatePartitionAction::label() const
     return d->label;
 }
 
+QStringList CreatePartitionAction::flags() const
+{
+    return d->flags;
+}
+
 bool CreatePartitionAction::bootable() const
 {
     return d->flags.contains("boot");

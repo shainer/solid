@@ -87,6 +87,11 @@ namespace Solid
                 QString label() const;
                 
                 /**
+                 * @returns the list of partition flags.
+                 */
+                QStringList flags() const;
+                
+                /**
                  * @returns true if the partition will be bootable.
                  */
                 bool bootable() const;

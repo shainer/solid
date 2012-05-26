@@ -17,7 +17,7 @@ public:
         : iface(v)
         , ignored(v->isIgnored())
         , usage(v->usage())
-        , filesystem(v->fsType())
+        , filesystem( Utils::Filesystem(v->fsType()) )
         , label(v->label())
         , uuid(v->uuid())
         , size(v->size())
@@ -30,9 +30,9 @@ public:
         : iface(0)
         , ignored(false)
         , usage(StorageVolume::FileSystem)
+        , label(action->label())
         , size(action->size())
         , offset(action->offset())
-        , label(action->label())
         , partitionType(action->partitionType())
         , bootable(action->bootable())
         , required(action->required())
@@ -42,7 +42,7 @@ public:
     
     bool ignored;
     StorageVolume::UsageType usage;
-    QString filesystem;
+    Utils::Filesystem filesystem;
     QString label;
     QString uuid;
     qulonglong size;
@@ -90,7 +90,7 @@ StorageVolume::UsageType Partition::usage() const
     return d->usage;
 }
     
-QString Partition::filesystem() const
+Utils::Filesystem Partition::filesystem() const
 {
     return d->filesystem;
 }
@@ -145,7 +145,7 @@ void Partition::setUsage(StorageVolume::UsageType usage)
     d->usage = usage;
 }
 
-void Partition::setFilesystem(const QString& fs)
+void Partition::setFilesystem(const Utils::Filesystem& fs)
 {
     d->filesystem = fs;
 }

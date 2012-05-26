@@ -148,6 +148,8 @@ set(solid_LIB_SRCS
    partitioner/actions/removepartitionaction.cpp
    partitioner/actions/resizepartitionaction.cpp
    partitioner/actions/modifypartitionaction.cpp
+
+   partitioner/utils/filesystem.cpp
 )
 
 if(NOT APPLE)
@@ -429,6 +431,8 @@ install( FILES partitioner/devices/partition.h
                partitioner/devices/disk.h
                partitioner/devices/freespace.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/devices COMPONENT Devel)
+install( FILES partitioner/utils/filesystem.h
+         DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/utils COMPONENT Devel)
 
 ########### parser build ###############
 
@@ -468,3 +472,4 @@ else (FLEX_EXECUTABLE AND BISON_EXECUTABLE)
    add_custom_target(UpdateSolidPredicateParser
                      COMMAND echo "flex and/or bison not found, so target UpdateSolidPredicateParser inactive")
 endif (FLEX_EXECUTABLE AND BISON_EXECUTABLE)
+add_subdirectory(partitioner/utils)

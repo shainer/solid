@@ -49,6 +49,7 @@ namespace Solid
                 ResizingToTheSameError,
                 ResizeOutOfBoundsError,
                 ExceedingPrimariesError,
+                FilesystemFlagsError,
                 DuplicateActionError,
             };
             

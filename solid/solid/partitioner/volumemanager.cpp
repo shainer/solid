@@ -117,6 +117,13 @@ bool VolumeManager::registerAction(Actions::Action* action)
         case Action::FormatPartition: {
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
             DeviceModified* p = d->searchDeviceByName(fpa->partition());
+            Utils::Filesystem fs = fpa->filesystem();
+
+            if (!fs.unsupportedFlags().isEmpty()) {
+                d->error.setType(PartitioningError::FilesystemFlagsError);
+                d->error.arg(fpa->filesystem().unsupportedFlags().join(", "));
+                return false;
+            }
             
             if (!p) {
                 d->error.setType(PartitioningError::PartitionNotFoundError);
@@ -131,7 +138,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             Partition* volume = dynamic_cast<Partition *>(p);
-            volume->setFilesystem(fpa->filesystem()); /* FIXME: check if the filesystem is supported */
+            volume->setFilesystem(fs);
             break;
         }
         

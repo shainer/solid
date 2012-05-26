@@ -30,7 +30,7 @@ namespace Actions
 class FormatPartitionAction::Private
 {
 public:
-    Private(const QString &p, const QString &fs)
+    Private(const QString &p, const Utils::Filesystem& fs)
         : partition(p)
         , filesystem(fs)
     {}
@@ -39,10 +39,10 @@ public:
     {}
     
     QString partition;
-    QString filesystem;
+    Utils::Filesystem filesystem;
 };
     
-FormatPartitionAction::FormatPartitionAction(const QString& partition, const QString& fs)
+FormatPartitionAction::FormatPartitionAction(const QString& partition, const Utils::Filesystem& fs)
     : d( new Private(partition, fs) )
 {}
 
@@ -58,8 +58,12 @@ Action::ActionType FormatPartitionAction::actionType() const
 
 QString FormatPartitionAction::description() const
 {
-    QString desc( "Changing filesystem of partition %0 to %1" );
-    desc = desc.arg(d->partition, d->filesystem);
+    QString desc( "Changing filesystem of partition %0 to %1 with label %2, owner uid %3, owner gid %4" );
+    desc = desc.arg(d->partition,
+                    d->filesystem.name(),
+                    d->filesystem.label(),
+                    QString::number(d->filesystem.ownerUid()),
+                    QString::number(d->filesystem.ownerGid()));
     
     return QObject::tr(desc.toUtf8().data());
 }
@@ -70,10 +74,11 @@ QString FormatPartitionAction::partition() const
     return d->partition;
 }
 
-QString FormatPartitionAction::filesystem() const
+Utils::Filesystem FormatPartitionAction::filesystem() const
 {
     return d->filesystem;
 }
+
 
 }
 }
