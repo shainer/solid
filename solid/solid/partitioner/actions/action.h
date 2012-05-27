@@ -50,7 +50,9 @@ namespace Solid
                     RemovePartition,
                     FormatPartition,
                     ResizePartition,
-                    ModifyPartition
+                    ModifyPartition,
+                    CreatePartitionTable,
+                    RemovePartitionTable
                 };
                 
                 explicit Action();

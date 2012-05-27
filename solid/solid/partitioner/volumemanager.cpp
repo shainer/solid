@@ -25,7 +25,9 @@
 #include <solid/partitioner/actions/createpartitionaction.h>
 #include <solid/partitioner/actions/removepartitionaction.h>
 #include <solid/partitioner/actions/resizepartitionaction.h>
-#include "actions/modifypartitionaction.h"
+#include <solid/partitioner/actions/createpartitiontableaction.h>
+#include <solid/partitioner/actions/modifypartitionaction.h>
+#include <solid/partitioner/actions/removepartitiontableaction.h>
 #include <solid/partitioner/utils/partitioningerror.h>
 #include <solid/device.h>
 #include <kglobal.h>
@@ -57,6 +59,7 @@ public:
     
     void resizePartition(Partition *, qlonglong, DeviceModified *, VolumeTree &);
     void movePartition(Partition *, qlonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
+    bool setPartitionTableScheme(const QString &, Utils::PTableType);
     
     QMap<QString, VolumeTree> volumeTrees;
     ActionStack actionstack;
@@ -329,6 +332,26 @@ bool VolumeManager::registerAction(Actions::Action* action)
             break;
         }
         
+        case Action::CreatePartitionTable: {
+            Actions::CreatePartitionTableAction* cpta = dynamic_cast< Actions::CreatePartitionTableAction* >(action);
+            
+            if (!d->setPartitionTableScheme(cpta->disk(), cpta->partitionTableScheme())) {
+                return false;
+            }
+            
+            break;
+        }
+        
+        case Action::RemovePartitionTable: {
+            Actions::RemovePartitionTableAction* rpta = dynamic_cast< Actions::RemovePartitionTableAction* >(action);
+            
+            if (!d->setPartitionTableScheme(rpta->disk(), Utils::None)) {
+                return false;
+            }
+            
+            break;
+        }
+        
         default:
             break;
     }
@@ -588,6 +611,34 @@ void VolumeManager::Private::movePartition(Partition* partition,
     if (freeSpaceLeft) {
         tree.d->addDevice(partition->parentName(), freeSpaceLeft);
     }
+}
+
+bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, PTableType scheme)
+{
+    VolumeTree tree = volumeTrees[diskName];
+
+    if (!tree.d) {
+        error.setType(PartitioningError::DiskNotFoundError);
+        error.arg(diskName);
+        return false;
+    }
+    
+    /*
+     * After removing or changing the partition table scheme, remove all the partitions.
+     * For now transitioning from one scheme to another isn't supported as it's potentially dangerous,
+     * so applications should warn the user about losing everything before authorizing this operation.
+     */ 
+    VolumeTreeItem* diskNode = tree.searchNode(diskName);
+    Disk* disk = dynamic_cast< Disk* >( diskNode->volume() );
+    disk->setPartitionTableScheme(scheme);
+    diskNode->clearChildren();
+    
+    /*
+     * Instead, add a big block of free space as the only disk's child in the tree.
+     */
+    FreeSpace* bigFreeSpace = new FreeSpace(disk->offset(), disk->size(), disk->name());
+    diskNode->addChild(bigFreeSpace);
+    return true;
 }
 
 

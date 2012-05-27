@@ -97,6 +97,11 @@ namespace Solid
             void removeChild(VolumeTreeItem *);
             
             /**
+             * Deletes all children of this item.
+             */
+            void clearChildren();
+            
+            /**
              * Comparison operator.
              * 
              * @returns true if the two items represent the same device, false otherwise.

@@ -147,6 +147,8 @@ set(solid_LIB_SRCS
    partitioner/actions/removepartitionaction.cpp
    partitioner/actions/resizepartitionaction.cpp
    partitioner/actions/modifypartitionaction.cpp
+   partitioner/actions/createpartitiontableaction.cpp
+   partitioner/actions/removepartitiontableaction.cpp
 
    partitioner/utils/filesystem.cpp
    partitioner/utils/partitioningerror.cpp
@@ -424,6 +426,8 @@ install( FILES partitioner/actions/action.h
                partitioner/actions/removepartitionaction.h
                partitioner/actions/resizepartitionaction.h
                partitioner/actions/modifypartitionaction.h
+               partitioner/actions/createpartitiontableaction.h
+               partitioner/actions/removepartitiontableaction.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/actions COMPONENT Devel)
 install( FILES partitioner/devices/partition.h
                partitioner/devices/devicemodified.h

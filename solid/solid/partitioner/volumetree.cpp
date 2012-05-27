@@ -99,6 +99,11 @@ void VolumeTreeItem::removeChild(VolumeTreeItem* child)
     d->children.removeOne(child);
 }
 
+void VolumeTreeItem::clearChildren()
+{
+    qDeleteAll(d->children);
+}
+
 bool VolumeTreeItem::operator==(const VolumeTreeItem& other) const
 {
     return (d->volume == other.volume());
