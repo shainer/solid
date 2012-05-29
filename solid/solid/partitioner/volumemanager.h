@@ -23,9 +23,11 @@
 #include <QtCore/QList>
 
 #include <solid/solid_export.h>
+#include <QtDBus/QDBusObjectPath>
 #include <solid/partitioner/volumetree.h>
 #include <solid/partitioner/actionstack.h>
 #include <solid/partitioner/actionexecuter.h>
+#include "devices/disk.h"
 
 namespace Solid
 {
@@ -39,8 +41,10 @@ namespace Solid
          * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
          */
-        class SOLID_EXPORT VolumeManager
+        class SOLID_EXPORT VolumeManager : public QObject
         {
+            Q_OBJECT
+        
         public:
             virtual ~VolumeManager();
             static VolumeManager* instance();
@@ -93,7 +97,14 @@ namespace Solid
              * @returns a description of the error.
              */
             QString errorDescription() const;
-                    
+            
+        public slots:
+            void doDeviceAdded(QString);
+            void doDeviceRemoved(QString);
+            
+        signals:
+            void diskAdded(VolumeTree);
+            void partitionAdded(Partition *);
         private:
             VolumeManager();
             

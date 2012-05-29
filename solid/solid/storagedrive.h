@@ -147,6 +147,10 @@ namespace Solid
         */
        qulonglong size() const;
 
+       /**
+        * @return a string identifying the partition table scheme on this drive, or an empty string
+        * if none is detected.
+        */
        QString partitionTableScheme() const;
 
        /**

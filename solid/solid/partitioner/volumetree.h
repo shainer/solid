@@ -207,7 +207,12 @@ namespace Solid
              * @param free include blocks of free space too.
              * @returns a sorted list of logical partitions.
              */
-            QList<DeviceModified *> logicalPartitions(bool free = false) const;            
+            QList<DeviceModified *> logicalPartitions(bool free = false) const;
+            
+            /**
+             * @returns a list of all devices stored in this tree.
+             */
+            QList<DeviceModified *> allDevices() const;
             
             void print() const;
             
@@ -243,6 +248,8 @@ namespace Solid
              * Removes a device. A device inside a tree is uniquely identified by name.
              */
             void removeDevice(const QString &);
+            
+            void removeAllFreeSpace();
             
             /*
              * Deletes all the nodes in the tree.

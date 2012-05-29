@@ -186,6 +186,30 @@ void VolumeTreePrivate::removeDevice(const QString& deviceName)
     }
 }
 
+void VolumeTreePrivate::removeAllFreeSpace()
+{
+    QList< VolumeTreeItem* > stack;
+    stack.push_front(root);
+    
+    while (!stack.isEmpty()) {
+        VolumeTreeItem* currentNode = stack.takeFirst();
+        
+        if (currentNode->volume()->deviceType() == DeviceModified::FreeSpaceDevice) {
+            VolumeTreeItem* parent = currentNode->parent();
+                
+            if (parent) {
+                parent->removeChild(currentNode);
+            }
+            
+            delete currentNode;
+        }
+            
+        foreach (VolumeTreeItem* child, currentNode->children()) {
+            stack.push_front(child);
+        }
+    }
+}
+
 void VolumeTreePrivate::clear()
 {
     delete root;
@@ -334,7 +358,6 @@ void VolumeTreePrivate::destroy(VolumeTreeItem* node)
     delete node;
 }
 
-
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
     qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "offset" << r->volume()->offset() << "size" << r->volume()->size();
@@ -432,6 +455,24 @@ QList< DeviceModified* > VolumeTree::logicalPartitions(bool free) const
     }
         
     return logicals;
+}
+
+QList< DeviceModified* > VolumeTree::allDevices() const
+{
+    QList< DeviceModified* > devices;
+    QList< VolumeTreeItem* > stack;
+    stack.push_front(d->root);
+    
+    while (!stack.isEmpty()) {
+        VolumeTreeItem* currentNode = stack.takeFirst();
+        devices.append(currentNode->volume());
+        
+        foreach (VolumeTreeItem* child, currentNode->children()) {
+            stack.push_front(child);
+        }
+    }
+    
+    return devices;
 }
 
 VolumeTreeItem* VolumeTree::searchNode(const QString& name) const

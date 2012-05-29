@@ -60,6 +60,11 @@ namespace Ifaces
          */
         virtual Solid::StorageDrive::DriveType driveType() const = 0;
 
+        /**
+         * Retrieves the partition table scheme, if any.
+         * 
+         * @returns a string indicating the partition table scheme, or an empty string if none is detected.
+         */
         virtual QString partitionTableScheme() const = 0;
 
 
