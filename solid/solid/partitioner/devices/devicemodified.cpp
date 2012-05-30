@@ -27,7 +27,14 @@ public:
     QString parentName;
     bool existent;
 };
-    
+
+QString DeviceModified::udiToName(const QString& udi)
+{
+    QString tmp = udi.split("/").last();
+    tmp.prepend("/dev/");
+    return tmp;
+}
+
 DeviceModified::DeviceModified(DeviceInterface* iface)
     : d( new Private(iface) )
 {}

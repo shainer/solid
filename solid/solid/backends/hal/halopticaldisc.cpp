@@ -160,4 +160,9 @@ qulonglong OpticalDisc::offset() const
     return Solid::Backends::Hal::Volume::offset();
 }
 
+QStringList OpticalDisc::flags() const
+{
+    return Solid::Backends::Hal::Volume::flags();
+}
+
 #include "backends/hal/halopticaldisc.moc"

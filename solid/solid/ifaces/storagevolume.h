@@ -101,6 +101,13 @@ namespace Ifaces
          * @return the starting offset of this volume.
          */
         virtual qulonglong offset() const = 0;
+        
+        /**
+         * Retrieves some properties associated with this volume.
+         * 
+         * @return a list of flags set for this partition.
+         */
+        virtual QStringList flags() const = 0;
 
         /**
          * Retrieves the crypto container UDI of this volume.

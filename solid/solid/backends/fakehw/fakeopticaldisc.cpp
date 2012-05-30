@@ -162,4 +162,9 @@ qulonglong FakeOpticalDisc::offset() const
     return Solid::Backends::Fake::FakeVolume::offset();
 }
 
+QStringList FakeOpticalDisc::flags() const
+{
+    return Solid::Backends::Fake::FakeVolume::flags();
+}
+
 #include "backends/fakehw/fakeopticaldisc.moc"

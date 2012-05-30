@@ -47,6 +47,7 @@ public Q_SLOTS:
     virtual QString uuid() const;
     virtual qulonglong size() const;
     virtual qulonglong offset() const;
+    virtual QStringList flags() const;
     virtual QString encryptedContainerUdi() const;
 };
 }

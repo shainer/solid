@@ -91,6 +91,11 @@ qulonglong FakeVolume::offset() const
     return 0;
 }
 
+QStringList FakeVolume::flags() const
+{
+    return QStringList();
+}
+
 QString Solid::Backends::Fake::FakeVolume::encryptedContainerUdi() const
 {
     return QString();

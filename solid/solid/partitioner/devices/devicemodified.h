@@ -23,6 +23,8 @@ namespace Solid
                 DeviceModified();
                 virtual ~DeviceModified();
                 
+                static QString udiToName(const QString &);
+                
                 virtual DeviceModifiedType deviceType() const = 0;
                 virtual qulonglong offset() const;
                 virtual qulonglong size() const = 0;

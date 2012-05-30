@@ -46,6 +46,7 @@ public:
     virtual bool isRewritable() const;
     virtual qulonglong capacity() const;
     virtual qulonglong offset() const;
+    virtual QStringList flags() const;
 };
 }
 }

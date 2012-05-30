@@ -24,6 +24,7 @@ public:
         , uuid(v->uuid())
         , size(v->size())
         , offset(v->offset())
+        , flags(v->flags())
     {}
     
     Private(Actions::CreatePartitionAction *action)
