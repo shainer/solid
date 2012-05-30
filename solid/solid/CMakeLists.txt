@@ -438,6 +438,7 @@ install( FILES partitioner/utils/filesystem.h
 	       partitioner/utils/partitioningerror.h
                partitioner/utils/partitiontableutils.h
                partitioner/utils/partitioner_enums.h
+               partitioner/utils/utils.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/utils COMPONENT Devel)
 
 ########### parser build ###############
