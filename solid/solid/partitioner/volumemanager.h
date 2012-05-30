@@ -101,10 +101,6 @@ namespace Solid
         public slots:
             void doDeviceAdded(QString);
             void doDeviceRemoved(QString);
-            
-        signals:
-            void diskAdded(VolumeTree);
-            void partitionAdded(Partition *);
         private:
             VolumeManager();
             

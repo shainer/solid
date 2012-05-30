@@ -22,6 +22,7 @@
 #define SOLID_STORAGEVOLUME_H
 
 #include <solid/solid_export.h>
+#include <QtCore/QStringList>
 
 #include <solid/deviceinterface.h>
 
@@ -151,6 +152,13 @@ namespace Solid
          * @return the offset of this volume inside the drive.
          **/
         qulonglong offset() const;
+        
+        /**
+         * Retrieves some properties associated with this partition.
+         * 
+         * @return a list of partition flags, such as "boot" for bootable.
+         */
+        QStringList flags() const;
 
         /**
          * Retrieves the crypto container of this volume.

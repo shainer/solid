@@ -67,6 +67,13 @@ namespace Solid
             QList<Action *> redo();
             
             /**
+             * Removes all the actions which concern the given disk. 
+             * 
+             * @param diskName the name of the disk;
+             */
+            void removeActionsOfDisk(const QString &);
+            
+            /**
              * Clears all the list, deleting the action objects.
              */
             void clear();

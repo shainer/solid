@@ -82,6 +82,12 @@ qulonglong Solid::StorageVolume::offset() const
     return_SOLID_CALL(Ifaces::StorageVolume *, d->backendObject(), 0, offset());
 }
 
+QStringList Solid::StorageVolume::flags() const
+{
+    Q_D(const StorageVolume);
+    return_SOLID_CALL(Ifaces::StorageVolume *, d->backendObject(), QStringList(), flags());
+}
+
 Solid::Device Solid::StorageVolume::encryptedContainer() const
 {
     Q_D(const StorageVolume);

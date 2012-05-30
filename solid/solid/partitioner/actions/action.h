@@ -23,6 +23,8 @@
 #include <solid/solid_export.h>
 #include <QtCore/QString>
 #include <QtCore/QObject>
+#include <QtCore/QStringList>
+#include <solid/partitioner/devices/devicemodified.h>
 
 namespace Solid
 {
@@ -30,6 +32,8 @@ namespace Solid
     {
         namespace Actions
         {
+            using namespace Devices;
+            
             /**
              * @class Action
              * @brief This is the abstract base class for all the actions the application can register for execution.
@@ -76,6 +80,13 @@ namespace Solid
                  * @returns true if two actions have the same description.
                  */
                 virtual bool operator==(Action *) const;
+                
+                /** EXPERIMENT **/
+                virtual void setOwnerDisk(DeviceModified *);
+                virtual DeviceModified* ownerDisk() const;
+                
+            private:
+                DeviceModified* owner;
             };
         }
     }

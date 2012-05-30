@@ -29,6 +29,7 @@
 #include <solid/partitioner/actions/modifypartitionaction.h>
 #include <solid/partitioner/actions/removepartitiontableaction.h>
 #include <solid/partitioner/utils/partitioningerror.h>
+#include <solid/partitioner/utils/utils.h>
 #include <solid/device.h>
 #include <backends/udisks/udisksmanager.h>
 #include <kglobal.h>
@@ -38,13 +39,6 @@ namespace Solid
 {   
 namespace Partitioner
 {
-
-QString nameFromUdi(const QString &udi)
-{
-    QString tmp = udi.split("/").last();
-    tmp.prepend("/dev/");
-    return tmp;
-}
     
 using namespace Devices;
 using namespace Utils;
@@ -74,7 +68,6 @@ public:
     Disk* addDisk(Solid::StorageDrive *, const QString &);
     void detectPartitionsOfDisk(const QString &);
     void detectFreeSpaceOfDisk(const QString &);
-    void addPartitionToDisk(StorageVolume *, const QString &);
     
     QMap<QString, VolumeTree> volumeTrees;
     ActionStack actionstack;
@@ -138,7 +131,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
     switch (action->actionType()) {
         case Action::FormatPartition: {
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
-            DeviceModified* p = d->searchDeviceByName(fpa->partition());
+            VolumeTree tree = d->searchTreeWithDevice(fpa->partition());
+            DeviceModified* p = tree.searchDevice(fpa->partition());
             Utils::Filesystem fs = fpa->filesystem();
 
             if (!fs.unsupportedFlags().isEmpty()) {
@@ -161,6 +155,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             Partition* volume = dynamic_cast<Partition *>(p);
             volume->setFilesystem(fs);
+            
+            fpa->setOwnerDisk(tree.root());
             break;
         }
         
@@ -206,6 +202,9 @@ bool VolumeManager::registerAction(Actions::Action* action)
 
             Partition* newPartition = new Partition(cpa);
             tree.d->addDevice(cpa->disk(), newPartition);
+            
+            cpa->setOwnerDisk(disk);
+            break;
         }
         
         case Action::RemovePartition: {
@@ -225,6 +224,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             tree.d->mergeAndDelete(rpa->partition());
+            rpa->setOwnerDisk(tree.root());
             break;
         }
         
@@ -299,6 +299,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
             }
             
+            rpa->setOwnerDisk(tree.root());
             break;
         }
         
@@ -347,6 +348,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
 
                 p->unsetFlag(flag);
             }
+            
+            mpa->setOwnerDisk(tree.root());
             break;
         }
         
@@ -357,6 +360,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 return false;
             }
             
+            VolumeTree tree = d->volumeTrees[cpta->disk()];
+            cpta->setOwnerDisk(tree.root());
             break;
         }
         
@@ -367,6 +372,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 return false;
             }
             
+            VolumeTree tree = d->volumeTrees[rpta->disk()];
+            rpta->setOwnerDisk(tree.root());
             break;
         }
         
@@ -387,34 +394,66 @@ void VolumeManager::redo()
 /*
  * FIXME: in order for this to work, we must be sure that when this slot is called, it isn't
  * called again until the previous instance hasn't finished execution.
+ * 
+ * TODO: Remove related actions when needed.
  */
 void VolumeManager::doDeviceAdded(QString udi)
 {
     Predicate pred1( DeviceInterface::StorageDrive, "udi", udi );
     Predicate pred2( DeviceInterface::StorageVolume, "udi", udi );
-    
     QList<Device> drives = Device::listFromQuery(pred1);
-    
+        
     if (!drives.isEmpty()) {
         StorageDrive* drive = drives.first().as<StorageDrive>();
         Disk* disk = d->addDisk(drive, udi);
         d->detectFreeSpaceOfDisk(disk->name());
-    } else {
+        
+        d->actionstack.removeActionsOfDisk(disk->name());
+    }
+    else {
         QList<Device> volumes = Device::listFromQuery(pred2);
         
         if (volumes.isEmpty()) {
             return;
         }
         
-        Device partition = volumes.first();
-        d->addPartitionToDisk(partition.as<StorageVolume>(), nameFromUdi(partition.parentUdi()));
-        d->detectFreeSpaceOfDisk(nameFromUdi(partition.parentUdi()));
+        QString diskName = DeviceModified::udiToName(volumes.first().parentUdi());
+        VolumeTree diskTree = d->volumeTrees[diskName];
+        
+        if (!diskTree.d) {
+            return;
+        }
+
+        d->detectPartitionsOfDisk(volumes.first().parentUdi());
+        d->detectFreeSpaceOfDisk(diskName);
+        
+        d->actionstack.removeActionsOfDisk(diskName);
     }
 }
 
 void VolumeManager::doDeviceRemoved(QString udi)
 {
-    qDebug() << udi << "was removed";
+    Predicate pred1( DeviceInterface::StorageDrive, "udi", udi );
+    Predicate pred2( DeviceInterface::StorageVolume, "udi", udi );
+    QList<Device> drives = Device::listFromQuery(pred1);
+    QString diskName;
+    
+    if (!drives.isEmpty()) {
+        Device drive = drives.first();
+        diskName = DeviceModified::udiToName(drive.udi());
+    }
+    else {
+        QList<Device> volumes = Device::listFromQuery(pred2);
+        
+        if (volumes.isEmpty()) {
+            return;
+        }
+        
+        QString diskName = DeviceModified::udiToName(volumes.first().parentUdi());
+    }
+    
+    d->volumeTrees.remove(diskName);
+    d->actionstack.removeActionsOfDisk(diskName);
 }
 
 QList< VolumeTree > VolumeManager::allDiskTrees() const
@@ -491,6 +530,7 @@ void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
     QList<Device> devices = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
     Partition* extended = 0;
     VolumeTree tree = volumeTrees[diskName];
+    tree.d->removeAllOfType(DeviceModified::PartitionDevice);
     
     foreach (Device device, devices) {
         StorageVolume* volume = device.as<StorageVolume>();
@@ -531,17 +571,11 @@ void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
 void VolumeManager::Private::detectFreeSpaceOfDisk(const QString& diskName)
 {
     VolumeTree tree = volumeTrees[diskName];
-    tree.d->removeAllFreeSpace();
+    tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
     
     foreach (FreeSpace* space, Device::freeSpaceOfDisk(tree)) {
         tree.d->addDevice(diskName, space);
     }
-}
-
-void VolumeManager::Private::addPartitionToDisk(StorageVolume* partition, const QString& diskName)
-{
-    VolumeTree tree = volumeTrees[diskName];
-    tree.d->addDevice(diskName, new Partition(partition));
 }
 
 void VolumeManager::Private::resizePartition(Partition* partition,
@@ -695,7 +729,6 @@ bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, PT
     diskNode->addChild(bigFreeSpace);
     return true;
 }
-
 
 DeviceModified* VolumeManager::Private::searchDeviceByName(const QString& name)
 {

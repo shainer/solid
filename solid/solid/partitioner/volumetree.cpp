@@ -186,7 +186,7 @@ void VolumeTreePrivate::removeDevice(const QString& deviceName)
     }
 }
 
-void VolumeTreePrivate::removeAllFreeSpace()
+void VolumeTreePrivate::removeAllOfType(DeviceModified::DeviceModifiedType type)
 {
     QList< VolumeTreeItem* > stack;
     stack.push_front(root);
@@ -194,7 +194,7 @@ void VolumeTreePrivate::removeAllFreeSpace()
     while (!stack.isEmpty()) {
         VolumeTreeItem* currentNode = stack.takeFirst();
         
-        if (currentNode->volume()->deviceType() == DeviceModified::FreeSpaceDevice) {
+        if (currentNode->volume()->deviceType() == type) {
             VolumeTreeItem* parent = currentNode->parent();
                 
             if (parent) {
@@ -269,9 +269,8 @@ DeviceModified* VolumeTreePrivate::rightDevice(VolumeTreeItem* node)
     return right->volume();
 }
 
-bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong size)
+FreeSpace* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong size)
 {
-    FreeSpace* container = 0;
     QList< VolumeTreeItem* > stack;
     stack.push_front(root);
     
@@ -283,7 +282,7 @@ bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong siz
             FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
             
             if (space->offset() <= offset && space->size() >= size) {
-                container = space;
+                return space;
             }
         }
         
@@ -291,6 +290,13 @@ bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong siz
             stack.push_front(child);
         }
     }
+    
+    return NULL;
+}
+
+bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong size)
+{
+    FreeSpace* container = searchContainer(offset, size);
     
     if (!container) {
         return false;

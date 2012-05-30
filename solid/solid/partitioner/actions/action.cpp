@@ -35,10 +35,19 @@ Action::~Action()
 
 bool Action::operator==(Action *other) const
 {
-    qDebug() << "vengo chiamato";
     return description() == other->description();
 }
-    
+
+DeviceModified* Action::ownerDisk() const
+{
+    return owner;
+}
+
+void Action::setOwnerDisk(DeviceModified* o)
+{
+    owner = o;
+}
+
 } 
 }
 }

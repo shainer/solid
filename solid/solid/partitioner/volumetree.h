@@ -26,6 +26,7 @@
 #include <solid/solid_export.h>
 #include <solid/partitioner/devices/devicemodified.h>
 #include <solid/partitioner/devices/partition.h>
+#include "devices/freespace.h"
 
 #include <QtCore/QDebug>
 #include <QtCore/QSharedData>
@@ -249,7 +250,10 @@ namespace Solid
              */
             void removeDevice(const QString &);
             
-            void removeAllFreeSpace();
+            /*
+             * Removes all devices of a certain type.
+             */
+            void removeAllOfType(DeviceModified::DeviceModifiedType);
             
             /*
              * Deletes all the nodes in the tree.
@@ -260,6 +264,8 @@ namespace Solid
              * Searches a node inside the tree.
              */
             VolumeTreeItem* searchNode(const QString &) const;
+            
+            FreeSpace* searchContainer(qulonglong, qulonglong);
             
             /*
              * When a new partition is requested, checks if a suitable block of free space exists.
