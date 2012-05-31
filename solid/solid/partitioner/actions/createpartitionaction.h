@@ -53,8 +53,8 @@ namespace Solid
                                                qulonglong offset,
                                                qulonglong size,
                                                Utils::PartitionType ptype,
-                                               const QString& label,
-                                               const QStringList& flags
+                                               const QString& label = QString(),
+                                               const QStringList& flags = QStringList()
                                               );
                 virtual ~CreatePartitionAction();
                 

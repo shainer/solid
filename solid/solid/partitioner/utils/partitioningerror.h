@@ -53,6 +53,7 @@ namespace Solid
                     ExceedingPrimariesError,
                     FilesystemFlagsError,
                     PartitionFlagsError,
+                    CannotFormatPartition,
                     NoPartitionTableError,
                     DuplicateActionError,
                 };

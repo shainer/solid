@@ -136,6 +136,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case CannotFormatPartition: {
+            d->description = "The filesystem of partition %0 cannot be changed.";
+            d->markersLeft = 1;
+            break;
+        }
+        
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";
             d->markersLeft = 1;

@@ -164,6 +164,13 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             Partition* volume = dynamic_cast<Partition *>(p);
+            
+            if (volume->usage() == StorageVolume::Other) {
+                d->error.setType(PartitioningError::CannotFormatPartition);
+                d->error.arg(volume->name());
+                return false;
+            }
+            
             volume->setFilesystem(fs);
             
             fpa->setOwnerDisk(tree.root());
@@ -545,6 +552,17 @@ void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
     Partition* extended = 0;
     VolumeTree tree = volumeTrees[diskName];
     tree.d->removeAllOfType(DeviceModified::PartitionDevice);
+    
+    /*
+     * For now doesn't consider all the volumes not supported.
+     */
+    for (QList<Device>::iterator it = devices.begin(); it != devices.end(); it++) {
+        StorageVolume* volume = it->as<StorageVolume>();
+        
+        if (volume->usage() > StorageVolume::FileSystem) {
+            devices.erase(it);
+        }
+    }
     
     foreach (Device device, devices) {
         StorageVolume* volume = device.as<StorageVolume>();
