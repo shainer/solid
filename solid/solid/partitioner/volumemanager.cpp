@@ -201,13 +201,6 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 d->error.arg( cpa->disk() );
                 return false;
             }
-            
-            if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
-                d->error.setType(PartitioningError::ContainerNotFoundError);
-                d->error.arg(QString::number(cpa->offset()));
-                d->error.arg(QString::number(cpa->size()));
-                return false;
-            }
 
             foreach (const QString& flagSet, cpa->flags()) {
                 if (!Utils::PartitionTableUtils::instance()->supportedFlags(scheme).contains(flagSet)) {
@@ -215,6 +208,27 @@ bool VolumeManager::registerAction(Actions::Action* action)
                     d->error.arg(flagSet);
                     return false;
                 }
+            }
+            
+            if (cpa->partitionType() == Logical) {
+                DeviceModified* extended = tree.extendedPartition();
+                
+                if (!extended) {
+                    d->error.setType(PartitioningError::BadLogicalPartitionError);
+                    return false;
+                }
+                
+                if (extended->offset() > cpa->offset() || extended->rightBoundary() < (cpa->offset() + cpa->size())) {
+                    d->error.setType(PartitioningError::BadLogicalPartitionError);
+                    return false;
+                }
+            }
+            
+            if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
+                d->error.setType(PartitioningError::ContainerNotFoundError);
+                d->error.arg(QString::number(cpa->offset()));
+                d->error.arg(QString::number(cpa->size()));
+                return false;
             }
 
             Partition* newPartition = new Partition(cpa);
@@ -505,6 +519,11 @@ bool VolumeManager::apply()
 QString VolumeManager::errorDescription() const
 {
     return d->error.description();
+}
+
+QList< Action* > VolumeManager::registeredActions() const
+{
+    return d->actionstack.list();
 }
 
 void VolumeManager::Private::detectDevices()

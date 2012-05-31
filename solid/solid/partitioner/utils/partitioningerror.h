@@ -55,6 +55,7 @@ namespace Solid
                     PartitionFlagsError,
                     CannotFormatPartition,
                     NoPartitionTableError,
+                    BadLogicalPartitionError,
                     DuplicateActionError,
                 };
 

@@ -98,6 +98,13 @@ namespace Solid
              */
             QString errorDescription() const;
             
+            /**
+             * Retrieves the list of registered actions.
+             * 
+             * @returns a list of actions.
+             */
+            QList< Action* > registeredActions() const;
+            
         public slots:
             void doDeviceAdded(QString);
             void doDeviceRemoved(QString);
