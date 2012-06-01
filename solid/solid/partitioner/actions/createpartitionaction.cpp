@@ -61,6 +61,14 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
     : d( new Private(disk, offset, size, ptype, label, flags) )
 {}
 
+CreatePartitionAction::CreatePartitionAction(const QString& disk,
+                                             qulonglong offset,
+                                             qulonglong size,
+                                             const QString& label,
+                                             const QStringList& flags)
+    : d( new Private(disk, offset, size, Primary, label, flags) )
+{}
+
 CreatePartitionAction::~CreatePartitionAction()
 {
     delete d;

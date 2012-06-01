@@ -56,6 +56,21 @@ namespace Solid
                                                const QString& label = QString(),
                                                const QStringList& flags = QStringList()
                                               );
+                
+                /**
+                 * See the constructor above.
+                 * 
+                 * This is a convenience method for GPT partitions, where there is no concept of
+                 * Primary, Extended or Logical. Any information the application provides in this sense
+                 * is ignored.
+                 */
+                explicit CreatePartitionAction(const QString& disk,
+                                               qulonglong offset,
+                                               qulonglong size,
+                                               const QString& label = QString(),
+                                               const QStringList& flags = QStringList()
+                                              );
+                
                 virtual ~CreatePartitionAction();
                 
                 virtual ActionType actionType() const;
