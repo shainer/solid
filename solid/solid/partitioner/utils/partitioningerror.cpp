@@ -142,8 +142,8 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
-        case BadLogicalPartitionError: {
-            d->description = "Cannot create a new logical partition. Check that an extended partition exists.";
+        case BadPartitionTypeError: {
+            d->description = "Cannot create a new partition of the requested type.";
             d->markersLeft = 0;
             break;
         }

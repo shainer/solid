@@ -76,6 +76,10 @@ public:
     /* Changes the initial offset of a partition. */
     void movePartition(Partition *, qlonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
     
+    /* Perform necessary checks when creating a new partition with either MBR or GPT. */
+    bool mbrPartitionChecks(CreatePartitionAction *);
+    bool gptPartitionChecks(CreatePartitionAction *);
+    
     /* Set a new ptable scheme for a disk, deleting all the partitions. */
     bool setPartitionTableScheme(const QString &, Utils::PTableType);
     
@@ -190,36 +194,37 @@ bool VolumeManager::registerAction(Actions::Action* action)
             Disk* disk = dynamic_cast< Disk* >( tree.searchDevice(cpa->disk()) );
             Utils::PTableType scheme = disk->partitionTableScheme();
 
-            if (scheme == Utils::None) {
-                d->error.setType(PartitioningError::NoPartitionTableError);
-                d->error.arg( cpa->disk() );
-                return false;
-            }
-            
-            if (tree.partitions().count() == 4 && cpa->partitionType() != Logical) {
-                d->error.setType(PartitioningError::ExceedingPrimariesError);
-                d->error.arg( cpa->disk() );
-                return false;
+            switch (scheme) {
+                case Utils::None: {
+                    d->error.setType(PartitioningError::NoPartitionTableError);
+                    d->error.arg( cpa->disk() );
+                    return false;
+                }
+                
+                case Utils::MBR: {
+                    if (!d->mbrPartitionChecks(cpa)) {
+                        return false;
+                    }
+                    
+                    break;
+                }
+                
+                case Utils::GPT: {
+                    if (!d->gptPartitionChecks(cpa)) {
+                        return false;
+                    }
+                    
+                    break;
+                }
+                
+                default:
+                    break;
             }
 
             foreach (const QString& flagSet, cpa->flags()) {
                 if (!Utils::PartitionTableUtils::instance()->supportedFlags(scheme).contains(flagSet)) {
                     d->error.setType(PartitioningError::PartitionFlagsError);
                     d->error.arg(flagSet);
-                    return false;
-                }
-            }
-            
-            if (cpa->partitionType() == Logical) {
-                DeviceModified* extended = tree.extendedPartition();
-                
-                if (!extended) {
-                    d->error.setType(PartitioningError::BadLogicalPartitionError);
-                    return false;
-                }
-                
-                if (extended->offset() > cpa->offset() || extended->rightBoundary() < (cpa->offset() + cpa->size())) {
-                    d->error.setType(PartitioningError::BadLogicalPartitionError);
                     return false;
                 }
             }
@@ -504,15 +509,6 @@ VolumeTree VolumeManager::diskTree(const QString& diskName) const
 /* DI PROVA */
 bool VolumeManager::apply()
 {
-    d->executer = new ActionExecuter(d->actionstack.list());
-    qDebug() << d->executer->valid();
-    
-    ActionExecuter* e2 = new ActionExecuter(d->actionstack.list());
-    qDebug() << e2->valid();
-    
-    delete d->executer;
-    delete e2;
-    
     return true;
 }
 
@@ -739,6 +735,46 @@ void VolumeManager::Private::movePartition(Partition* partition,
     if (freeSpaceLeft) {
         tree.d->addDevice(partition->parentName(), freeSpaceLeft);
     }
+}
+
+bool VolumeManager::Private::mbrPartitionChecks(CreatePartitionAction* cpa)
+{
+    VolumeTree tree = volumeTrees[ cpa->disk() ];
+    DeviceModified* extended = tree.extendedPartition();
+    
+    if (tree.partitions().count() == 4 && cpa->partitionType() != Logical) {
+        error.setType(PartitioningError::ExceedingPrimariesError);
+        error.arg( cpa->disk() );
+        return false;
+    }
+    
+    if (cpa->partitionType() == Logical) {
+        if (!extended || extended->offset() > cpa->offset() || extended->rightBoundary() < (cpa->offset() + cpa->size())) {
+            error.setType(PartitioningError::BadPartitionTypeError);
+            return false;
+        }
+    }
+    
+    if (cpa->partitionType() == Extended && extended) {
+        error.setType(PartitioningError::BadPartitionTypeError);
+        return false;
+    }
+    
+    return true;
+}
+
+bool VolumeManager::Private::gptPartitionChecks(CreatePartitionAction* cpa)
+{
+    VolumeTree tree = volumeTrees[ cpa->disk() ];
+    
+    /* FIXME: create a new error type */
+    if (tree.partitions().count() == 128) {
+        error.setType(PartitioningError::ExceedingPrimariesError);
+        error.arg( cpa->disk() );
+        return false;
+    }
+    
+    return true;
 }
 
 bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, PTableType scheme)
