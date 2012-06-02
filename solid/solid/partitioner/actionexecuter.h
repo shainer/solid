@@ -4,6 +4,7 @@
 #include <solid/solid_export.h>
 #include <QtCore/QObject>
 #include "actions/action.h"
+#include "volumetree.h"
 
 namespace Solid
 {
@@ -15,14 +16,14 @@ namespace Solid
             Q_OBJECT
             
         public:
-            ActionExecuter(const QList<Actions::Action *>& );
+            ActionExecuter();
             virtual ~ActionExecuter();
             
-            bool valid() const;
-                    
+            bool execute();
+            
         private:
-            QList<Actions::Action *> actions;
-            bool m_valid;
+            QList< Actions::Action* > m_actions;
+            QMap<QString, VolumeTree> m_disks;
         };
     
     }

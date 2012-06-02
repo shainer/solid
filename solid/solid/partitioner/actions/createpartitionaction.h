@@ -45,14 +45,14 @@ namespace Solid
                  * @param disk the name of the disk the partition will be created on.
                  * @param offset the offset (in bytes) of the new partition.
                  * @param size the size (in bytes) of the new partition.
-                 * @param ptype the type of the new partition (primary, logical or extended).
+                 * @param extended whether the new partition should be extended: @see extended().
                  * @param label the partition label.
                  * @param flags partition flags.
                  */
                 explicit CreatePartitionAction(const QString& disk,
                                                qulonglong offset,
                                                qulonglong size,
-                                               Utils::PartitionType ptype,
+                                               bool extended,
                                                const QString& label = QString(),
                                                const QStringList& flags = QStringList()
                                               );
@@ -91,9 +91,6 @@ namespace Solid
                  */
                 qulonglong size() const;
                 
-                /**
-                 * @returns the partition type.
-                 */
                 Utils::PartitionType partitionType() const;
                 
                 /**

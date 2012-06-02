@@ -79,9 +79,9 @@ namespace Solid
             /**
              * Retrieves all the trees representing drives.
              * 
-             * @returns a list of pointers to the disk tree managed internally by this class.
+             * @returns a map with the trees.
              */
-            QList<VolumeTree> allDiskTrees() const;
+            QMap<QString, VolumeTree> allDiskTrees() const;
             
             /**
              * Retrieves the tree representing a given drive.

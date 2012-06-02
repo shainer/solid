@@ -18,6 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "createpartitionaction.h"
+#include <partitioner/volumemanager.h>
 
 namespace Solid
 {
@@ -31,14 +32,25 @@ using namespace Utils;
 class CreatePartitionAction::Private
 {
 public:
-    Private(const QString &d, qulonglong o, qulonglong s, PartitionType t, const QString& l, const QStringList& f)
+    Private(const QString &d, qulonglong o, qulonglong s, bool e, const QString& l, const QStringList& f)
         : disk(d)
         , offset(o)
         , size(s)
-        , partitionType(t)
+        , extended(e)
+        , logical(false)
         , label(l)
         , flags(f)
-    {}
+    {
+        QMap<QString, VolumeTree> trees = VolumeManager::instance()->allDiskTrees();
+        
+        if (trees.contains(disk)) {
+            DeviceModified* extended = trees[disk].extendedPartition();
+            
+            if (extended && (extended->offset() <= offset && extended->rightBoundary() >= offset + size)) {
+                logical = true;
+            }
+        }
+    }
     
     ~Private()
     {}
@@ -46,7 +58,8 @@ public:
     QString disk;
     qulonglong offset;
     qulonglong size;
-    PartitionType partitionType;
+    bool extended;
+    bool logical;
     QString label;
     QStringList flags;
 };
@@ -54,11 +67,11 @@ public:
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
-                                             PartitionType ptype,
+                                             bool extended,
                                              const QString& label,
                                              const QStringList& flags
                                             )
-    : d( new Private(disk, offset, size, ptype, label, flags) )
+    : d( new Private(disk, offset, size, extended, label, flags) )
 {}
 
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
@@ -66,7 +79,7 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong size,
                                              const QString& label,
                                              const QStringList& flags)
-    : d( new Private(disk, offset, size, Primary, label, flags) )
+    : d( new Private(disk, offset, size, false, label, flags) )
 {}
 
 CreatePartitionAction::~CreatePartitionAction()
@@ -105,7 +118,15 @@ qulonglong CreatePartitionAction::size() const
 
 PartitionType CreatePartitionAction::partitionType() const
 {
-    return d->partitionType;
+    if (d->extended) {
+        return Extended;
+    }
+    
+    if (d->logical) {
+        return Logical;
+    }
+    
+    return Primary;
 }
 
 QString CreatePartitionAction::label() const

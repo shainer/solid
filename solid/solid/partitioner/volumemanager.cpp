@@ -77,8 +77,8 @@ public:
     void movePartition(Partition *, qlonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
     
     /* Perform necessary checks when creating a new partition with either MBR or GPT. */
-    bool mbrPartitionChecks(CreatePartitionAction *);
-    bool gptPartitionChecks(CreatePartitionAction *);
+    bool mbrPartitionChecks(Actions::CreatePartitionAction *);
+    bool gptPartitionChecks(Actions::CreatePartitionAction *);
     
     /* Set a new ptable scheme for a disk, deleting all the partitions. */
     bool setPartitionTableScheme(const QString &, Utils::PTableType);
@@ -298,6 +298,29 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 return false;
             }
             
+    
+            /* Special checks for extendend partitions */
+            DeviceModified* firstLogical = 0;
+            DeviceModified* lastLogical = 0;
+            if (toResize->partitionType() == Extended) {
+                lastLogical = tree.extendedNode()->children().last()->volume();
+                firstLogical = tree.extendedNode()->children().first()->volume();
+                
+                if (rpa->newSize() < toResize->size() &&
+                   (lastLogical->deviceType() != DeviceModified::FreeSpaceDevice ||
+                    toResize->offset() + rpa->newSize() < lastLogical->offset())) {
+                    d->error.setType(PartitioningError::ResizeOutOfBoundsError);
+                    return false;
+                }
+                
+                if (rpa->newOffset() > toResize->offset() &&
+                    firstLogical->deviceType() != DeviceModified::FreeSpaceDevice ||
+                    toResize->offset() > firstLogical->rightBoundary()) {
+                    d->error.setType(PartitioningError::ResizeOutOfBoundsError);
+                    return false;
+                }
+            }
+            
             if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
                 boundary = toResize->rightBoundary();
             } else {
@@ -496,9 +519,9 @@ void VolumeManager::doDeviceRemoved(QString udi)
     d->actionstack.removeActionsOfDisk(diskName);
 }
 
-QList< VolumeTree > VolumeManager::allDiskTrees() const
+QMap<QString, VolumeTree> VolumeManager::allDiskTrees() const
 {
-    return d->volumeTrees.values();
+    return d->volumeTrees;
 }
 
 VolumeTree VolumeManager::diskTree(const QString& diskName) const
@@ -630,7 +653,7 @@ void VolumeManager::Private::resizePartition(Partition* partition,
                                     DeviceModified* rightDevice,
                                     VolumeTree& tree)
 {  
-    if (ns == -1) {
+    if (ns == -1 || ns == partition->size()) {
         return;
     }
     qulonglong newSize = (qulonglong)ns;
@@ -654,6 +677,26 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         } else {
             spaceRight->setOffset(rightOffset);
             spaceRight->setSize(rightSize);
+        }
+    }
+    
+    if (partition->partitionType() == Extended) {
+        DeviceModified* lastLogical = tree.extendedNode()->children().last()->volume();
+        
+        if (lastLogical->deviceType() == DeviceModified::FreeSpaceDevice) {
+            qulonglong logSize = lastLogical->size() + (newSize - partition->size());
+            
+            if (logSize == 0) {
+                tree.d->removeDevice(lastLogical->name());
+            } else {
+                lastLogical->setSize(logSize);
+            }
+        } else {
+            qulonglong lastOffset = lastLogical->rightBoundary();
+            qulonglong lastSize = partition->offset() + newSize - lastOffset;
+            
+            FreeSpace* last = new FreeSpace(lastOffset, lastSize, partition->name());
+            tree.d->addDevice(partition->name(), last);
         }
     }
     
@@ -725,6 +768,26 @@ void VolumeManager::Private::movePartition(Partition* partition,
         }
     }
     
+    if (partition->partitionType() == Extended) {
+        DeviceModified* firstLogical = tree.extendedNode()->children().first()->volume();
+        
+        if (firstLogical->deviceType() == DeviceModified::FreeSpaceDevice) {
+            qulonglong logSize = firstLogical->size() - (newOffset - partition->offset());
+            
+            if (logSize == 0) {
+                tree.d->removeDevice(firstLogical->name());
+            } else {
+                firstLogical->setSize(logSize);
+            }
+        } else {
+            qulonglong firstOffset = partition->offset();
+            qulonglong firstSize = partition->offset() - newOffset;
+            
+            FreeSpace* first = new FreeSpace(firstOffset, firstSize, partition->name());
+            tree.d->addDevice(partition->name(), first);
+        }
+    }
+    
     partition->setOffset(newOffset);
     
     /*
@@ -737,24 +800,23 @@ void VolumeManager::Private::movePartition(Partition* partition,
     }
 }
 
-bool VolumeManager::Private::mbrPartitionChecks(CreatePartitionAction* cpa)
+bool VolumeManager::Private::mbrPartitionChecks(Actions::CreatePartitionAction* cpa)
 {
     VolumeTree tree = volumeTrees[ cpa->disk() ];
     DeviceModified* extended = tree.extendedPartition();
+    qulonglong newRightBoundary = cpa->offset() + cpa->size();
     
-    if (tree.partitions().count() == 4 && cpa->partitionType() != Logical) {
+    /* Whether the new partition will be logical is detected automatically computing its boundaries */
+    bool isLogical = extended && (cpa->offset() >= extended->offset() && (newRightBoundary <= extended->rightBoundary()));
+    
+    /* If the new partition won't be logical, check that we're not surpassing the limit of 4 primary partitions */
+    if (tree.partitions().count() == 4 && !isLogical) {
         error.setType(PartitioningError::ExceedingPrimariesError);
         error.arg( cpa->disk() );
         return false;
     }
     
-    if (cpa->partitionType() == Logical) {
-        if (!extended || extended->offset() > cpa->offset() || extended->rightBoundary() < (cpa->offset() + cpa->size())) {
-            error.setType(PartitioningError::BadPartitionTypeError);
-            return false;
-        }
-    }
-    
+    /* A disk can have only one extended partition. */
     if (cpa->partitionType() == Extended && extended) {
         error.setType(PartitioningError::BadPartitionTypeError);
         return false;
@@ -767,7 +829,11 @@ bool VolumeManager::Private::gptPartitionChecks(CreatePartitionAction* cpa)
 {
     VolumeTree tree = volumeTrees[ cpa->disk() ];
     
-    /* FIXME: create a new error type */
+    /*
+     * This limit should be extendible, but udisks doesn't support it.
+     * 
+     * FIXME: create a different error type.
+     */
     if (tree.partitions().count() == 128) {
         error.setType(PartitioningError::ExceedingPrimariesError);
         error.arg( cpa->disk() );
