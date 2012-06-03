@@ -32,12 +32,13 @@ using namespace Utils;
 class CreatePartitionAction::Private
 {
 public:
-    Private(const QString &d, qulonglong o, qulonglong s, bool e, const QString& l, const QStringList& f)
+    Private(const QString &d, qulonglong o, qulonglong s, bool e, Utils::Filesystem fs, const QString& l, const QStringList& f)
         : disk(d)
         , offset(o)
         , size(s)
         , extended(e)
         , logical(false)
+        , filesystem(fs)
         , label(l)
         , flags(f)
     {
@@ -60,6 +61,7 @@ public:
     qulonglong size;
     bool extended;
     bool logical;
+    Utils::Filesystem filesystem;
     QString label;
     QStringList flags;
 };
@@ -68,18 +70,20 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
                                              bool extended,
+                                             const Utils::Filesystem& fs,
                                              const QString& label,
                                              const QStringList& flags
                                             )
-    : d( new Private(disk, offset, size, extended, label, flags) )
+    : d( new Private(disk, offset, size, extended, fs, label, flags) )
 {}
 
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
+                                             const Utils::Filesystem& fs,
                                              const QString& label,
                                              const QStringList& flags)
-    : d( new Private(disk, offset, size, false, label, flags) )
+    : d( new Private(disk, offset, size, false, fs, label, flags) )
 {}
 
 CreatePartitionAction::~CreatePartitionAction()
@@ -94,8 +98,8 @@ Action::ActionType CreatePartitionAction::actionType() const
 
 QString CreatePartitionAction::description() const
 {
-    QString desc( "Creating a new partition with size %0 on %1" );
-    desc = desc.arg(QString::number(d->size), d->disk);
+    QString desc( "Creating a new partition with size %0 and \"%1\" filesystem on %2" );
+    desc = desc.arg(QString::number(d->size), d->filesystem.name(), d->disk);
     
     return QObject::tr(desc.toUtf8().data());
 }
@@ -127,6 +131,11 @@ PartitionType CreatePartitionAction::partitionType() const
     }
     
     return Primary;
+}
+
+Filesystem CreatePartitionAction::filesystem() const
+{
+    return d->filesystem;
 }
 
 QString CreatePartitionAction::label() const

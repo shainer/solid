@@ -23,6 +23,7 @@
 
 #include <solid/partitioner/actions/action.h>
 #include <solid/partitioner/utils/partitioner_enums.h>
+#include <solid/partitioner/utils/filesystem.h>
 #include <QtCore/QStringList>
 
 namespace Solid
@@ -36,7 +37,7 @@ namespace Solid
              * @extends Action
              * @brief Action for creating a new partition
              */
-            class SOLID_EXPORT CreatePartitionAction : public Action
+            class SOLID_EXPORT CreatePartitionAction : virtual public Action
             {
             public:
                 /**
@@ -45,14 +46,18 @@ namespace Solid
                  * @param disk the name of the disk the partition will be created on.
                  * @param offset the offset (in bytes) of the new partition.
                  * @param size the size (in bytes) of the new partition.
-                 * @param extended whether the new partition should be extended: @see extended().
+                 * @param extended whether the new partition should be extended: @see partitionType().
+                 * @param fs the filesystem the partition will have, or a void object for none.
                  * @param label the partition label.
                  * @param flags partition flags.
+                 * 
+                 * @note the filesystem parameter is ignored if an extended partition is requested.
                  */
                 explicit CreatePartitionAction(const QString& disk,
                                                qulonglong offset,
                                                qulonglong size,
-                                               bool extended,
+                                               bool extended = false,
+                                               const Utils::Filesystem& fs = Utils::Filesystem(),
                                                const QString& label = QString(),
                                                const QStringList& flags = QStringList()
                                               );
@@ -67,6 +72,7 @@ namespace Solid
                 explicit CreatePartitionAction(const QString& disk,
                                                qulonglong offset,
                                                qulonglong size,
+                                               const Utils::Filesystem& fs = Utils::Filesystem(),
                                                const QString& label = QString(),
                                                const QStringList& flags = QStringList()
                                               );
@@ -91,7 +97,16 @@ namespace Solid
                  */
                 qulonglong size() const;
                 
+                /**
+                 * @returns an enum value indicating if the new partition will be primary, extended or logical.
+                 * @note whether the partition will be logical is deduced automatically from its geometry.
+                 */
                 Utils::PartitionType partitionType() const;
+                
+                /**
+                 * @returns the filesystem this partition will have.
+                 */
+                Utils::Filesystem filesystem() const;
                 
                 /**
                  * @returns the partition label.

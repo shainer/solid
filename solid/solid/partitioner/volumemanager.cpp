@@ -121,6 +121,7 @@ VolumeManager::VolumeManager()
 
 VolumeManager::~VolumeManager()
 {
+    d->actionstack.clear();
     d->volumeTrees.clear();
     delete d;
 }
@@ -238,6 +239,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
 
             Partition* newPartition = new Partition(cpa);
+            newPartition->setFilesystem(cpa->filesystem());
             tree.d->addDevice(cpa->disk(), newPartition);
             
             cpa->setOwnerDisk(disk);
@@ -365,7 +367,6 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             rpa->setOwnerDisk(tree.root());
-            tree.print();
             break;
         }
         

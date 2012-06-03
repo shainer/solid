@@ -43,7 +43,7 @@ namespace Solid
                  * Constructs a new object.
                  * 
                  * @param partition the partition to format.
-                 * @param fs the name of the new filesystem.
+                 * @param fs the new filesystem.
                  */
                 explicit FormatPartitionAction(const QString &, const Utils::Filesystem &);
                 virtual ~FormatPartitionAction();

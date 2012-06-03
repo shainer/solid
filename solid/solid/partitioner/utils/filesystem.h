@@ -45,18 +45,23 @@ namespace Solid
                  * @param uid the owner UID, if ownership is supported.
                  * @param gid the owner GID, if ownership is supported.
                  */
-                explicit Filesystem(const QString &, const QString &, uid_t, gid_t);
+                explicit Filesystem(const QString &name,
+                                    const QString &label,
+                                    uid_t ownerUid,
+                                    gid_t ownerGid);
 
                 /**
                  * Creates a new filesystem.
                  *
                  * @param name the filesystem name.
-                 * @param the filesystem flags: each string has the format "name=value".
+                 * @param flags the filesystem flags: each string has the format "name=value".
                  */
-                explicit Filesystem(const QString &, const QStringList &flags = QStringList());
+                explicit Filesystem(const QString &name,
+                                    const QStringList &flags = QStringList());
+
 
                 /**
-                 * Creates a void filesystem.
+                 * Creates a void filesystem. It means "No filesystem".
                  */
                 explicit Filesystem();
 

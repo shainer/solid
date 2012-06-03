@@ -265,7 +265,7 @@ namespace Solid
              */
             VolumeTreeItem* searchNode(const QString &) const;
             
-            FreeSpace* searchContainer(qulonglong, qulonglong);
+            VolumeTreeItem* searchContainer(qulonglong, qulonglong);
             
             /*
              * When a new partition is requested, checks if a suitable block of free space exists.

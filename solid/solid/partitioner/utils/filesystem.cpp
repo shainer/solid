@@ -56,9 +56,6 @@ public:
         , ownerGid(ogid)
     {}
 
-    Private()
-    {}
-
     ~Private()
     {}
 
@@ -78,7 +75,7 @@ Filesystem::Filesystem(const QString& name, const QString& label, uid_t ownerUid
 {}
 
 Filesystem::Filesystem()
-    : d( new Private )
+    : d( new Private("none", QStringList()) )
 {}
 
 Filesystem::Filesystem(const Filesystem &other)

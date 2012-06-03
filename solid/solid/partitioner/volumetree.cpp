@@ -78,7 +78,7 @@ void VolumeTreeItem::addChild(DeviceModified* child)
 {
     VolumeTreeItem* item = new VolumeTreeItem(child, QList<VolumeTreeItem *>(), this);
     bool inserted = false;
-        
+    
     for (int i = 0; i < d->children.size(); i++) {
         DeviceModified* device = d->children[i]->volume();
         
@@ -269,7 +269,7 @@ DeviceModified* VolumeTreePrivate::rightDevice(VolumeTreeItem* node)
     return right->volume();
 }
 
-FreeSpace* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong size)
+VolumeTreeItem* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong size)
 {
     QList< VolumeTreeItem* > stack;
     stack.push_front(root);
@@ -282,7 +282,7 @@ FreeSpace* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong size
             FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
             
             if (space->offset() <= offset && space->size() >= size) {
-                return space;
+                return currentNode;
             }
         }
         
@@ -296,12 +296,13 @@ FreeSpace* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong size
 
 bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong size)
 {
-    FreeSpace* container = searchContainer(offset, size);
+    VolumeTreeItem* containerNode = searchContainer(offset, size);   
     
-    if (!container) {
+    if (!containerNode) {
         return false;
     }
     
+    FreeSpace* container = dynamic_cast< FreeSpace* >(containerNode->volume());
     FreeSpace* leftSpace = 0;
     FreeSpace* rightSpace = 0;
     qulonglong containerOffset = container->offset();
@@ -317,7 +318,7 @@ bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong siz
         addDevice(container->parentName(), rightSpace);
     }
     
-    delete container;
+    delete containerNode;
     return true;
 }
 
