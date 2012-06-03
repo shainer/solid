@@ -314,8 +314,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 }
                 
                 if (rpa->newOffset() > toResize->offset() &&
-                    firstLogical->deviceType() != DeviceModified::FreeSpaceDevice ||
-                    toResize->offset() > firstLogical->rightBoundary()) {
+                    (firstLogical->deviceType() != DeviceModified::FreeSpaceDevice ||
+                    toResize->offset() > firstLogical->rightBoundary())) {
                     d->error.setType(PartitioningError::ResizeOutOfBoundsError);
                     return false;
                 }
@@ -469,9 +469,12 @@ void VolumeManager::doDeviceAdded(QString udi)
     if (!drives.isEmpty()) {
         StorageDrive* drive = drives.first().as<StorageDrive>();
         Disk* disk = d->addDisk(drive, udi);
-        d->detectFreeSpaceOfDisk(disk->name());
         
+        d->detectFreeSpaceOfDisk(disk->name());
         d->actionstack.removeActionsOfDisk(disk->name());
+        
+        VolumeTree diskTree = d->volumeTrees[disk->name()];
+        emit deviceAdded(diskTree);
     }
     else {
         QList<Device> volumes = Device::listFromQuery(pred2);
@@ -491,6 +494,7 @@ void VolumeManager::doDeviceAdded(QString udi)
         d->detectFreeSpaceOfDisk(diskName);
         
         d->actionstack.removeActionsOfDisk(diskName);
+        emit deviceAdded(diskTree);
     }
 }
 
@@ -517,6 +521,7 @@ void VolumeManager::doDeviceRemoved(QString udi)
     
     d->volumeTrees.remove(diskName);
     d->actionstack.removeActionsOfDisk(diskName);
+    emit deviceRemoved(diskName);
 }
 
 QMap<QString, VolumeTree> VolumeManager::allDiskTrees() const
@@ -558,6 +563,7 @@ void VolumeManager::Private::detectDevices()
         if (drive->driveType() == StorageDrive::HardDisk)
         {
             Disk* newDisk = addDisk(drive, udi);
+            
             /* FIXME */
             if (!udi.contains("loop")) {
                 detectPartitionsOfDisk(udi);

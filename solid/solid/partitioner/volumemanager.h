@@ -108,6 +108,11 @@ namespace Solid
         public slots:
             void doDeviceAdded(QString);
             void doDeviceRemoved(QString);
+            
+        signals:
+            void deviceAdded(VolumeTree);
+            void deviceRemoved(QString);
+            
         private:
             VolumeManager();
             
