@@ -78,9 +78,13 @@ Partition::Partition(StorageVolume* volume)
 Partition::Partition(Actions::CreatePartitionAction* action)
     : DeviceModified()
     , d( new Private(action) )
-{
+{    
+    QString offsetStr = formatByteSize((double)(d->offset));
+    QString sizeStr = formatByteSize((double)(d->size));
+    QString partitionName = "New partition of offset " + offsetStr + " and size " + sizeStr;
+    
+    DeviceModified::setName(partitionName);
     DeviceModified::setParentName(action->disk());
-    DeviceModified::setName("New partition");
 }
 
 Partition::~Partition()

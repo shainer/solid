@@ -153,6 +153,7 @@ set(solid_LIB_SRCS
    partitioner/utils/filesystem.cpp
    partitioner/utils/partitioningerror.cpp
    partitioner/utils/partitiontableutils.cpp
+   partitioner/utils/utils.cpp
 )
 
 if(NOT APPLE)

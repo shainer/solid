@@ -69,13 +69,6 @@ namespace Solid
                 virtual ~DeviceModified();
                 
                 /**
-                 * A static method to convert from a UDI to a name used in the partitioner.
-                 * 
-                 * @todo REMOVE.
-                 */
-                static QString udiToName(const QString &);
-                
-                /**
                  * @returns the most specific type of the object.
                  */
                 virtual DeviceModifiedType deviceType() const = 0;

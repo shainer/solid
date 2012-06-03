@@ -22,5 +22,35 @@
 #define SOLID_PARTITIONER_UTILS_UTILS_H
 
 #define SPACE_BETWEEN_LOGICALS 32256
+#include <QtCore/QString>
+#include <solid/solid_export.h>
+
+namespace Solid
+{
+    namespace Partitioner
+    {
+        namespace Utils
+        {
+            /**
+             * Converts from a device UDI detected by udisks, like /org/freedesktop/UDisks/devices/sda, to the
+             * correspondent Linux-like name, e.g. /dev/sda.
+             * 
+             * @param udi the device UDI to convert.
+             * @returns the Linux-like device name.
+             * @note not sure if this conversion is universally valid.
+             */
+            QString SOLID_EXPORT udiToName(const QString &);
+            
+            /**
+             * Converts from a Linux-like device name to a device UDI.
+             * 
+             * @param name the Linux-like device name.
+             * @returns the correspondent device UDI.
+             * @note not sure if this conversion is universally valid.
+             */
+            QString SOLID_EXPORT nameToUdi(const QString &);
+        }
+    }
+}
 
 #endif

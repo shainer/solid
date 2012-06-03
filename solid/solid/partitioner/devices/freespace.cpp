@@ -18,6 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "freespace.h"
+#include <backends/udisks/udisksdevice.h>
 
 namespace Solid
 {
@@ -45,8 +46,10 @@ FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUd
     : DeviceModified()
     , d( new Private( offset, size ) )
 {
-    /* FIXME: this isn't right */
-    QString uniqueName = "Free space of offset " + QString::number(d->offset) + " and size " + QString::number(d->size);
+    QString offsetStr = formatByteSize((double)(d->offset));
+    QString sizeStr = formatByteSize((double)(d->size));
+    
+    QString uniqueName = "Free space of offset " + offsetStr + " and size " + sizeStr;
     DeviceModified::setName(uniqueName);
     DeviceModified::setParentName(parentUdi);
 }

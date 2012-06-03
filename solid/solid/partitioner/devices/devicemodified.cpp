@@ -47,13 +47,6 @@ public:
     bool existent;
 };
 
-QString DeviceModified::udiToName(const QString& udi)
-{
-    QString tmp = udi.split("/").last();
-    tmp.prepend("/dev/");
-    return tmp;
-}
-
 DeviceModified::DeviceModified(DeviceInterface* iface)
     : d( new Private(iface) )
 {}
@@ -84,18 +77,12 @@ bool DeviceModified::existent() const
 
 void DeviceModified::setName(const QString& udi)
 {
-    QString n = udi.split("/").last();
-    n.prepend("/dev/");
-    
-    d->name = n;
+    d->name = udi;
 }
 
 void DeviceModified::setParentName(const QString& udi)
 {
-    QString n = udi.split("/").last();
-    n.prepend("/dev/");
-    
-    d->parentName = n;
+    d->parentName = udi;
 }
 
 bool DeviceModified::operator==(const DeviceModified& other) const

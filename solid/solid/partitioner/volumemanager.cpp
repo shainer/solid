@@ -48,7 +48,7 @@ class VolumeManager::Private
 public:
     Private()
         : executer(0)
-        , udisksManager( new Backends::UDisks::UDisksManager(0) )
+        , deviceManager( new Backends::UDisks::UDisksManager(0) )
     {}
     
     ~Private()
@@ -86,7 +86,7 @@ public:
     QMap<QString, VolumeTree> volumeTrees;
     ActionStack actionstack;
     ActionExecuter* executer;
-    Backends::UDisks::UDisksManager* udisksManager;
+    Ifaces::DeviceManager* deviceManager; /* FIXME: to be destroyed */
     
     PartitioningError error;
 };
@@ -114,13 +114,14 @@ VolumeManager::VolumeManager()
     Q_ASSERT(!s_volumemanager->q);
     s_volumemanager->q = this;
     
-    QObject::connect(d->udisksManager, SIGNAL(deviceAdded(QString)), this, SLOT(doDeviceAdded(QString)));
-    QObject::connect(d->udisksManager, SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
+    QObject::connect(d->deviceManager, SIGNAL(deviceAdded(QString)), this, SLOT(doDeviceAdded(QString)));
+    QObject::connect(d->deviceManager, SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
     d->detectDevices();
 }
 
 VolumeManager::~VolumeManager()
 {
+    d->volumeTrees.clear();
     delete d;
 }
 
@@ -483,7 +484,7 @@ void VolumeManager::doDeviceAdded(QString udi)
             return;
         }
         
-        QString diskName = DeviceModified::udiToName(volumes.first().parentUdi());
+        QString diskName = volumes.first().parentUdi();
         VolumeTree diskTree = d->volumeTrees[diskName];
         
         if (!diskTree.d) {
@@ -507,7 +508,7 @@ void VolumeManager::doDeviceRemoved(QString udi)
     
     if (!drives.isEmpty()) {
         Device drive = drives.first();
-        diskName = DeviceModified::udiToName(drive.udi());
+        diskName = drive.udi();
     }
     else {
         QList<Device> volumes = Device::listFromQuery(pred2);
@@ -516,7 +517,7 @@ void VolumeManager::doDeviceRemoved(QString udi)
             return;
         }
         
-        QString diskName = DeviceModified::udiToName(volumes.first().parentUdi());
+        QString diskName = volumes.first().parentUdi();
     }
     
     d->volumeTrees.remove(diskName);
@@ -534,7 +535,6 @@ VolumeTree VolumeManager::diskTree(const QString& diskName) const
     return d->volumeTrees[diskName];
 }
 
-/* DI PROVA */
 bool VolumeManager::apply()
 {
     return true;
@@ -562,12 +562,12 @@ void VolumeManager::Private::detectDevices()
         
         if (drive->driveType() == StorageDrive::HardDisk)
         {
-            Disk* newDisk = addDisk(drive, udi);
+            addDisk(drive, udi);
             
             /* FIXME */
             if (!udi.contains("loop")) {
                 detectPartitionsOfDisk(udi);
-                detectFreeSpaceOfDisk(newDisk->name());
+                detectFreeSpaceOfDisk(udi);
             }
         }
     }
@@ -588,13 +588,10 @@ Disk* VolumeManager::Private::addDisk(StorageDrive* drive, const QString& udi)
 }
 
 void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
-{
-    QString diskName = parentUdi.split("/").last();
-    diskName.prepend("/dev/");
-    
+{    
     QList<Device> devices = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
     Partition* extended = 0;
-    VolumeTree tree = volumeTrees[diskName];
+    VolumeTree tree = volumeTrees[parentUdi];
     tree.d->removeAllOfType(DeviceModified::PartitionDevice);
     
     /*
@@ -615,15 +612,15 @@ void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
             extended = new Partition(volume);
             extended->setPartitionType(Extended);
             extended->setName(device.udi());
-            extended->setParentName(diskName);
+            extended->setParentName(parentUdi);
             
-            tree.d->addDevice(diskName, extended);
+            tree.d->addDevice(parentUdi, extended);
         }
     }
     
     foreach (Device device, devices) {
         StorageVolume* volume = device.as<StorageVolume>();
-        QString parentName = diskName;
+        QString parentName = parentUdi;
         
         if (volume->uuid().isEmpty()) {
             continue;

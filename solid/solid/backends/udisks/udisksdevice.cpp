@@ -42,7 +42,7 @@
 using namespace Solid::Backends::UDisks;
 
 // Adapted from KLocale as Solid needs to be Qt-only
-static QString formatByteSize(double size)
+QString formatByteSize(double size)
 {
     // Per IEC 60027-2
 

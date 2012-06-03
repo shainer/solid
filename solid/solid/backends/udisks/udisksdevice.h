@@ -29,6 +29,8 @@
 #include <QtDBus/QDBusInterface>
 #include <QtCore/QSet>
 
+QString formatByteSize(double);
+
 namespace Solid
 {
 namespace Backends
@@ -61,7 +63,7 @@ public:
 
     QString errorToString(const QString & error) const;
     Solid::ErrorType errorToSolidError(const QString & error) const;
-
+    
 Q_SIGNALS:
     void changed();
 
