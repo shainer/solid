@@ -88,7 +88,7 @@ qulonglong FakeVolume::size() const
 
 qulonglong FakeVolume::offset() const
 {
-    return 0;
+    return fakeDevice()->property("offset").toULongLong();
 }
 
 QStringList FakeVolume::flags() const

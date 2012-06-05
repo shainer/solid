@@ -48,6 +48,7 @@ namespace Solid
         Q_PROPERTY(QString uuid READ uuid)
         Q_PROPERTY(qulonglong size READ size)
         Q_PROPERTY(qulonglong offset READ offset)
+        Q_PROPERTY(QStringList flags READ flags)
         Q_DECLARE_PRIVATE(StorageVolume)
         friend class Device;
 

@@ -25,9 +25,7 @@
 #include "udisksdevice.h"
 
 #include "solid/ifaces/devicemanager.h"
-#include <partitioner/volumetree.h>
 #include <partitioner/devices/partition.h>
-#include <partitioner/devices/freespace.h>
 
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusArgument>
@@ -79,7 +77,6 @@ public:
     virtual QObject* createDevice(const QString& udi);
     virtual QStringList devicesFromQuery(const QString& parentUdi, Solid::DeviceInterface::Type type);
     virtual QStringList allDevices();
-    virtual QList<FreeSpace *> freeSpaceOfDisk(const Partitioner::VolumeTree &);
     virtual QSet< Solid::DeviceInterface::Type > supportedInterfaces() const;
     virtual QStringList supportedFilesystems() const;
     virtual QString udiPrefix() const;
@@ -94,9 +91,6 @@ private:
     const QStringList &deviceCache();
     QStringList allDevicesInternal();
     
-    QList< FreeSpace* > findSpace(QList< Partitioner::VolumeTreeItem* >, DeviceModified*, bool logicals = false);
-    FreeSpace* spaceBetweenPartitions(Partition *, Partition *, DeviceModified *);
-    FreeSpace* spaceBetweenLogicalPartitions(Partition *, Partition *, DeviceModified *);
     
     QStringList m_knownDrivesWithMedia;  // list of known optical drives which contain a media
     QSet<Solid::DeviceInterface::Type> m_supportedInterfaces;

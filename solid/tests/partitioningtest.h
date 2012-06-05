@@ -17,32 +17,22 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef PARTITIONINGTEST_H
+#define PARTITIONINGTEST_H
 
-#ifndef SOLID_PARTITIONER_UTILS_UTILS_H
-#define SOLID_PARTITIONER_UTILS_UTILS_H
+#include <QtCore/QObject>
+#include <fakemanager.h>
 
-#define SPACE_BETWEEN_LOGICALS 32256
-#define LOOPDEVICE_MAJOR           7
-
-#include <QtCore/QString>
-#include <solid/solid_export.h>
-#include <solid/partitioner/volumetree.h>
-
-namespace Solid
+class PartitioningTest : public QObject
 {
-    namespace Partitioner
-    {
-        namespace Utils
-        {            
-            /**
-             * Finds all blocks of free space inside a disk.
-             * 
-             * @param diskTree the tree representing the disk layout.
-             * @returns a list of free space blocks.
-             */
-            QList< Devices::FreeSpace*> SOLID_EXPORT freeSpaceOfDisk(const VolumeTree &);
-        }
-    }
-}
+    Q_OBJECT
+    
+private slots:
+    void initTestCase();
+    void test();
+    
+private:
+    Solid::Backends::Fake::FakeManager* fakeManager;
+};
 
 #endif

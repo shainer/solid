@@ -65,7 +65,7 @@ Solid::StorageDrive::Bus FakeStorage::bus() const
 
 Solid::StorageDrive::DriveType FakeStorage::driveType() const
 {
-    QString type = fakeDevice()->property("major").toString();
+    QString type = fakeDevice()->property("driveType").toString();
 
     if (type=="disk")
     {
@@ -122,7 +122,7 @@ qulonglong FakeStorage::size() const
 
 QString FakeStorage::partitionTableScheme() const
 {
-    return fakeDevice()->property("PartitionTableScheme").toString();
+    return fakeDevice()->property("partitionTableScheme").toString();
 }
 
 #include "backends/fakehw/fakestorage.moc"

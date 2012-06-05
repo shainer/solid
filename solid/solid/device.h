@@ -93,15 +93,6 @@ namespace Solid
          */
         static QList<Device> listFromQuery(const QString &predicate,
                                            const QString &parentUdi = QString());
-        
-        
-        /**
-         * Retrieves the list of free space blocks in a disk.
-         * 
-         * @param tree the tree representing the disk layout.
-         * @returns a list of free space blocks, sorted by initial offset.
-         */
-        static QList<Partitioner::Devices::FreeSpace *> freeSpaceOfDisk(const Solid::Partitioner::VolumeTree &);
 
 
         /**

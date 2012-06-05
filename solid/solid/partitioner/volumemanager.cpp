@@ -33,6 +33,7 @@
 #include <solid/device.h>
 #include <backends/udisks/udisksmanager.h>
 #include <kglobal.h>
+#include <solid/block.h>
 #include <solid/predicate.h>
 
 namespace Solid
@@ -560,21 +561,17 @@ void VolumeManager::Private::detectDevices()
     foreach(Device dev, Device::listFromType(DeviceInterface::StorageDrive)) {
         QString udi = dev.udi();
         Solid::StorageDrive *drive = dev.as<Solid::StorageDrive>();
+        Solid::Block* block = dev.as<Solid::Block>();
         
         if (drive->driveType() == StorageDrive::HardDisk)
         {
-            addDisk(drive, udi);
+            Disk* newDisk = addDisk(drive, udi);
             
-            /* FIXME */
-            if (!udi.contains("loop")) {
+            if (block->deviceMajor() != LOOPDEVICE_MAJOR && newDisk->partitionTableScheme() != None) {
                 detectPartitionsOfDisk(udi);
                 detectFreeSpaceOfDisk(udi);
             }
         }
-    }
-    
-    foreach (VolumeTree disk, volumeTrees.values()) {
-        disk.print();
     }
 }
 
@@ -585,6 +582,7 @@ Disk* VolumeManager::Private::addDisk(StorageDrive* drive, const QString& udi)
     
     VolumeTree tree( disk );
     volumeTrees.insert(disk->name(), tree);
+        
     return disk;
 }
 
@@ -647,7 +645,7 @@ void VolumeManager::Private::detectFreeSpaceOfDisk(const QString& diskName)
     VolumeTree tree = volumeTrees[diskName];
     tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
     
-    foreach (FreeSpace* space, Device::freeSpaceOfDisk(tree)) {
+    foreach (FreeSpace* space, Utils::freeSpaceOfDisk(tree)) {
         tree.d->addDevice(diskName, space);
     }
 }

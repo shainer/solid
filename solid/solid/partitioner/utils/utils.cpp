@@ -18,21 +18,133 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "utils.h"
+#include <solid/partitioner/utils/utils.h>
+#include <solid/partitioner/devices/disk.h>
+
 #include <QtCore/QStringList>
 
-QString Solid::Partitioner::Utils::nameToUdi(const QString& name)
+namespace Solid
 {
-    QString n = name.split("/").last();
-    n.prepend("/org/freedesktop/UDisks/devices/");
+namespace Partitioner
+{
+namespace Utils
+{
+
+using namespace Devices;
     
-    return n;
+QList< FreeSpace* > findSpace(QList< Partitioner::VolumeTreeItem* >, DeviceModified*, bool logicals = false);
+FreeSpace* spaceBetweenPartitions(Partition *, Partition *, DeviceModified *);
+FreeSpace* spaceBetweenLogicalPartitions(Partition *, Partition *, DeviceModified *);
+
+QList< FreeSpace* > freeSpaceOfDisk(const Solid::Partitioner::VolumeTree& diskTree)
+{
+    QList< VolumeTreeItem* > primaryPartitions = diskTree.rootNode()->children();
+    Disk* disk = dynamic_cast< Disk* >(diskTree.root());
+    VolumeTreeItem* extended = diskTree.extendedNode();
+    
+    QList< FreeSpace* > freeSpaces;
+    
+    freeSpaces.append( findSpace(primaryPartitions, disk) );
+    
+    if (extended) {
+        freeSpaces.append( findSpace(extended->children(), extended->volume(), true) );
+    }
+    
+    return freeSpaces;
 }
 
-QString Solid::Partitioner::Utils::udiToName(const QString& udi)
+QList< FreeSpace* > findSpace(QList< VolumeTreeItem* > partitions, DeviceModified* parent, bool logicals)
 {
-    QString n = udi.split("/").last();
-    n.prepend("/dev/");
+    QList< FreeSpace* > freeSpaces;
     
-    return n;
+    if (partitions.isEmpty()) {
+        freeSpaces.append( new FreeSpace(parent->offset(), parent->size(), parent->name()) );
+        return freeSpaces;
+    }
+    
+    for (int i = -1; i < partitions.size(); i++) {
+        Partition* volume1 = NULL;
+        Partition* volume2 = NULL;
+        FreeSpace *space = NULL;
+        
+        if (i == -1) {
+            volume2 = dynamic_cast< Partition* >(partitions[i+1]->volume());
+        }
+        else if (i < partitions.size() - 1) {
+            volume1 = dynamic_cast< Partition* >(partitions[i]->volume());
+            volume2 = dynamic_cast< Partition* >(partitions[i+1]->volume());
+        }
+        else {
+            volume1 = dynamic_cast< Partition* >(partitions[i]->volume());
+        }
+        
+        if (!logicals) {
+            space = spaceBetweenPartitions(volume1, volume2, parent);
+        } else {
+            space = spaceBetweenLogicalPartitions(volume1, volume2, parent);
+        }
+        
+        if (space) {
+            freeSpaces.append(space);
+        }
+    }
+    
+    return freeSpaces;
+}
+
+FreeSpace* spaceBetweenPartitions(Partition* partition1,
+                                                 Partition* partition2,
+                                                 DeviceModified* disk)
+{
+    FreeSpace* sp = 0;
+    
+    if (!partition1) {
+        qulonglong initialOffset = disk->offset();
+        if (partition2->offset() > initialOffset) {
+            sp = new FreeSpace(initialOffset, partition2->offset() - initialOffset, disk->name());
+        }
+    }
+    else if (!partition2) {
+        if (partition1->rightBoundary() < disk->size()) {
+            sp = new FreeSpace(partition1->rightBoundary(), disk->size() - partition1->rightBoundary(), disk->name());
+        }
+    }
+    else {
+        if (partition1->rightBoundary() < partition2->offset()) {
+            sp = new FreeSpace(partition1->rightBoundary(), (partition2->offset() - partition1->rightBoundary()), disk->name());
+        }
+    }
+    
+    return sp;
+}
+
+FreeSpace* spaceBetweenLogicalPartitions(Partition* partition1,
+                                                        Partition* partition2,
+                                                        DeviceModified* extended)
+{
+    FreeSpace* sp = 0;
+    
+    if (!partition1) {
+        qulonglong e_offset = extended->offset() + SPACE_BETWEEN_LOGICALS;
+        if (e_offset < partition2->offset()) {
+            sp = new FreeSpace(e_offset, partition2->offset() - e_offset, extended->name());
+        }
+    }
+    else if (!partition2) {
+        qulonglong e_rightOffset = extended->offset() + extended->size();
+        if (partition1->rightBoundary() < e_rightOffset) {
+            sp = new FreeSpace(partition1->rightBoundary(), e_rightOffset - partition1->rightBoundary(), extended->name());
+        }
+    }
+    else {
+        if (partition1->rightBoundary() + SPACE_BETWEEN_LOGICALS < partition2->offset()) {
+            sp = new FreeSpace(partition1->rightBoundary(), partition2->offset() - partition1->rightBoundary(), extended->name());
+        }
+    }
+    
+    return sp;
+}
+
+}
+}
 }
