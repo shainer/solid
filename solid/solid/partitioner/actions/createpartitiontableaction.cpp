@@ -29,7 +29,7 @@ namespace Actions
 class CreatePartitionTableAction::Private
 {
 public:
-    Private(const QString& d, Utils::PTableType t)
+    Private(const QString& d, Utils::PartitionTableScheme t)
         : disk(d)
         , scheme(t)
     {}
@@ -38,10 +38,10 @@ public:
     {}
 
     QString disk;
-    Utils::PTableType scheme;
+    Utils::PartitionTableScheme scheme;
 };
 
-CreatePartitionTableAction::CreatePartitionTableAction(const QString &disk, Utils::PTableType type)
+CreatePartitionTableAction::CreatePartitionTableAction(const QString &disk, Utils::PartitionTableScheme type)
     : d( new Private(disk, type) )
 {}
 
@@ -61,17 +61,17 @@ QString CreatePartitionTableAction::description() const
 
     switch (d->scheme)
     {
-        case Utils::MBR: {
+        case Utils::MBRScheme: {
             desc = desc.arg("mbr");
             break;
         }
 
-        case Utils::GPT: {
+        case Utils::GPTScheme: {
             desc = desc.arg("gpt");
             break;
         }
 
-        case Utils::APM: {
+        case Utils::APMScheme: {
             desc = desc.arg("apm");
             break;
         }
@@ -89,7 +89,7 @@ QString CreatePartitionTableAction::disk() const
     return d->disk;
 }
 
-Utils::PTableType CreatePartitionTableAction::partitionTableScheme() const
+Utils::PartitionTableScheme CreatePartitionTableAction::partitionTableScheme() const
 {
     return d->scheme;
 }

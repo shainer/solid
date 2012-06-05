@@ -42,15 +42,15 @@ public:
                                              << "boot_code_is_pic"
                                              << "in_use";
 
-        supportedFlags.insert(MBR, mbrFlags);
-        supportedFlags.insert(GPT, gptFlags);
-        supportedFlags.insert(APM, apmFlags);
+        supportedFlags.insert(MBRScheme, mbrFlags);
+        supportedFlags.insert(GPTScheme, gptFlags);
+        supportedFlags.insert(APMScheme, apmFlags);
     }
 
     ~Private()
     {}
 
-    QHash< PTableType, QStringList > supportedFlags;
+    QHash< PartitionTableScheme, QStringList > supportedFlags;
 };
 
 class PartitionTableUtilsHelper
@@ -91,7 +91,7 @@ PartitionTableUtils* PartitionTableUtils::instance()
     return s_ptableutils->q;
 }
 
-QStringList PartitionTableUtils::supportedFlags(PTableType scheme)
+QStringList PartitionTableUtils::supportedFlags(PartitionTableScheme scheme)
 {
     return d->supportedFlags.value(scheme);
 }

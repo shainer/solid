@@ -45,7 +45,7 @@ namespace Solid
                  * @param disk the name of the disk.
                  * @param scheme an identifier of the new partition table scheme to be created.
                  */
-                explicit CreatePartitionTableAction(const QString &, Utils::PTableType);
+                explicit CreatePartitionTableAction(const QString &, Utils::PartitionTableScheme);
                 virtual ~CreatePartitionTableAction();
 
                 virtual ActionType actionType() const;
@@ -59,7 +59,7 @@ namespace Solid
                 /**
                  * @returns the chosen partition table scheme.
                  */
-                Utils::PTableType partitionTableScheme() const;
+                Utils::PartitionTableScheme partitionTableScheme() const;
 
             private:
                 class Private;

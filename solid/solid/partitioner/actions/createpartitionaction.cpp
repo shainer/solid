@@ -123,14 +123,14 @@ qulonglong CreatePartitionAction::size() const
 PartitionType CreatePartitionAction::partitionType() const
 {
     if (d->extended) {
-        return Extended;
+        return ExtendedPartition;
     }
     
     if (d->logical) {
-        return Logical;
+        return LogicalPartition;
     }
     
-    return Primary;
+    return PrimaryPartition;
 }
 
 Filesystem CreatePartitionAction::filesystem() const

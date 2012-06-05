@@ -70,7 +70,7 @@ namespace Solid
                 /**
                  * @returns an enum value for the ptable scheme, or None if there isn't a table.
                  */
-                Utils::PTableType partitionTableScheme() const;
+                Utils::PartitionTableScheme partitionTableScheme() const;
                 
                 /**
                  * Sets a size.
@@ -93,7 +93,7 @@ namespace Solid
                  * 
                  * @param scheme the new scheme.
                  */
-                void setPartitionTableScheme(Utils::PTableType);
+                void setPartitionTableScheme(Utils::PartitionTableScheme);
 
             private:
                 class Private;

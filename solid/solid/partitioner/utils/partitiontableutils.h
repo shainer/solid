@@ -21,6 +21,8 @@
 #define SOLID_PARTITIONER_UTILS_PARTITIONTABLEUTILS_H
 
 #include <QtCore/QHash>
+#include <QtCore/QStringList>
+
 #include <solid/partitioner/utils/partitioner_enums.h>
 
 namespace Solid
@@ -35,7 +37,7 @@ namespace Solid
                 virtual ~PartitionTableUtils();
                 static PartitionTableUtils* instance();
 
-                QStringList supportedFlags(PTableType);
+                QStringList supportedFlags(PartitionTableScheme);
 
             private:
                 PartitionTableUtils();

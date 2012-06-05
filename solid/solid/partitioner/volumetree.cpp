@@ -367,7 +367,7 @@ void VolumeTreePrivate::destroy(VolumeTreeItem* node)
 
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
-    qDebug() << r->volume()->name() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "offset" << r->volume()->offset() << "size" << r->volume()->size();
+    qDebug() << r->volume()->description() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "offset" << r->volume()->offset() << "size" << r->volume()->size();
     
     foreach (VolumeTreeItem *c, r->children()) {
         print(c);
@@ -408,7 +408,7 @@ VolumeTreeItem* VolumeTree::extendedNode() const
     foreach (VolumeTreeItem* child, d->root->children()) {
         Partition* part = dynamic_cast<Partition *>(child->volume());
         
-        if (part->partitionType() == Extended) {
+        if (part->partitionType() == ExtendedPartition) {
             return child;
         }
     }

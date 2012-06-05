@@ -10,18 +10,18 @@ namespace Solid
 
             enum PartitionType
             {
-                Unused,
-                Primary,
-                Logical,
-                Extended
+                UnusedPartition,
+                PrimaryPartition,
+                LogicalPartition,
+                ExtendedPartition
             };
 
-            enum PTableType
+            enum PartitionTableScheme
             {
-                None,
-                MBR,
-                GPT,
-                APM
+                NoneScheme,
+                MBRScheme,
+                GPTScheme,
+                APMScheme
             };
 
         }

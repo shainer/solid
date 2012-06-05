@@ -82,7 +82,7 @@ public:
     bool gptPartitionChecks(Actions::CreatePartitionAction *);
     
     /* Set a new ptable scheme for a disk, deleting all the partitions. */
-    bool setPartitionTableScheme(const QString &, Utils::PTableType);
+    bool setPartitionTableScheme(const QString &, Utils::PartitionTableScheme);
     
     QMap<QString, VolumeTree> volumeTrees;
     ActionStack actionstack;
@@ -195,16 +195,16 @@ bool VolumeManager::registerAction(Actions::Action* action)
             
             VolumeTree tree = d->volumeTrees[cpa->disk()];
             Disk* disk = dynamic_cast< Disk* >( tree.searchDevice(cpa->disk()) );
-            Utils::PTableType scheme = disk->partitionTableScheme();
+            Utils::PartitionTableScheme scheme = disk->partitionTableScheme();
 
             switch (scheme) {
-                case Utils::None: {
+                case Utils::NoneScheme: {
                     d->error.setType(PartitioningError::NoPartitionTableError);
                     d->error.arg( cpa->disk() );
                     return false;
                 }
                 
-                case Utils::MBR: {
+                case Utils::MBRScheme: {
                     if (!d->mbrPartitionChecks(cpa)) {
                         return false;
                     }
@@ -212,7 +212,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                     break;
                 }
                 
-                case Utils::GPT: {
+                case Utils::GPTScheme: {
                     if (!d->gptPartitionChecks(cpa)) {
                         return false;
                     }
@@ -306,7 +306,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
             /* Special checks for extendend partitions */
             DeviceModified* firstLogical = 0;
             DeviceModified* lastLogical = 0;
-            if (toResize->partitionType() == Extended) {
+            if (toResize->partitionType() == ExtendedPartition) {
                 lastLogical = tree.extendedNode()->children().last()->volume();
                 firstLogical = tree.extendedNode()->children().first()->volume();
                 
@@ -436,7 +436,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
         case Action::RemovePartitionTable: {
             Actions::RemovePartitionTableAction* rpta = dynamic_cast< Actions::RemovePartitionTableAction* >(action);
             
-            if (!d->setPartitionTableScheme(rpta->disk(), Utils::None)) {
+            if (!d->setPartitionTableScheme(rpta->disk(), Utils::NoneScheme)) {
                 return false;
             }
             
@@ -567,7 +567,7 @@ void VolumeManager::Private::detectDevices()
         {
             Disk* newDisk = addDisk(drive, udi);
             
-            if (block->deviceMajor() != LOOPDEVICE_MAJOR && newDisk->partitionTableScheme() != None) {
+            if (block->deviceMajor() != LOOPDEVICE_MAJOR && newDisk->partitionTableScheme() != NoneScheme) {
                 detectPartitionsOfDisk(udi);
                 detectFreeSpaceOfDisk(udi);
             }
@@ -609,7 +609,7 @@ void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
 
         if (volume->uuid().isEmpty()) {
             extended = new Partition(volume);
-            extended->setPartitionType(Extended);
+            extended->setPartitionType(ExtendedPartition);
             extended->setName(device.udi());
             extended->setParentName(parentUdi);
             
@@ -628,10 +628,10 @@ void VolumeManager::Private::detectPartitionsOfDisk(const QString& parentUdi)
         Partition* part = new Partition(volume);
         
         if (extended && (part->offset() >= extended->offset() && part->rightBoundary() <= extended->rightBoundary())) {
-            part->setPartitionType(Logical);
+            part->setPartitionType(LogicalPartition);
             parentName = extended->name();
         } else {
-            part->setPartitionType(Primary);
+            part->setPartitionType(PrimaryPartition);
         }
         
         part->setName(device.udi());
@@ -659,7 +659,7 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         return;
     }
     qulonglong newSize = (qulonglong)ns;
-    qulonglong spaceBetween = (partition->partitionType() == Logical ? SPACE_BETWEEN_LOGICALS : 0);
+    qulonglong spaceBetween = (partition->partitionType() == LogicalPartition ? SPACE_BETWEEN_LOGICALS : 0);
     
     if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
         qulonglong spaceOffset = partition->offset() + newSize + spaceBetween;
@@ -682,7 +682,7 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         }
     }
     
-    if (partition->partitionType() == Extended) {
+    if (partition->partitionType() == ExtendedPartition) {
         DeviceModified* lastLogical = tree.extendedNode()->children().last()->volume();
         
         if (lastLogical->deviceType() == DeviceModified::FreeSpaceDevice) {
@@ -716,7 +716,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         return;
     }
     
-    qulonglong spaceBetween = (partition->partitionType() == Logical ? SPACE_BETWEEN_LOGICALS : 0);
+    qulonglong spaceBetween = (partition->partitionType() == LogicalPartition ? SPACE_BETWEEN_LOGICALS : 0);
     qulonglong newOffset = (qulonglong)no;
     qulonglong oldOffset = partition->offset();
     FreeSpace *freeSpaceRight = 0;
@@ -770,7 +770,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         }
     }
     
-    if (partition->partitionType() == Extended) {
+    if (partition->partitionType() == ExtendedPartition) {
         DeviceModified* firstLogical = tree.extendedNode()->children().first()->volume();
         
         if (firstLogical->deviceType() == DeviceModified::FreeSpaceDevice) {
@@ -819,7 +819,7 @@ bool VolumeManager::Private::mbrPartitionChecks(Actions::CreatePartitionAction* 
     }
     
     /* A disk can have only one extended partition. */
-    if (cpa->partitionType() == Extended && extended) {
+    if (cpa->partitionType() == ExtendedPartition && extended) {
         error.setType(PartitioningError::BadPartitionTypeError);
         return false;
     }
@@ -827,7 +827,7 @@ bool VolumeManager::Private::mbrPartitionChecks(Actions::CreatePartitionAction* 
     return true;
 }
 
-bool VolumeManager::Private::gptPartitionChecks(CreatePartitionAction* cpa)
+bool VolumeManager::Private::gptPartitionChecks(Actions::CreatePartitionAction* cpa)
 {
     VolumeTree tree = volumeTrees[ cpa->disk() ];
     
@@ -845,7 +845,7 @@ bool VolumeManager::Private::gptPartitionChecks(CreatePartitionAction* cpa)
     return true;
 }
 
-bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, PTableType scheme)
+bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, PartitionTableScheme scheme)
 {
     VolumeTree tree = volumeTrees[diskName];
 

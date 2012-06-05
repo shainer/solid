@@ -36,22 +36,22 @@ public:
         , size(i->size())
     {
         if (i->partitionTableScheme() == "mbr") {
-            ptableType = Utils::MBR;
+            ptableType = Utils::MBRScheme;
         }
         else if (i->partitionTableScheme() == "gpt") {
-            ptableType = Utils::GPT;
+            ptableType = Utils::GPTScheme;
         }
         else if (i->partitionTableScheme() == "apm") {
-            ptableType = Utils::APM;
+            ptableType = Utils::APMScheme;
         }
         else {
-            ptableType = Utils::None;
+            ptableType = Utils::NoneScheme;
         }
     }
     
     StorageDrive* iface;
     qulonglong size;
-    Utils::PTableType ptableType;
+    Utils::PartitionTableScheme ptableType;
 };
 
 Disk::Disk(StorageDrive* drive)
@@ -74,7 +74,7 @@ qulonglong Disk::size() const
     qulonglong s = d->size;
     s -= offset();
 
-    if (d->ptableType == Utils::GPT) {
+    if (d->ptableType == Utils::GPTScheme) {
         s -= 512 * 34; /* secondary GPT table which replicates the first at the end for safety purposes */
     }
 
@@ -87,7 +87,7 @@ qulonglong Disk::offset() const
 
     switch (d->ptableType)
     {
-        case Utils::MBR: {
+        case Utils::MBRScheme: {
             off = MEGABYTE; /* the first MB is reserved */
             break;
         }
@@ -95,7 +95,7 @@ qulonglong Disk::offset() const
         /*
          * FIXME: this value assumes the LBA size is the standard 512 bytes. However, this is not always the case.
          */
-        case Utils::GPT: {
+        case Utils::GPTScheme: {
             off = 512 * 40;
             break;
         }
@@ -107,7 +107,7 @@ qulonglong Disk::offset() const
     return off;
 }
 
-Utils::PTableType Disk::partitionTableScheme() const
+Utils::PartitionTableScheme Disk::partitionTableScheme() const
 {
     return d->ptableType;
 }
@@ -127,7 +127,7 @@ void Disk::setSize(qulonglong s)
     Q_UNUSED(s)
 }
 
-void Disk::setPartitionTableScheme(Utils::PTableType type)
+void Disk::setPartitionTableScheme(Utils::PartitionTableScheme type)
 {
     d->ptableType = type;
 }
