@@ -79,11 +79,15 @@ Partition::Partition(Actions::CreatePartitionAction* action)
     : DeviceModified()
     , d( new Private(action) )
 {    
+    QString offset = QString::number(d->offset);
+    QString size = QString::number(d->size);
     QString offsetStr = formatByteSize((double)(d->offset));
     QString sizeStr = formatByteSize((double)(d->size));
-    QString partitionName = "New partition of offset " + offsetStr + " and size " + sizeStr;
     
-    DeviceModified::setName(partitionName);
+    QString partitionName = "New partition of offset %0 and size %1";
+    DeviceModified::setName( partitionName.arg(offset, size) );
+    DeviceModified::setDescription( partitionName.arg(offsetStr, sizeStr) );
+    
     DeviceModified::setParentName(action->disk());
 }
 

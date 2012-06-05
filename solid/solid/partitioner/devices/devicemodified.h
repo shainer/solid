@@ -100,6 +100,19 @@ namespace Solid
                 virtual QString name() const;
                 
                 /**
+                 * Retrieves a readable description for the device. In most cases this description is identical to the name.
+                 * However, when a device's offset and size are included in the name, the name uniquely identifies the device
+                 * only when those are left in bytes: string representations are nicer to look at but with rounding we can end
+                 * with two devices showing the same initial offset and size, therefore the name won't be unique anymore.
+                 * 
+                 * To summarize, name() shows offset/size in bytes, to maintain uniqueness. A description() aims to be readable
+                 * by the user so it converts them to a nice string representation.
+                 * 
+                 * @returns a readable description of the device.
+                 */
+                virtual QString description() const;
+                
+                /**
                  * @returns the name of the parent object, or an empty string if there isn't any parent.
                  */
                 virtual QString parentName() const;
@@ -110,6 +123,8 @@ namespace Solid
                  * @param udi the new UDI.
                  */
                 void setName(const QString &);
+                
+                void setDescription(const QString &);
                 
                 /**
                  * Sets a new parent name for the device.

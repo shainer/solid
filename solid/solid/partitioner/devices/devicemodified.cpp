@@ -43,6 +43,7 @@ public:
     
     DeviceInterface* iface;
     QString name;
+    QString description;
     QString parentName;
     bool existent;
 };
@@ -65,6 +66,11 @@ QString DeviceModified::name() const
     return d->name;
 }
 
+QString DeviceModified::description() const
+{
+    return d->description;
+}
+
 QString DeviceModified::parentName() const
 {
     return d->parentName;
@@ -78,6 +84,12 @@ bool DeviceModified::existent() const
 void DeviceModified::setName(const QString& udi)
 {
     d->name = udi;
+    d->description = udi; /* if not set separately, it's the same thing */
+}
+
+void DeviceModified::setDescription(const QString& desc)
+{
+    d->description = desc;
 }
 
 void DeviceModified::setParentName(const QString& udi)

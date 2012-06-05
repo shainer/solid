@@ -49,8 +49,10 @@ FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUd
     QString offsetStr = formatByteSize((double)(d->offset));
     QString sizeStr = formatByteSize((double)(d->size));
     
-    QString uniqueName = "Free space of offset " + offsetStr + " and size " + sizeStr;
-    DeviceModified::setName(uniqueName);
+    QString uniqueName = "Free space of offset %0 and size %1";
+    DeviceModified::setName( uniqueName.arg(QString::number(offset), QString::number(size)) );
+    DeviceModified::setDescription( uniqueName.arg(offsetStr, sizeStr) );
+    
     DeviceModified::setParentName(parentUdi);
 }
 
