@@ -23,6 +23,7 @@
 
 #define SPACE_BETWEEN_LOGICALS 32256
 #define LOOPDEVICE_MAJOR           7
+#define MEGABYTE               1204 * 1204
 
 #include <QtCore/QString>
 #include <solid/solid_export.h>
@@ -40,7 +41,15 @@ namespace Solid
              * @param diskTree the tree representing the disk layout.
              * @returns a list of free space blocks.
              */
-            QList< Devices::FreeSpace*> SOLID_EXPORT freeSpaceOfDisk(const VolumeTree &);
+            QList< Devices::FreeSpace*> freeSpaceOfDisk(const VolumeTree &);
+            
+            /**
+             * Retrieves the size of a disk.
+             * 
+             * @param udi the disk UDI.
+             * @returns the disk size in bytes.
+             */
+            qulonglong getDiskSize(const QString &);
         }
     }
 }

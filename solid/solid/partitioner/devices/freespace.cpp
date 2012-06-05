@@ -17,7 +17,8 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "freespace.h"
+#include <solid/partitioner/devices/freespace.h>
+#include <solid/partitioner/utils/utils.h>
 #include <backends/udisks/udisksdevice.h>
 
 namespace Solid
@@ -79,6 +80,14 @@ qulonglong FreeSpace::offset() const
 qulonglong FreeSpace::rightBoundary() const
 {
     return (d->offset + d->size);
+}
+
+bool FreeSpace::isMinimumSize() const
+{
+    qulonglong onePercentDiskSize = Utils::getDiskSize(parentName()) / 100;
+    qulonglong minimum = (onePercentDiskSize > MEGABYTE) ? MEGABYTE : onePercentDiskSize;
+    
+    return (d->size >= minimum);
 }
 
 void FreeSpace::setSize(qulonglong s)

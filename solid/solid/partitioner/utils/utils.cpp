@@ -20,6 +20,7 @@
 
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/devices/disk.h>
+#include <solid/partitioner/volumemanager.h>
 
 #include <QtCore/QStringList>
 
@@ -143,6 +144,12 @@ FreeSpace* spaceBetweenLogicalPartitions(Partition* partition1,
     }
     
     return sp;
+}
+
+qulonglong getDiskSize(const QString& udi)
+{
+    VolumeTree tree = VolumeManager::instance()->diskTree(udi);
+    return tree.root()->size();
 }
 
 }

@@ -65,6 +65,15 @@ namespace Solid
                 qulonglong rightBoundary() const;
                 
                 /**
+                 * Most partitioning libraries don't allow the creation of partitions with size less than the minimum between
+                 * 1MB and 1% of the disk size, for alignment reasons. The block still needs to exist in the system, but the
+                 * application cannot create a new partition on it.
+                 * 
+                 * @return whether this free space block surpasses the minimum size required from creation.
+                 */
+                bool isMinimumSize() const;
+                
+                /**
                  * Sets a new size for this block.
                  * 
                  * @param size the new size in bytes.
