@@ -74,7 +74,7 @@ qulonglong Disk::size() const
     s -= offset();
 
     if (d->ptableType == Utils::GPT) {
-        s -= (512 * 8 + 16 * 1024 * 8);
+        s -= (512 * 8 + 16 * 1024 * 8); /* secondary GPT table which replicates the first for safety purposes */
     }
 
     return s;
@@ -87,7 +87,7 @@ qulonglong Disk::offset() const
     switch (d->ptableType)
     {
         case Utils::MBR: {
-            off += 512 * 8;
+            off += 1024 * 1024; /* the first MB is reserved */
             break;
         }
 

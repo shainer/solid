@@ -30,7 +30,35 @@
 #include <partitioner/devices/freespace.h>
 
 #include <QtDBus/QDBusInterface>
+#include <QtDBus/QDBusArgument>
 #include <QtCore/QSet>
+
+struct FileSystems
+{
+    QString id;
+    QString name;
+    bool supports_unix_owners;
+    bool can_mount;
+    bool can_create;
+    uint max_label_len;
+    bool supports_label_rename;
+    bool supports_online_label_rename;
+    bool supports_fsck;
+    bool supports_online_fsck;
+    bool supports_resize_enlarge;
+    bool supports_online_resize_enlarge;
+    bool supports_resize_shrink;
+    bool supports_online_resize_shrink;
+};
+typedef QList<FileSystems> FileSystemsList;
+
+Q_DECLARE_METATYPE(FileSystems);
+Q_DECLARE_METATYPE(FileSystemsList);
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, FileSystems &knownFS);
+QDBusArgument &operator<<(QDBusArgument &argument, const FileSystems &knownFS);
+const QDBusArgument &operator>>(const QDBusArgument &argument, FileSystemsList &knownFSList);
+QDBusArgument &operator<<(QDBusArgument &argument, const FileSystemsList &knownFSList);
 
 namespace Solid
 {
@@ -53,6 +81,7 @@ public:
     virtual QStringList allDevices();
     virtual QList<FreeSpace *> freeSpaceOfDisk(const Partitioner::VolumeTree &);
     virtual QSet< Solid::DeviceInterface::Type > supportedInterfaces() const;
+    virtual QStringList supportedFilesystems() const;
     virtual QString udiPrefix() const;
     virtual ~UDisksManager();
 

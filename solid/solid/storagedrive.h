@@ -46,6 +46,7 @@ namespace Solid
         Q_PROPERTY(bool hotpluggable READ isHotpluggable)
         Q_PROPERTY(bool inUse READ isInUse)
         Q_PROPERTY(qulonglong size READ size)
+        Q_PROPERTY(QString partitionTableScheme READ partitionTableScheme)
         Q_DECLARE_PRIVATE(StorageDrive)
         friend class Device;
 
