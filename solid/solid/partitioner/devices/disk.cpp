@@ -18,6 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include <solid/partitioner/devices/disk.h>
+#include <solid/partitioner/utils/utils.h>
 #include <QtCore/QDebug>
 
 namespace Solid
@@ -74,7 +75,7 @@ qulonglong Disk::size() const
     s -= offset();
 
     if (d->ptableType == Utils::GPT) {
-        s -= (512 * 8 + 16 * 1024 * 8); /* secondary GPT table which replicates the first for safety purposes */
+        s -= 512 * 34; /* secondary GPT table which replicates the first at the end for safety purposes */
     }
 
     return s;
@@ -87,13 +88,15 @@ qulonglong Disk::offset() const
     switch (d->ptableType)
     {
         case Utils::MBR: {
-            off += 1024 * 1024; /* the first MB is reserved */
+            off = MEGABYTE; /* the first MB is reserved */
             break;
         }
 
+        /*
+         * FIXME: this value assumes the LBA size is the standard 512 bytes. However, this is not always the case.
+         */
         case Utils::GPT: {
-            off += (512 * 8 + 16 * 1024 * 8);
-            off += 512 * 8;
+            off = 512 * 40;
             break;
         }
 
