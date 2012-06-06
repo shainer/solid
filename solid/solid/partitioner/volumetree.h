@@ -219,6 +219,7 @@ namespace Solid
             
         private:
             friend class VolumeManager;
+            friend class VolumeTreeMap;
             QSharedDataPointer<VolumeTreePrivate> d;
         };
         

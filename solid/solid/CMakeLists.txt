@@ -133,6 +133,7 @@ set(solid_LIB_SRCS
 
    partitioner/volumemanager.cpp
    partitioner/volumetree.cpp
+   partitioner/volumetreemap.cpp
    partitioner/actionexecuter.cpp
    partitioner/actionstack.cpp
 
@@ -419,7 +420,7 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
                networking.h video.h serialinterface.h smartcardreader.h internetgateway.h
                networkshare.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid COMPONENT Devel)
 install( FILES partitioner/volumemanager.h partitioner/volumetree.h
-               partitioner/actionexecuter.h partitioner/actionstack.h
+               partitioner/actionexecuter.h partitioner/actionstack.h partitioner/volumetreemap.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h

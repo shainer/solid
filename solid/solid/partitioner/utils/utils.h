@@ -36,14 +36,6 @@ namespace Solid
         namespace Utils
         {            
             /**
-             * Finds all blocks of free space inside a disk.
-             * 
-             * @param diskTree the tree representing the disk layout.
-             * @returns a list of free space blocks.
-             */
-            QList< Devices::FreeSpace*> freeSpaceOfDisk(const VolumeTree &);
-            
-            /**
              * Retrieves the size of a disk.
              * 
              * @param udi the disk UDI.
