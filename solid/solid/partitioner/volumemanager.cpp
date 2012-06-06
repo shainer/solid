@@ -72,7 +72,7 @@ public:
     VolumeTreeMap volumeTreeMap;
     ActionStack actionstack;
     ActionExecuter* executer;
-    Ifaces::DeviceManager* deviceManager; /* FIXME: to be properly destroyed */
+    Ifaces::DeviceManager* deviceManager;
     
     PartitioningError error;
 };
@@ -109,6 +109,8 @@ VolumeManager::~VolumeManager()
 {
     d->actionstack.clear();
     d->volumeTreeMap.clear();
+    d->deviceManager->deleteLater();
+    
     delete d;
 }
 
