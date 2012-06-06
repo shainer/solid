@@ -197,6 +197,7 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
         
         part->setName(device.udi());
         part->setParentName(parentName);
+        
         tree.d->addDevice(parentName, part);
     }    
 }
@@ -209,8 +210,6 @@ void VolumeTreeMap::detectFreeSpaceOfDisk(const QString& parentUdi)
     foreach (FreeSpace* space, d->freeSpaceOfDisk(tree)) {
         tree.d->addDevice(space->parentName(), space);
     }
-    
-    qDebug();
 }
 
 QList< FreeSpace* > VolumeTreeMap::Private::freeSpaceOfDisk(const VolumeTree& diskTree)
@@ -286,7 +285,7 @@ FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(Partition* partition1,
             sp = new FreeSpace(initialOffset, partition2->offset() - initialOffset, parent->name());
         }
     }
-    else if (!partition2) {        
+    else if (!partition2) {
         if (partition1->rightBoundary() + spaceBetween < parent->rightBoundary()) {
             sp = new FreeSpace(partition1->rightBoundary(), parent->rightBoundary() - partition1->rightBoundary() - spaceBetween, parent->name());
         }

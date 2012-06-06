@@ -160,6 +160,14 @@ namespace Solid
          * @return a list of partition flags, such as "boot" for bootable.
          */
         QStringList flags() const;
+        
+        /**
+         * Retrieves the partition type.
+         * 
+         * @return a string representing the "type" of the partition, or an empty string if this volume isn't a partition.
+         * @note valid types depend on the partition table in use.
+         */
+        QString partitionType() const;
 
         /**
          * Retrieves the crypto container of this volume.

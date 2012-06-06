@@ -120,9 +120,17 @@ qulonglong Volume::offset() const
     return m_device->prop("volume.offset").toULongLong();
 }
 
+/*
+ * FIXME: can these properties be read from HAL?
+ */
 QStringList Volume::flags() const
 {
     return QStringList();
+}
+
+QString Volume::partitionType() const
+{
+    return QString();
 }
 
 QString Solid::Backends::Hal::Volume::encryptedContainerUdi() const

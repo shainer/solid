@@ -55,6 +55,11 @@ QStringList UDisksStorageVolume::flags() const
     return m_device->prop("PartitionFlags").toStringList();
 }
 
+QString UDisksStorageVolume::partitionType() const
+{
+    return m_device->prop("PartitionType").toString();
+}
+
 QString UDisksStorageVolume::uuid() const
 {
     return m_device->prop("IdUuid").toString();

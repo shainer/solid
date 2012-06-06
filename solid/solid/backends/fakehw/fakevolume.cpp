@@ -93,7 +93,12 @@ qulonglong FakeVolume::offset() const
 
 QStringList FakeVolume::flags() const
 {
-    return QStringList();
+    return fakeDevice()->property("flags").toStringList();
+}
+
+QString FakeVolume::partitionType() const
+{
+    return fakeDevice()->property("partitionType").toString();
 }
 
 QString Solid::Backends::Fake::FakeVolume::encryptedContainerUdi() const

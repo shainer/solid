@@ -88,6 +88,12 @@ QStringList Solid::StorageVolume::flags() const
     return_SOLID_CALL(Ifaces::StorageVolume *, d->backendObject(), QStringList(), flags());
 }
 
+QString Solid::StorageVolume::partitionType() const
+{
+    Q_D(const StorageVolume);
+    return_SOLID_CALL(Ifaces::StorageVolume *, d->backendObject(), QString(), partitionType());
+}
+
 Solid::Device Solid::StorageVolume::encryptedContainer() const
 {
     Q_D(const StorageVolume);

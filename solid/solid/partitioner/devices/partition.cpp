@@ -18,9 +18,8 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include <solid/partitioner/devices/partition.h>
+#include <solid/partitioner/utils/utils.h>
 #include <backends/udisks/udisksdevice.h>
-#include <QtCore/QDebug>
-#include <kio/global.h>
 
 namespace Solid
 {
@@ -43,8 +42,13 @@ public:
         , uuid(v->uuid())
         , size(v->size())
         , offset(v->offset())
+        , partitionType(PrimaryPartition)
         , flags(v->flags())
-    {}
+    {
+        if (v->partitionType() == EXTENDED_TYPE_STRING) {
+            partitionType = ExtendedPartition;
+        }
+    }
     
     Private(Actions::CreatePartitionAction *action)
         : iface(0)

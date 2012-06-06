@@ -22,6 +22,7 @@
 #define SOLID_PARTITIONER_UTILS_UTILS_H
 
 #define SPACE_BETWEEN_LOGICALS 32256
+#define EXTENDED_TYPE_STRING   "0x05"
 #define LOOPDEVICE_MAJOR           7
 #define MEGABYTE               1204 * 1204
 

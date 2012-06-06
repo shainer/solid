@@ -108,6 +108,13 @@ namespace Ifaces
          * @return a list of flags set for this partition.
          */
         virtual QStringList flags() const = 0;
+        
+        /**
+         * Retrieves the partition type.
+         * 
+         * @return a string representation of the partition type, or an empty string if this volume isn't a partition.
+         */
+        virtual QString partitionType() const = 0;
 
         /**
          * Retrieves the crypto container UDI of this volume.

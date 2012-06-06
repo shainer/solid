@@ -47,6 +47,7 @@ public:
     virtual qulonglong size() const;
     virtual qulonglong offset() const;
     virtual QStringList flags() const;
+    virtual QString partitionType() const;
     virtual QString encryptedContainerUdi() const;
 };
 }
