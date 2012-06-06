@@ -99,7 +99,8 @@ VolumeManager::VolumeManager()
 {
     Q_ASSERT(!s_volumemanager->q);
     s_volumemanager->q = this;
-    
+
+    d->volumeTreeMap.build();
     QObject::connect(d->deviceManager, SIGNAL(deviceAdded(QString)), this, SLOT(doDeviceAdded(QString)));
     QObject::connect(d->deviceManager, SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
 }

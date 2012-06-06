@@ -36,10 +36,15 @@ namespace Solid
         {
         public:
             /**
-             * Builds a tree map detecting all initial devices on system.
+             * Creates an empty tree map.
              */
             explicit VolumeTreeMap();
             virtual ~VolumeTreeMap();
+            
+            /**
+             * Builds all the trees detecting devices.
+             */
+            void build();
             
             /**
              * Retrieves the map of trees.

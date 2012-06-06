@@ -50,6 +50,14 @@ public:
 
 VolumeTreeMap::VolumeTreeMap()
     : d( new Private )
+{}
+
+VolumeTreeMap::~VolumeTreeMap()
+{
+    delete d;
+}
+
+void VolumeTreeMap::build()
 {
     /*
      * Detection of drives.
@@ -73,12 +81,7 @@ VolumeTreeMap::VolumeTreeMap()
                 detectFreeSpaceOfDisk(udi);
             }
         }
-    }   
-}
-
-VolumeTreeMap::~VolumeTreeMap()
-{
-    delete d;
+    }
 }
 
 QMap< QString, VolumeTree > VolumeTreeMap::deviceTrees() const
