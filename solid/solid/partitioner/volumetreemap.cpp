@@ -167,7 +167,7 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
     foreach (Device device, devices) {
         StorageVolume* volume = device.as<StorageVolume>();
 
-        if (volume->uuid().isEmpty()) { /* this is always a valid property */
+        if (volume->partitionType() == EXTENDED_TYPE_STRING) {
             extended = new Partition(volume);
             extended->setPartitionType(Utils::ExtendedPartition);
             extended->setName(device.udi());
@@ -185,7 +185,7 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
         StorageVolume* volume = device.as<StorageVolume>();
         QString parentName = parentUdi;
         
-        if (volume->uuid().isEmpty()) {
+        if (volume->partitionType() == EXTENDED_TYPE_STRING) {
             continue;
         }
         
