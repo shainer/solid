@@ -88,7 +88,7 @@ qulonglong Disk::offset() const
     switch (d->ptableType)
     {
         case Utils::MBRScheme: {
-            off = MEGABYTE; /* the first MB is reserved */
+            off = 1024 * 1024; /* the first MB is reserved */
             break;
         }
 

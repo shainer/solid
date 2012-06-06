@@ -24,7 +24,6 @@
 #define SPACE_BETWEEN_LOGICALS 32256
 #define EXTENDED_TYPE_STRING   "0x05"
 #define LOOPDEVICE_MAJOR           7
-#define MEGABYTE               1204 * 1204
 
 #include <QtCore/QString>
 #include <solid/solid_export.h>

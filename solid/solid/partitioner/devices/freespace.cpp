@@ -85,7 +85,8 @@ qulonglong FreeSpace::rightBoundary() const
 bool FreeSpace::isMinimumSize() const
 {
     qulonglong onePercentDiskSize = Utils::getDiskSize(parentName()) / 100;
-    qulonglong minimum = (onePercentDiskSize > MEGABYTE) ? MEGABYTE : onePercentDiskSize;
+    qulonglong megabyte = (1024 * 1024);
+    qulonglong minimum = (onePercentDiskSize > megabyte) ? megabyte : onePercentDiskSize;
     
     return (d->size >= minimum);
 }
