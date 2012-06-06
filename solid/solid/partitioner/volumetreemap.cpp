@@ -207,8 +207,10 @@ void VolumeTreeMap::detectFreeSpaceOfDisk(const QString& parentUdi)
     tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
     
     foreach (FreeSpace* space, d->freeSpaceOfDisk(tree)) {
-        tree.d->addDevice(parentUdi, space);
+        tree.d->addDevice(space->parentName(), space);
     }
+    
+    qDebug();
 }
 
 QList< FreeSpace* > VolumeTreeMap::Private::freeSpaceOfDisk(const VolumeTree& diskTree)
@@ -284,14 +286,14 @@ FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(Partition* partition1,
             sp = new FreeSpace(initialOffset, partition2->offset() - initialOffset, parent->name());
         }
     }
-    else if (!partition2) {
-        if (partition1->rightBoundary() < parent->rightBoundary()) {
-            sp = new FreeSpace(partition1->rightBoundary(), parent->rightBoundary() - partition1->rightBoundary(), parent->name());
+    else if (!partition2) {        
+        if (partition1->rightBoundary() + spaceBetween < parent->rightBoundary()) {
+            sp = new FreeSpace(partition1->rightBoundary(), parent->rightBoundary() - partition1->rightBoundary() - spaceBetween, parent->name());
         }
     }
     else {
         if (partition1->rightBoundary() + spaceBetween < partition2->offset()) {
-            sp = new FreeSpace(partition1->rightBoundary(), (partition2->offset() - partition1->rightBoundary()), parent->name());
+            sp = new FreeSpace(partition1->rightBoundary(), (partition2->offset() - partition1->rightBoundary() - spaceBetween), parent->name());
         }
     }
     

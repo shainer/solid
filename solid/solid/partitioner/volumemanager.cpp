@@ -72,7 +72,7 @@ public:
     VolumeTreeMap volumeTreeMap;
     ActionStack actionstack;
     ActionExecuter* executer;
-    Ifaces::DeviceManager* deviceManager; /* FIXME: to be destroyed */
+    Ifaces::DeviceManager* deviceManager; /* FIXME: to be properly destroyed */
     
     PartitioningError error;
 };

@@ -173,7 +173,7 @@
                                   - /home volume (xfs, 208GB)
                                   - /foreign volume (ntfs, 20GB)
                     -->
-                    <device udi="/org/kde/solid/fakehw/volume_uuid_feedface"> <!-- root -->
+                    <device udi="/org/kde/solid/fakehw/root_volume"> <!-- root -->
                         <property key="name">/</property>
                         <property key="interfaces">Block,StorageVolume,StorageAccess</property>
                         <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
@@ -192,7 +192,39 @@
                         <property key="size">21474826480</property> <!-- real size: 21474836480 -->
                         <property key="offset">1048576</property>
                     </device>
-                    <device udi="/org/kde/solid/fakehw/volume_uuid_c0ffee"> <!-- home volume -->
+                    <device udi="/org/kde/solid/fakehw/extended_volume"> <!-- extended partition -->
+                        <property key="name">StorageVolume</property>
+                        <property key="interfaces">Block,StorageVolume,StorageAccess</property>
+                        <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
+
+                        <property key="minor">2</property>
+                        <property key="major">3</property>
+                        <property key="device">/dev/hda2</property>
+
+                        <property key="isIgnored">false</property>
+                        <property key="isMounted">false</property>
+                        <property key="usage">other</property>
+                        <property key="size">246960716288</property>
+                        <property key="offset">21475885056</property>
+                    </device>
+                    <device udi="/org/kde/solid/fakehw/swap_volume"> <!-- swap volume -->
+                        <property key="name">StorageVolume (swap)</property>
+                        <property key="interfaces">Block,StorageVolume,StorageAccess</property>
+                        <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
+
+                        <property key="minor">5</property>
+                        <property key="major">3</property>
+                        <property key="device">/dev/hda5</property>
+
+                        <property key="isIgnored">true</property>
+                        <property key="isMounted">false</property>
+                        <property key="uuid">volume_part5_size_1048576</property>
+                        <property key="usage">other</property>
+                        <property key="fsType">swap</property>
+                        <property key="size">2147383648</property> <!-- real size: 2147483648 -->
+                        <property key="offset">21475917312</property>
+                    </device>
+                    <device udi="/org/kde/solid/fakehw/home_volume"> <!-- home volume -->
                         <property key="name">/home</property>
                         <property key="interfaces">Block,StorageVolume,StorageAccess</property>
                         <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
@@ -211,7 +243,7 @@
                         <property key="size">223338299392</property>
                         <property key="offset">23623433216</property>
                     </device>
-                    <device udi="/org/kde/solid/fakehw/volume_uuid_f00ba7"> <!-- foreign volume -->
+                    <device udi="/org/kde/solid/fakehw/foreign_logical"> <!-- foreign volume -->
                         <property key="name">/foreign</property>
                         <property key="interfaces">Block,StorageVolume,StorageAccess</property>
                         <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
@@ -227,40 +259,8 @@
                         <property key="fsType">ntfs</property>
                         <property key="label">Foreign</property>
                         <property key="uuid">f00ba7</property>
-                        <property key="size">21474836480</property>
+                        <property key="size">21474736480</property> <!-- real size: 21474836480 -->
                         <property key="offset">246961764864</property>
-                    </device>
-                    <device udi="/org/kde/solid/fakehw/volume_part2_size_1024"> <!-- extended partition -->
-                        <property key="name">StorageVolume</property>
-                        <property key="interfaces">Block,StorageVolume,StorageAccess</property>
-                        <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
-
-                        <property key="minor">2</property>
-                        <property key="major">3</property>
-                        <property key="device">/dev/hda2</property>
-
-                        <property key="isIgnored">false</property>
-                        <property key="isMounted">false</property>
-                        <property key="usage">other</property>
-                        <property key="size">246960716288</property>
-                        <property key="offset">21475885056</property>
-                    </device>
-                    <device udi="/org/kde/solid/fakehw/volume_part5_size_1048576"> <!-- swap volume -->
-                        <property key="name">StorageVolume (swap)</property>
-                        <property key="interfaces">Block,StorageVolume,StorageAccess</property>
-                        <property key="parent">/org/kde/solid/fakehw/storage_serial_HD56890I</property>
-
-                        <property key="minor">5</property>
-                        <property key="major">3</property>
-                        <property key="device">/dev/hda5</property>
-
-                        <property key="isIgnored">true</property>
-                        <property key="isMounted">false</property>
-                        <property key="uuid">volume_part5_size_1048576</property>
-                        <property key="usage">other</property>
-                        <property key="fsType">swap</property>
-                        <property key="size">2147473648</property> <!-- real size: 2147483648 -->
-                        <property key="offset">21475917312</property>
                     </device>
 
 
