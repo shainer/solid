@@ -35,6 +35,7 @@ namespace Solid
             /**
              * @class CreatePartitionAction
              * @extends Action
+             * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief Action for creating a new partition
              */
             class SOLID_EXPORT CreatePartitionAction : virtual public Action

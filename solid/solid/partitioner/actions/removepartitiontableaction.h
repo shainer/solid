@@ -30,8 +30,8 @@ namespace Solid
             /**
              * @class RemovePartitionTableAction
              * @extends Action
+             * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief Action to delete a partition table from a disk.
-             * 
              * @warning executing this action causes the automatic removal of all partitions present on the disk.
              */
             class SOLID_EXPORT RemovePartitionTableAction : public Action

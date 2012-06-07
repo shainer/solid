@@ -29,15 +29,13 @@ namespace Actions
 class ModifyPartitionAction::Private
 {
 public:    
-    Private(const QString& p, const QStringList& fs)
+    Private(const QStringList& fs)
         : isLabelChanged(false)
-        , partition(p)
         , flags(fs)
     {}
     
-    Private(const QString& p, const QString& l, const QStringList& fs)
+    Private(const QString& l, const QStringList& fs)
         : isLabelChanged(true)
-        , partition(p)
         , label(l)
         , flags(fs)
     {}
@@ -47,19 +45,20 @@ public:
     
     bool isLabelChanged;
     
-    QString partition;
     QString label;
     QStringList flags;
 };
 
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QString& label,
                                              const QStringList& flags)
-    : d( new Private(partition, label, flags) )
+    : PartitionAction(partition)
+    , d( new Private(label, flags) )
 {}
 
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
                                              const QStringList& flags)
-    : d( new Private(partition, flags) )
+    : PartitionAction(partition)
+    , d( new Private(flags) )
 {}
 
 
@@ -80,18 +79,13 @@ QString ModifyPartitionAction::description() const
     QString desc;
     
     if (d->isLabelChanged) {
-        desc += desc3.arg(d->partition, d->label);
+        desc += desc3.arg(partition(), d->label);
     }
     else if (!d->flags.isEmpty()) {
-        desc += desc1.arg(d->partition, d->flags.join(" "));
+        desc += desc1.arg(partition(), d->flags.join(" "));
     }
 
     return desc;
-}
-
-QString ModifyPartitionAction::partition() const
-{
-    return d->partition;
 }
 
 QString ModifyPartitionAction::label() const

@@ -20,7 +20,7 @@
 #ifndef SOLID_PARTITIONER_ACTIONS_FORMATPARTITIONACTION_H
 #define SOLID_PARTITIONER_ACTIONS_FORMATPARTITIONACTION_H
 
-#include "action.h"
+#include <solid/partitioner/actions/partitionaction.h>
 #include <solid/partitioner/utils/filesystem.h>
 #include <QtCore/QStringList>
 #include <unistd.h>
@@ -33,10 +33,11 @@ namespace Solid
         {
             /**
              * @class FormatPartitionAction
-             * @extends Action
+             * @extends PartitionAction
+             * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief Action to format a partition with a new filesystem.
              */
-            class SOLID_EXPORT FormatPartitionAction : public Action
+            class SOLID_EXPORT FormatPartitionAction : public PartitionAction
             {
             public:
                 /**
@@ -50,11 +51,6 @@ namespace Solid
                 
                 virtual Action::ActionType actionType() const;
                 virtual QString description() const;
-                
-                /**
-                 * @returns the partition to be formatted.
-                 */
-                QString partition() const;
                 
                 /**
                  * @returns an object representing the new filesystem.

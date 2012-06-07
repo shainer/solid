@@ -143,6 +143,7 @@ set(solid_LIB_SRCS
    partitioner/devices/freespace.cpp
 
    partitioner/actions/action.cpp
+   partitioner/actions/partitionaction.cpp
    partitioner/actions/formatpartitionaction.cpp
    partitioner/actions/createpartitionaction.cpp
    partitioner/actions/removepartitionaction.cpp
@@ -423,6 +424,7 @@ install( FILES partitioner/volumemanager.h partitioner/volumetree.h
                partitioner/actionexecuter.h partitioner/actionstack.h partitioner/volumetreemap.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
+               partitioner/actions/partitionaction.h
                partitioner/actions/formatpartitionaction.h
                partitioner/actions/createpartitionaction.h
                partitioner/actions/removepartitionaction.h

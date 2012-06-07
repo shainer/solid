@@ -17,8 +17,7 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "removepartitionaction.h"
+#include <solid/partitioner/actions/partitionaction.h>
 
 namespace Solid
 {
@@ -27,26 +26,38 @@ namespace Partitioner
 namespace Actions
 {
 
-RemovePartitionAction::RemovePartitionAction(const QString& partition)
-    : PartitionAction(partition)
+class PartitionAction::Private
+{
+public:
+    Private(const QString& p)
+        : partition(p)
+    {}
+    
+    ~Private()
+    {}
+    
+    QString partition;
+};
+
+PartitionAction::PartitionAction(const QString& partition)
+    : d( new Private(partition) )
 {}
 
-RemovePartitionAction::~RemovePartitionAction()
-{}
-
-Action::ActionType RemovePartitionAction::actionType() const
+PartitionAction::~PartitionAction()
 {
-    return Action::RemovePartition;
+    delete d;
 }
 
-QString RemovePartitionAction::description() const
+QString PartitionAction::partition() const
 {
-    QString desc( "Removing partition %0." );
-    desc = desc.arg( partition() );
-    
-    return QObject::tr(desc.toUtf8().data());
+    return d->partition;
 }
-    
+
+void PartitionAction::setPartitionName(const QString& name)
+{
+    d->partition = name;
+}
+
 }
 }
 }

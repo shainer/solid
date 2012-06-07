@@ -36,6 +36,7 @@ namespace Solid
             
             /**
              * @class Action
+             * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief This is the abstract base class for all the actions the application can register for execution.
              * 
              * Please note that no error checking is performed while you create the action. All errors are detected

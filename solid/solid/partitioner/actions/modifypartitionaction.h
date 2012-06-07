@@ -20,7 +20,7 @@
 #ifndef SOLID_PARTITIONER_ACTIONS_MODIFYPARTITIONACTION_H
 #define SOLID_PARTITIONER_ACTIONS_MODIFYPARTITIONACTION_H
 
-#include <solid/partitioner/actions/action.h>
+#include <solid/partitioner/actions/partitionaction.h>
 #include <QtCore/QStringList>
 
 namespace Solid
@@ -31,10 +31,11 @@ namespace Solid
         {
             /**
              * @class ModifyPartitionAction
-             * @extends Action
+             * @extends PartitionAction
+             * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief Action to modify label and/or flags of a partition.
              */
-            class SOLID_EXPORT ModifyPartitionAction : public Action
+            class SOLID_EXPORT ModifyPartitionAction : public PartitionAction
             {
             public:
                 
@@ -62,11 +63,6 @@ namespace Solid
                 
                 virtual ActionType actionType() const;
                 virtual QString description() const;
-                
-                /**
-                 * @returns the partition to change.
-                 */
-                QString partition() const;
                 
                 /**
                  * @returns the new label.

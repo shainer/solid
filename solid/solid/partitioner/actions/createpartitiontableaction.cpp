@@ -32,13 +32,37 @@ public:
     Private(const QString& d, Utils::PartitionTableScheme t)
         : disk(d)
         , scheme(t)
-    {}
+    {
+    
+        switch (scheme) {
+            case Utils::MBRScheme: {
+                schemeName = "mbr";
+                break;
+            }
+            
+            case Utils::GPTScheme: {
+                schemeName = "gpt";
+                break;
+            }
+            
+            case Utils::APMScheme: {
+                schemeName = "apm";
+                break;
+            }
+            
+            default: {
+                schemeName = "none";
+                break;
+            }
+        }
+    }
 
     ~Private()
     {}
 
     QString disk;
     Utils::PartitionTableScheme scheme;
+    QString schemeName;
 };
 
 CreatePartitionTableAction::CreatePartitionTableAction(const QString &disk, Utils::PartitionTableScheme type)
@@ -58,27 +82,7 @@ Action::ActionType CreatePartitionTableAction::actionType() const
 QString CreatePartitionTableAction::description() const
 {
     QString desc = "Creating partition table of type %0 on %1";
-
-    switch (d->scheme)
-    {
-        case Utils::MBRScheme: {
-            desc = desc.arg("mbr");
-            break;
-        }
-
-        case Utils::GPTScheme: {
-            desc = desc.arg("gpt");
-            break;
-        }
-
-        case Utils::APMScheme: {
-            desc = desc.arg("apm");
-            break;
-        }
-
-        default:
-            break;
-    }
+    desc.arg( d->schemeName );
 
     desc = desc.arg(d->disk);
     return desc;
@@ -92,6 +96,11 @@ QString CreatePartitionTableAction::disk() const
 Utils::PartitionTableScheme CreatePartitionTableAction::partitionTableScheme() const
 {
     return d->scheme;
+}
+
+QString CreatePartitionTableAction::schemeName() const
+{
+    return d->schemeName;
 }
 
 }

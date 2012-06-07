@@ -30,26 +30,26 @@ namespace Actions
 class ResizePartitionAction::Private
 {
 public:
-    Private(const QString& p, qlonglong o, qlonglong s)
-        : partition(p)
-        , newOffset(o)
+    Private(qlonglong o, qlonglong s)
+        : newOffset(o)
         , newSize(s)
     {}
     
     ~Private()
     {}
     
-    QString partition;
     qlonglong newOffset;
     qlonglong newSize;
 };
     
 ResizePartitionAction::ResizePartitionAction(const QString& partition, qlonglong newOffset, qlonglong newSize)
-    : d( new Private(partition, newOffset, newSize) )
+    : PartitionAction(partition)
+    , d( new Private(newOffset, newSize) )
 {}
 
 ResizePartitionAction::ResizePartitionAction(const QString& partition, qlonglong newSize)
-    : d( new Private(partition, -1, newSize) )
+    : PartitionAction(partition)
+    , d( new Private(-1, newSize) )
 {}
 
 ResizePartitionAction::~ResizePartitionAction()
@@ -65,14 +65,9 @@ Action::ActionType ResizePartitionAction::actionType() const
 QString ResizePartitionAction::description() const
 {
     QString desc( "Changing %0 to offset %1 and size %2" );
-    desc = desc.arg(d->partition, QString::number(d->newOffset), QString::number(d->newSize));
+    desc = desc.arg(partition(), QString::number(d->newOffset), QString::number(d->newSize));
     
     return QObject::tr(desc.toUtf8().data());
-}
-
-QString ResizePartitionAction::partition() const
-{
-    return d->partition;
 }
 
 qlonglong ResizePartitionAction::newOffset() const

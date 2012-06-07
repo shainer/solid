@@ -17,11 +17,11 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef SOLID_PARTITIONER_ACTIONS_CREATEPARTITIONTABLEACTION_H
-#define SOLID_PARTITIONER_ACTIONS_CREATEPARTITIONTABLEACTION_H
+#ifndef SOLID_PARTITIONER_ACTIONS_PARTITIONACTION_H
+#define SOLID_PARTITIONER_ACTIONS_PARTITIONACTION_H
 
-#include "action.h"
-#include <solid/partitioner/utils/partitioner_enums.h>
+#include <solid/solid_export.h>
+#include <solid/partitioner/actions/action.h>
 
 namespace Solid
 {
@@ -30,42 +30,43 @@ namespace Solid
         namespace Actions
         {
             /**
-             * @class CreatePartitionTableAction
+             * @class PartitionAction
              * @extends Action
              * @author Lisa Vitolo <shainer@chakra-project.org>
-             * @brief Action to create a new partition table on a disk.
-             * @warning executing this action causes the automatic removal of all partitions present on the disk.
+             * 
+             * This class is an abstract base class for all the actions that operate on a partition
+             * (CreatePartitionAction isn't included).
              */
-            class SOLID_EXPORT CreatePartitionTableAction : public Action
+            class SOLID_EXPORT PartitionAction : public Action
             {
             public:
+                explicit PartitionAction(const QString& partition);
+                virtual ~PartitionAction();
+                
                 /**
-                 * Creates a new object.
+                 * Retrieves the type of the object.
                  * 
-                 * @param disk the name of the disk.
-                 * @param scheme an identifier of the new partition table scheme to be created.
+                 * @returns the most derived class a generic Action object is instance of.
                  */
-                explicit CreatePartitionTableAction(const QString &, Utils::PartitionTableScheme);
-                virtual ~CreatePartitionTableAction();
-
-                virtual ActionType actionType() const;
-                virtual QString description() const;
-
-                /**
-                 * @returns the name of disk to change.
-                 */
-                QString disk() const;
+                virtual Action::ActionType actionType() const = 0;
                 
                 /**
-                 * @returns the chosen partition table scheme.
+                 * @returns a localized string depicting the action.
                  */
-                Utils::PartitionTableScheme partitionTableScheme() const;
+                virtual QString description() const = 0;
                 
                 /**
-                 * @returns the string associated to the partition table scheme selected.
+                 * @returns the partition involved in the action.
                  */
-                QString schemeName() const;
-
+                virtual QString partition() const;
+                
+                /**
+                 * Sets a different partition name for this action.
+                 * 
+                 * @param name the new partition name.
+                 */
+                virtual void setPartitionName(const QString &);
+                
             private:
                 class Private;
                 Private* d;
