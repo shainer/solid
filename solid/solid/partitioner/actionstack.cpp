@@ -56,7 +56,7 @@ void ActionStack::push(Action* op)
     qDeleteAll(d->undoneActions);
     d->undoneActions.clear();
     
-    d->actions.push_front(op);
+    d->actions.push_back(op);
 }
 
 QList< Action* > ActionStack::undo()
@@ -64,8 +64,8 @@ QList< Action* > ActionStack::undo()
     Action* first = NULL;
     
     if (!d->actions.isEmpty()) {
-        first = d->actions.takeFirst();
-        d->undoneActions.push_front(first);
+        first = d->actions.takeLast();
+        d->undoneActions.push_back(first);
     }
     
     return d->actions;
@@ -76,8 +76,8 @@ QList< Action* > ActionStack::redo()
     Action* firstUndone = NULL;
     
     if (!d->undoneActions.isEmpty()) {
-        firstUndone = d->undoneActions.takeFirst();
-        d->actions.push_front(firstUndone);
+        firstUndone = d->undoneActions.takeLast();
+        d->actions.push_back(firstUndone);
     }
     
     return d->actions;
@@ -98,6 +98,11 @@ void ActionStack::removeActionsOfDisk(const QString& diskName)
 bool ActionStack::contains(Action* a) const
 {
     return d->actions.contains(a);
+}
+
+int ActionStack::size() const
+{
+    return d->actions.size();
 }
 
 bool ActionStack::empty() const

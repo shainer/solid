@@ -97,6 +97,11 @@ namespace Solid
             bool contains(Action *) const;
             
             /**
+             * @returns how many actions are currently registered.
+             */
+            int size() const;
+            
+            /**
              * @returns the list of valid actions.
              */
             QList<Action *> list() const;
