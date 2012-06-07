@@ -32,6 +32,8 @@ class Filesystem::Private
 public:
     Private(const QString& n, const QStringList& flags)
         : name(n)
+        , ownerUid(-1)
+        , ownerGid(-1)
     {
         foreach (const QString& flag, flags) {
             if (flag.startsWith("label")) {
