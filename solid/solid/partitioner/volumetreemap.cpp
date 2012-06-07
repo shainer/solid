@@ -55,7 +55,6 @@ public:
     QList< FreeSpace* > freeSpaceOfDisk(const VolumeTree &);
     QList< FreeSpace* > findSpace(QList< VolumeTreeItem* >, DeviceModified *);
     FreeSpace* spaceBetweenPartitions(Partition *, Partition *, DeviceModified *);
-    void device();
 };
 
 VolumeTreeMap::VolumeTreeMap()
@@ -63,6 +62,14 @@ VolumeTreeMap::VolumeTreeMap()
 {
     QObject::connect(d->backend, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
     QObject::connect(d->backend, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
+}
+
+/* FIXME */
+VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
+    : QObject()
+    , d( new Private )
+{
+    d->devices = other.d->devices;
 }
 
 VolumeTreeMap::~VolumeTreeMap()
@@ -129,6 +136,19 @@ QPair< VolumeTree, DeviceModified* > VolumeTreeMap::searchTreeWithDevice(const Q
     }
     
     return pair;
+}
+
+DeviceModified* VolumeTreeMap::searchDevice(const QString& udi) const
+{
+    foreach (const VolumeTree& tree, d->devices.values()) {
+        DeviceModified* dev = tree.searchDevice(udi);
+        
+        if (dev) {
+            return dev;
+        }
+    }
+    
+    return NULL;
 }
 
 void VolumeTreeMap::remove(const QString& diskName)

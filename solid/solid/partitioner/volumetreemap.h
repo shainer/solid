@@ -43,6 +43,7 @@ namespace Solid
              * Creates an empty tree map.
              */
             explicit VolumeTreeMap();
+            VolumeTreeMap(const VolumeTreeMap &);
             virtual ~VolumeTreeMap();
             
             /**
@@ -72,6 +73,14 @@ namespace Solid
              * @returns a pair containing the device object and the tree in which it was found.
              */
             QPair<VolumeTree, Devices::DeviceModified *> searchTreeWithDevice(const QString &) const;
+            
+            /**
+             * Searches a specific device inside the map.
+             * 
+             * @param udi the device UDI.
+             * @returns the device object, or NULL if not found.
+             */
+            Devices::DeviceModified* searchDevice(const QString &) const;
             
             /**
              * Searches the map for a disk layout.
