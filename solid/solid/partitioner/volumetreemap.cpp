@@ -82,6 +82,7 @@ VolumeTreeMap::~VolumeTreeMap()
 
 void VolumeTreeMap::build()
 {
+    clear();
     /*
      * Detection of drives.
      * A new tree is created for each disk on the system.
@@ -162,71 +163,16 @@ void VolumeTreeMap::clear()
 }
 
 /*
- * BIG FIXME: these two slots are a first draft, they weren't properly tested and they probably don't work as they should.
- * I saw a commit in master that probably fix the reason doDeviceAdded doesn't detect anything, please check.
+ * TODO: implement correctly.
  */
 void VolumeTreeMap::doDeviceAdded(QString udi)
 {
-    Predicate pred1( DeviceInterface::StorageDrive, "udi", udi );
-    Predicate pred2( DeviceInterface::StorageVolume, "udi", udi );
-    QList<Device> drives = Device::listFromQuery(pred1);
-    
-    /* It's a drive */
-    if (!drives.isEmpty()) {
-        StorageDrive* drive = drives.first().as<StorageDrive>();
-        Block* block = drives.first().as<Block>();
-        
-        qDebug() << drive->driveType();
-        
-        if (drive->driveType() == StorageDrive::HardDisk) {
-            Disk* disk = d->addDisk(drive, udi);
-        
-            if (block->deviceMajor() != LOOPDEVICE_MAJOR && !drive->partitionTableScheme().isEmpty()) {
-                d->detectFreeSpaceOfDisk(disk->name());
-            }
-            
-            emit deviceAdded(d->devices[disk->name()]);
-        }
-    }
-    else {
-        QList<Device> volumes = Device::listFromQuery(pred2);
-
-        if (volumes.isEmpty()) {
-            return;
-        }
-        
-        QString diskName = volumes.first().parentUdi();
-        
-        if (d->devices.contains(diskName)) {
-            d->detectPartitionsOfDisk(diskName);
-            d->detectFreeSpaceOfDisk(diskName);        
-            emit deviceAdded(d->devices[diskName]);
-        }
-    }
+    Q_UNUSED(udi)
 }
 
 void VolumeTreeMap::doDeviceRemoved(QString udi)
 {
-    QString diskName;
-    
-    if (contains(udi)) {
-        remove(udi);
-        diskName = udi;
-    }
-    else {
-        VolumeTree tree = searchTreeWithDevice(udi).first;
-        
-        if (!tree.d) {
-            return;
-        }
-        
-        VolumeTreeItem* deviceItem = tree.searchNode(udi);
-        delete deviceItem;
-        
-        d->detectFreeSpaceOfDisk(deviceItem->volume()->parentName());
-    }
-    
-    emit deviceRemoved(diskName);
+    Q_UNUSED(udi)
 }
 
 Disk* VolumeTreeMap::Private::addDisk(StorageDrive* drive, const QString& udi)
