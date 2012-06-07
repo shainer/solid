@@ -57,7 +57,7 @@ namespace Solid
                 explicit CreatePartitionAction(const QString& disk,
                                                qulonglong offset,
                                                qulonglong size,
-                                               bool extended = false,
+                                               bool extended,
                                                const Utils::Filesystem& fs = Utils::Filesystem(),
                                                const QString& label = QString(),
                                                const QStringList& flags = QStringList()
