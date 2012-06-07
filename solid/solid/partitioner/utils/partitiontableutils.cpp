@@ -32,25 +32,13 @@ class PartitionTableUtils::Private
 {
 public:
     Private()
-    {
-        QStringList mbrFlags = QStringList() << "boot";
-        QStringList gptFlags = QStringList() << "required";
-        QStringList apmFlags = QStringList() << "allocated"
-                                             << "allow_read"
-                                             << "allow_write"
-                                             << "boot"
-                                             << "boot_code_is_pic"
-                                             << "in_use";
-
-        supportedFlags.insert(MBRScheme, mbrFlags);
-        supportedFlags.insert(GPTScheme, gptFlags);
-        supportedFlags.insert(APMScheme, apmFlags);
-    }
+    {}
 
     ~Private()
     {}
 
     QHash< PartitionTableScheme, QStringList > supportedFlags;
+    QHash< PartitionTableScheme, QHash<QString, QString> > types;
 };
 
 class PartitionTableUtilsHelper
@@ -74,6 +62,72 @@ PartitionTableUtils::PartitionTableUtils()
     : d( new Private )
 {
     Q_ASSERT(!s_ptableutils->q);
+    
+    QStringList mbrFlags = QStringList() << "boot";
+    QStringList gptFlags = QStringList() << "required";
+    QStringList apmFlags = QStringList() << "allocated"
+                                            << "allow_read"
+                                            << "allow_write"
+                                            << "boot"
+                                            << "boot_code_is_pic"
+                                            << "in_use";
+
+    d->supportedFlags.insert(MBRScheme, mbrFlags);
+    d->supportedFlags.insert(GPTScheme, gptFlags);
+    d->supportedFlags.insert(APMScheme, apmFlags);
+    
+    /*
+     * FIXME: for MBR, check CHS vs. LBA.
+     * Use the property KnownFilesystem, when implemented.
+     */
+    QHash< QString, QString > apm;
+    apm.insert("btrfs", "Apple_Unix_SVR2");
+    apm.insert("ext2", "Apple_Unix_SVR2");
+    apm.insert("ext3", "Apple_Unix_SVR2");
+    apm.insert("ext4", "Apple_Unix_SVR2");
+    apm.insert("minix", "Apple_Unix_SVR2");
+    apm.insert("nilfs2", "Apple_Unix_SVR2");
+    apm.insert("ntfs", "Apple_Unix_SVR2");
+    apm.insert("reiserfs", "Apple_Unix_SVR2");
+    apm.insert("swap", "Apple_Unix_SVR2");
+    apm.insert("unformatted", "Apple_Scratch");
+    apm.insert("xfs", "Apple_Unix_SVR2");
+    apm.insert("vfat", "Apple_Unix_SVR2");
+    apm.insert("bfs", "Be_BFS");
+    
+    QHash< QString, QString > gpt;
+    gpt.insert("btrfs", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("ext2", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("ext3", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("ext4", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("minix", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("nilfs2", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("ntfs", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("reiserfs", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("swap", "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F");
+    gpt.insert("unformatted", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("vfat", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+    gpt.insert("xfs", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
+
+    QHash< QString, QString > mbr;
+    mbr.insert("btrfs", "0x83");
+    mbr.insert("extended", "0x05");
+    mbr.insert("ext2", "0x83");
+    mbr.insert("ext3", "0x83");
+    mbr.insert("ext4", "0x83");
+    mbr.insert("minix", "0x81");
+    mbr.insert("nilfs2", "0x83");
+    mbr.insert("ntfs", "0x07");
+    mbr.insert("reiserfs", "0x83");
+    mbr.insert("swap", "0x82");
+    mbr.insert("unformatted", "0x00");
+    mbr.insert("vfat", "0x0b");
+    mbr.insert("xfs", "0x83");
+    
+    d->types.insert(Utils::APMScheme, apm);
+    d->types.insert(Utils::GPTScheme, gpt);
+    d->types.insert(Utils::MBRScheme, mbr);
+    
     s_ptableutils->q = this;
 }
 
@@ -94,6 +148,16 @@ PartitionTableUtils* PartitionTableUtils::instance()
 QStringList PartitionTableUtils::supportedFlags(PartitionTableScheme scheme)
 {
     return d->supportedFlags.value(scheme);
+}
+
+QString PartitionTableUtils::typeString(PartitionTableScheme scheme, QString type)
+{
+    if (type.isEmpty()) {
+        type = "unformatted";
+    }
+    
+    QHash<QString, QString> schemeTypes = d->types[scheme];
+    return schemeTypes[type];
 }
 
 }

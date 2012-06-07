@@ -38,6 +38,7 @@ namespace Solid
                 static PartitionTableUtils* instance();
 
                 QStringList supportedFlags(PartitionTableScheme);
+                QString typeString(PartitionTableScheme, QString);
 
             private:
                 PartitionTableUtils();
