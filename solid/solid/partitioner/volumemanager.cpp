@@ -20,8 +20,8 @@
 #include <solid/partitioner/volumemanager.h>
 #include <solid/partitioner/devices/partition.h>
 #include <solid/partitioner/devices/disk.h>
-#include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/action.h>
+#include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/createpartitionaction.h>
 #include <solid/partitioner/actions/removepartitionaction.h>
 #include <solid/partitioner/actions/resizepartitionaction.h>
@@ -33,9 +33,10 @@
 #include <solid/partitioner/volumetreemap.h>
 #include <solid/device.h>
 #include <backends/udisks/udisksmanager.h>
-#include <kglobal.h>
 #include <solid/block.h>
 #include <solid/predicate.h>
+
+#include <kglobal.h>
 
 namespace Solid
 {   
@@ -49,32 +50,27 @@ class VolumeManager::Private
 {
 public:
     Private()
-        : executer(0)
-        , deviceManager( new Backends::UDisks::UDisksManager(0) )
     {}
     
     ~Private()
     {}
     
-    /* Resize a partition given its parent. */
+    /* Resize a partition. */
     void resizePartition(Partition *, qlonglong, DeviceModified *, VolumeTree &);
     
-    /* Changes the initial offset of a partition. */
+    /* Moves a partition. */
     void movePartition(Partition *, qlonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
     
-    /* Perform necessary checks when creating a new partition with either MBR or GPT. */
+    /* Perform necessary checks when creating a new partition on either MBR or GPT tables. */
     bool mbrPartitionChecks(Actions::CreatePartitionAction *);
     bool gptPartitionChecks(Actions::CreatePartitionAction *);
     
     /* Set a new ptable scheme for a disk, deleting all the partitions. */
     bool setPartitionTableScheme(const QString &, Utils::PartitionTableScheme);
     
-    VolumeTreeMap volumeTreeMap;
-    ActionStack actionstack;
-    ActionExecuter* executer;
-    Ifaces::DeviceManager* deviceManager;
-    
-    PartitioningError error;
+    VolumeTreeMap volumeTreeMap; /* set of trees with disk layouts */
+    ActionStack actionstack; /* stack of registered actions */
+    PartitioningError error; /* latest error */
 };
 
 class VolumeManagerHelper
@@ -101,16 +97,13 @@ VolumeManager::VolumeManager()
     s_volumemanager->q = this;
 
     d->volumeTreeMap.build();
-    QObject::connect(d->deviceManager, SIGNAL(deviceAdded(QString)), this, SLOT(doDeviceAdded(QString)));
-    QObject::connect(d->deviceManager, SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
+    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree)), this, SLOT(doDeviceAdded(VolumeTree)));
+    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
 }
 
 VolumeManager::~VolumeManager()
 {
-    d->actionstack.clear();
-    d->volumeTreeMap.clear();
-    d->deviceManager->deleteLater();
-    
+    d->actionstack.clear();    
     delete d;
 }
 
@@ -135,23 +128,27 @@ bool VolumeManager::registerAction(Actions::Action* action)
     switch (action->actionType()) {
         case Action::FormatPartition: {
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
+            
             QPair<VolumeTree, DeviceModified* > pair = d->volumeTreeMap.searchTreeWithDevice(fpa->partition());
             VolumeTree tree = pair.first;
             DeviceModified* p = pair.second;
             Utils::Filesystem fs = fpa->filesystem();
 
+            /* At least one flag of the specified filesystem is out-of-context */
             if (!fs.unsupportedFlags().isEmpty()) {
                 d->error.setType(PartitioningError::FilesystemFlagsError);
                 d->error.arg(fpa->filesystem().unsupportedFlags().join(", "));
                 return false;
             }
             
+            /* Unexistent device */
             if (!p) {
                 d->error.setType(PartitioningError::PartitionNotFoundError);
                 d->error.arg(fpa->partition());
                 return false;
             }
             
+            /* The specified device isn't a partition. */
             if (p->deviceType() != DeviceModified::PartitionDevice) {
                 d->error.setType(PartitioningError::WrongDeviceTypeError);
                 d->error.arg("partition");
@@ -159,13 +156,6 @@ bool VolumeManager::registerAction(Actions::Action* action)
             }
             
             Partition* volume = dynamic_cast<Partition *>(p);
-            
-            if (volume->usage() == StorageVolume::Other) {
-                d->error.setType(PartitioningError::CannotFormatPartition);
-                d->error.arg(volume->name());
-                return false;
-            }
-            
             volume->setFilesystem(fs);
             
             fpa->setOwnerDisk(tree.root());
@@ -173,16 +163,18 @@ bool VolumeManager::registerAction(Actions::Action* action)
         }
         
         case Action::CreatePartition: {
-            Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);
+            Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);            
+            QPair<VolumeTree, DeviceModified* > pair = d->volumeTreeMap.searchTreeWithDevice( cpa->disk() );
+            VolumeTree tree = pair.first;
             
-            if (!d->volumeTreeMap.contains(cpa->disk())) {
+            /* No disk */
+            if (!tree.d) {
                 d->error.setType(PartitioningError::DiskNotFoundError);
                 d->error.arg(cpa->disk());
                 return false;
             }
             
-            VolumeTree tree = d->volumeTreeMap[cpa->disk()];
-            Disk* disk = dynamic_cast< Disk* >( tree.searchDevice(cpa->disk()) );
+            Disk* disk = dynamic_cast< Disk* >( pair.second );
             Utils::PartitionTableScheme scheme = disk->partitionTableScheme();
 
             switch (scheme) {
@@ -212,6 +204,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                     break;
             }
 
+            /* Checks whether the partition table supports all the given flags */
             foreach (const QString& flagSet, cpa->flags()) {
                 if (!Utils::PartitionTableUtils::instance()->supportedFlags(scheme).contains(flagSet)) {
                     d->error.setType(PartitioningError::PartitionFlagsError);
@@ -220,6 +213,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 }
             }
             
+            /* Looks for the block of free space that will contain this partition. */
             if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
                 d->error.setType(PartitioningError::ContainerNotFoundError);
                 d->error.arg(QString::number(cpa->offset()));
@@ -253,6 +247,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 d->error.arg("partition");
             }
             
+            /* Deletes the partition merging adjacent free blocks if present. */
             tree.d->mergeAndDelete(rpa->partition());
             rpa->setOwnerDisk(tree.root());
             break;
@@ -287,13 +282,15 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 return false;
             }
             
+            /* The offset is moved to the left, but there is no free space for such move */
             if (leftDevice && leftDevice->deviceType() != DeviceModified::FreeSpaceDevice && rpa->newOffset() < toResize->offset()) {
                 d->error.setType(PartitioningError::ResizeOutOfBoundsError);
                 return false;
             }
-            
     
-            /* Special checks for extendend partitions */
+            /*
+             * For extended partitions it avoids "crushing" any logical one.
+             */
             DeviceModified* firstLogical = 0;
             DeviceModified* lastLogical = 0;
             if (toResize->partitionType() == ExtendedPartition) {
@@ -315,40 +312,40 @@ bool VolumeManager::registerAction(Actions::Action* action)
                 }
             }
             
+            /* Finds what's the biggest right boundary the new partition can have */
             if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
                 boundary = toResize->rightBoundary();
             } else {
                 boundary = rightDevice->offset() + rightDevice->size();
             }
             
+            /* If the size is increased beyond the legal boundary... */
             if ((toResize->offset() + rpa->newSize()) > boundary) {
                 qlonglong difference = toResize->offset() + rpa->newSize() - boundary;
                 
+                /* ... but the offset is reduced of at least that quantity, OK */
                 if ((toResize->offset() - rpa->newOffset()) < difference) {
                     d->error.setType(PartitioningError::ResizeOutOfBoundsError);
                     return false;
                 }
                 
+                /*
+                 * NOTE: defining an order of the operations isn't really necessary if we're sure everything is legal.
+                 * However, avoiding surpassing boundaries even temporarity prevents us from having any issue later.
+                 */
                 d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
                 d->resizePartition(toResize, rpa->newSize(), rightDevice, tree);
             }
+            /* If the partition is moved forward beyond the legal boundary... */
             else if (rpa->newOffset() + toResize->size() >= boundary) {
-                qlonglong difference = rpa->newOffset() + toResize->size() - boundary; /* of how much? */
-                
-                /*
-                 * If the size is reduced of at least that quantity
-                 * then the partition will stay in its limit, therefore the operation is allowed.
-                 * Otherwise, the exception below is thrown.
-                 */
+                qlonglong difference = rpa->newOffset() + toResize->size() - boundary;
+
+                /* ... but the size is reduced of at least that quantity, OK */
                 if ((toResize->size() - rpa->newSize()) < difference) {
                     d->error.setType(PartitioningError::ResizeOutOfBoundsError);
                     return false;
                 }
                 
-                /*
-                 * To avoid problems with further calculations, first change the size and then the offset,
-                 * so no limit is surpassed even temporarily.
-                 */
                 d->resizePartition(toResize, rpa->newSize(), rightDevice, tree);
                 d->movePartition(toResize, rpa->newOffset(), leftDevice, rightDevice, itemToResize->parent()->volume(), tree);
             }
@@ -444,70 +441,29 @@ bool VolumeManager::registerAction(Actions::Action* action)
     return true;
 }
 
+/*
+ * TODO: implement
+ */
 void VolumeManager::undo()
 {}
 
 void VolumeManager::redo()
 {}
 
-/*
- * FIXME: in order for this to work, we must be sure that when this slot is called, it isn't
- * called again until the previous instance hasn't finished execution.
- */
-void VolumeManager::doDeviceAdded(QString udi)
+void VolumeManager::doDeviceAdded(VolumeTree tree)
 {
-    Predicate pred1( DeviceInterface::StorageDrive, "udi", udi );
-    Predicate pred2( DeviceInterface::StorageVolume, "udi", udi );
-    QList<Device> drives = Device::listFromQuery(pred1);
-        
-    if (!drives.isEmpty()) {
-        StorageDrive* drive = drives.first().as<StorageDrive>();
-        Disk* disk = d->volumeTreeMap.addDisk(drive, udi);
-        
-        d->volumeTreeMap.detectFreeSpaceOfDisk(disk->name());
-        d->actionstack.removeActionsOfDisk(disk->name());        
-        emit deviceAdded(d->volumeTreeMap[disk->name()]);
-    }
-    else {
-        QList<Device> volumes = Device::listFromQuery(pred2);
-        
-        if (volumes.isEmpty()) {
-            return;
-        }
-        
-        QString diskName = volumes.first().parentUdi();
-        d->volumeTreeMap.detectPartitionsOfDisk(diskName);
-        d->volumeTreeMap.detectFreeSpaceOfDisk(diskName);
-        
-        d->actionstack.removeActionsOfDisk(diskName);
-        emit deviceAdded(d->volumeTreeMap[diskName]);
-    }
+    QString diskName = tree.root()->name();
+    d->actionstack.removeActionsOfDisk(diskName);
+    
+    tree.print();
+    
+    emit deviceAdded(tree);
 }
 
 void VolumeManager::doDeviceRemoved(QString udi)
 {
-    Predicate pred1( DeviceInterface::StorageDrive, "udi", udi );
-    Predicate pred2( DeviceInterface::StorageVolume, "udi", udi );
-    QList<Device> drives = Device::listFromQuery(pred1);
-    QString diskName;
-    
-    if (!drives.isEmpty()) {
-        Device drive = drives.first();
-        diskName = drive.udi();
-    }
-    else {
-        QList<Device> volumes = Device::listFromQuery(pred2);
-        
-        if (volumes.isEmpty()) {
-            return;
-        }
-        
-        QString diskName = volumes.first().parentUdi();
-    }
-    
-    d->volumeTreeMap.remove(diskName);
-    d->actionstack.removeActionsOfDisk(diskName);
-    emit deviceRemoved(diskName);
+    d->actionstack.removeActionsOfDisk(udi);
+    emit deviceRemoved(udi);
 }
 
 QMap<QString, VolumeTree> VolumeManager::allDiskTrees() const
@@ -522,7 +478,15 @@ VolumeTree VolumeManager::diskTree(const QString& diskName) const
 
 bool VolumeManager::apply()
 {
-    return true;
+    ActionExecuter executer;
+    
+    if (executer.isValid()) {
+        return executer.execute();
+    }
+    
+   
+    /* FIXME: set error */
+    return false;
 }
 
 QString VolumeManager::errorDescription() const

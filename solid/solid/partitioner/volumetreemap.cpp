@@ -23,6 +23,9 @@
 #include <solid/device.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/devices/partition.h>
+#include <solid/predicate.h>
+#include <ifaces/devicemanager.h>
+#include <backends/udisks/udisksmanager.h>
 
 namespace Solid
 {
@@ -35,25 +38,38 @@ class VolumeTreeMap::Private
 {
 public:
     Private()
+        : backend( new Backends::UDisks::UDisksManager(0) )
     {}
     
     ~Private()
     {}
     
     QMap<QString, VolumeTree> devices;
+    Ifaces::DeviceManager* backend;
+
+    Disk* addDisk(StorageDrive *, const QString &);
+    void detectPartitionsOfDisk(const QString &);
+    void detectFreeSpaceOfDisk(const QString &);
     
     /* The following functions help detecting free space blocks between partitions */
     QList< FreeSpace* > freeSpaceOfDisk(const VolumeTree &);
     QList< FreeSpace* > findSpace(QList< VolumeTreeItem* >, DeviceModified *);
     FreeSpace* spaceBetweenPartitions(Partition *, Partition *, DeviceModified *);
+    void device();
 };
 
 VolumeTreeMap::VolumeTreeMap()
     : d( new Private )
-{}
+{
+    QObject::connect(d->backend, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
+    QObject::connect(d->backend, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
+}
 
 VolumeTreeMap::~VolumeTreeMap()
 {
+    clear();
+    d->backend->deleteLater();
+    
     delete d;
 }
 
@@ -70,15 +86,15 @@ void VolumeTreeMap::build()
         
         if (drive->driveType() == StorageDrive::HardDisk)
         {
-            Disk* newDisk = addDisk(drive, udi);
+            Disk* newDisk = d->addDisk(drive, udi);
             
             /*
              * Loop partitions, identified by a particular major number, aren't considered for partitioning.
              * The same applies to disks without a partition table.
              */
             if (block->deviceMajor() != LOOPDEVICE_MAJOR && newDisk->partitionTableScheme() != Utils::NoneScheme) {
-                detectPartitionsOfDisk(udi);
-                detectFreeSpaceOfDisk(udi);
+                d->detectPartitionsOfDisk(udi);
+                d->detectFreeSpaceOfDisk(udi);
             }
         }
     }
@@ -125,22 +141,90 @@ void VolumeTreeMap::clear()
     d->devices.clear();
 }
 
-Disk* VolumeTreeMap::addDisk(StorageDrive* drive, const QString& udi)
+/*
+ * BIG FIXME: these two slots are a first draft, they weren't properly tested and they probably don't work as they should.
+ * I saw a commit in master that probably fix the reason doDeviceAdded doesn't detect anything, please check.
+ */
+void VolumeTreeMap::doDeviceAdded(QString udi)
+{
+    Predicate pred1( DeviceInterface::StorageDrive, "udi", udi );
+    Predicate pred2( DeviceInterface::StorageVolume, "udi", udi );
+    QList<Device> drives = Device::listFromQuery(pred1);
+    
+    /* It's a drive */
+    if (!drives.isEmpty()) {
+        StorageDrive* drive = drives.first().as<StorageDrive>();
+        Block* block = drives.first().as<Block>();
+        
+        qDebug() << drive->driveType();
+        
+        if (drive->driveType() == StorageDrive::HardDisk) {
+            Disk* disk = d->addDisk(drive, udi);
+        
+            if (block->deviceMajor() != LOOPDEVICE_MAJOR && !drive->partitionTableScheme().isEmpty()) {
+                d->detectFreeSpaceOfDisk(disk->name());
+            }
+            
+            emit deviceAdded(d->devices[disk->name()]);
+        }
+    }
+    else {
+        QList<Device> volumes = Device::listFromQuery(pred2);
+
+        if (volumes.isEmpty()) {
+            return;
+        }
+        
+        QString diskName = volumes.first().parentUdi();
+        
+        if (d->devices.contains(diskName)) {
+            d->detectPartitionsOfDisk(diskName);
+            d->detectFreeSpaceOfDisk(diskName);        
+            emit deviceAdded(d->devices[diskName]);
+        }
+    }
+}
+
+void VolumeTreeMap::doDeviceRemoved(QString udi)
+{
+    QString diskName;
+    
+    if (contains(udi)) {
+        remove(udi);
+        diskName = udi;
+    }
+    else {
+        VolumeTree tree = searchTreeWithDevice(udi).first;
+        
+        if (!tree.d) {
+            return;
+        }
+        
+        VolumeTreeItem* deviceItem = tree.searchNode(udi);
+        delete deviceItem;
+        
+        d->detectFreeSpaceOfDisk(deviceItem->volume()->parentName());
+    }
+    
+    emit deviceRemoved(diskName);
+}
+
+Disk* VolumeTreeMap::Private::addDisk(StorageDrive* drive, const QString& udi)
 {
     Devices::Disk* disk = new Devices::Disk( drive );
     disk->setName(udi);
     
     VolumeTree tree( disk );
-    d->devices.insert(disk->name(), tree);
+    devices.insert(disk->name(), tree);
         
     return disk;
 }
 
-void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
-{    
-    QList<Device> devices = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
+void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi)
+{
+    QList<Device> devs = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
     Devices::Partition* extended = 0;
-    VolumeTree tree = d->devices[parentUdi];
+    VolumeTree tree = devices[parentUdi];
     
     /*
      * Every detection removes the previous one. This is useful when the detection is repeated
@@ -152,11 +236,11 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
      * For now doesn't consider all the volume types not supported.
      * TODO: erase volumes when isIgnored() == true.
      */
-    for (QList<Device>::iterator it = devices.begin(); it != devices.end(); it++) {
+    for (QList<Device>::iterator it = devs.begin(); it != devs.end(); it++) {
         StorageVolume* volume = it->as<StorageVolume>();
         
         if (volume->usage() > StorageVolume::FileSystem) {
-            devices.erase(it);
+            devs.erase(it);
         }
     }
     
@@ -164,7 +248,7 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
      * Finds the extended partition, if any. This must be done separately because nobody assures us
      * that the extended partition comes before the logicals in the devices list.
      */
-    foreach (Device device, devices) {
+    foreach (Device device, devs) {
         StorageVolume* volume = device.as<StorageVolume>();
 
         if (volume->partitionType() == EXTENDED_TYPE_STRING) {
@@ -181,7 +265,7 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
      * Now detects whether the other partitions are primary or logical. Udisks doesn't supply this information, so we
      * simply check if a partition falls inside the boundaries of the extended (if present).
      */
-    foreach (Device device, devices) {
+    foreach (Device device, devs) {
         StorageVolume* volume = device.as<StorageVolume>();
         QString parentName = parentUdi;
         
@@ -205,12 +289,12 @@ void VolumeTreeMap::detectPartitionsOfDisk(const QString& parentUdi)
     }    
 }
 
-void VolumeTreeMap::detectFreeSpaceOfDisk(const QString& parentUdi)
+void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi)
 {
-    VolumeTree tree = d->devices[parentUdi];
+    VolumeTree tree = devices[parentUdi];
     tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
     
-    foreach (FreeSpace* space, d->freeSpaceOfDisk(tree)) {
+    foreach (FreeSpace* space, freeSpaceOfDisk(tree)) {
         tree.d->addDevice(space->parentName(), space);
     }
 }

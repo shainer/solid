@@ -31,9 +31,13 @@ namespace Solid
         /**
          * @class VolumeTreeMap
          * @brief This class manages a map of trees representing disk layouts.
+         * 
+         * @author Lisa Vitolo <shainer@chakra-project.org>
          */
-        class SOLID_EXPORT VolumeTreeMap
+        class SOLID_EXPORT VolumeTreeMap : public QObject
         {
+            Q_OBJECT
+
         public:
             /**
              * Creates an empty tree map.
@@ -89,27 +93,25 @@ namespace Solid
              */
             void clear();
             
-            /**
-             * Adds a new disk in the map.
-             * 
-             * @param drive the StorageDrive interface.
-             * @param udi the disk UDI.
-             */
-            Disk* addDisk(StorageDrive *, const QString &);
+        public slots:
+            void doDeviceAdded(QString);
+            void doDeviceRemoved(QString);
+            
+        signals:
             
             /**
-             * Detects and adds to the layout all partitions of a disk.
+             * This signal is emitted when a new device (disk or partition) is added to the system.
              * 
-             * @param diskName the name of the disk to inspect.
+             * @param tree the updated disk layout's tree.
              */
-            void detectPartitionsOfDisk(const QString &);
+            void deviceAdded(VolumeTree);
             
             /**
-             * Detects and adds to the layout all the free space blocks inside a disk.
+             * This signal is emitted when a device is removed from the system.
              * 
-             * @param diskName the name of the disk to inspect.
+             * @param name the name of the disk where the device is contained, if any.
              */
-            void detectFreeSpaceOfDisk(const QString &);
+            void deviceRemoved(QString);
             
         private:
             class Private;

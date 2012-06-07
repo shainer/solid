@@ -21,13 +21,12 @@
 #define SOLID_PARTITIONER_VOLUMEMANAGER_H
 
 #include <QtCore/QList>
+#include <QtDBus/QDBusObjectPath>
 
 #include <solid/solid_export.h>
-#include <QtDBus/QDBusObjectPath>
 #include <solid/partitioner/volumetree.h>
 #include <solid/partitioner/actionstack.h>
 #include <solid/partitioner/actionexecuter.h>
-#include "devices/disk.h"
 
 namespace Solid
 {
@@ -38,6 +37,7 @@ namespace Solid
          * 
          * This class is the core of the partitioner submodule. It manages drives and partitions using trees and
          * allows the application to register and apply actions on them.
+         * It's a singleton.
          * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
          */
@@ -79,7 +79,7 @@ namespace Solid
             /**
              * Retrieves all the trees representing drives.
              * 
-             * @returns a map with the trees.
+             * @returns a map with pairs of type (disk name, disk layout).
              */
             QMap<QString, VolumeTree> allDiskTrees() const;
             
@@ -87,14 +87,14 @@ namespace Solid
              * Retrieves the tree representing a given drive.
              * 
              * @param diskName the disk name.
-             * @returns a pointer of the associated tree.
+             * @returns the associated tree, or an invalid object if the disk doesn't exist.
              */
             VolumeTree diskTree(const QString &) const;
             
             /**
              * Retrieves the latest error occurred.
              * 
-             * @returns a description of the error.
+             * @returns a description of the error, or "Success" if everything went fine.
              */
             QString errorDescription() const;
             
@@ -106,11 +106,27 @@ namespace Solid
             QList< Action* > registeredActions() const;
             
         public slots:
-            void doDeviceAdded(QString);
+            
+            /**
+             * @see class VolumeTreeMap.
+             */
+            void doDeviceAdded(VolumeTree);
             void doDeviceRemoved(QString);
             
         signals:
+            
+            /**
+             * This signal is emitted when a new device (disk or partition) is added to the system.
+             * 
+             * @param tree the updated disk layout's tree.
+             */
             void deviceAdded(VolumeTree);
+            
+            /**
+             * This signal is emitted when a device is removed from the system.
+             * 
+             * @param name the device UDI.
+             */
             void deviceRemoved(QString);
             
         private:
