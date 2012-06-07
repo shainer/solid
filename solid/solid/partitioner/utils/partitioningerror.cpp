@@ -28,31 +28,19 @@ namespace Partitioner
 {
 namespace Utils
 {
-
-class PartitioningError::Private
-{
-public:
-    Private()
-    {}
-    
-    ~Private()
-    {}
-    
-    ErrorType type;
-    QString description;
-    int markersLeft;
-};
     
 PartitioningError::PartitioningError(PartitioningError::ErrorType type)
-    : d( new Private )
+    : d( new PartitioningErrorPrivate )
 {
     setType(type);
 }
 
+PartitioningError::PartitioningError(const PartitioningError& other)
+    : d( other.d )
+{}
+
 PartitioningError::~PartitioningError()
-{
-    delete d;
-}
+{}
 
 PartitioningError::ErrorType PartitioningError::type() const
 {
@@ -151,6 +139,18 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";
             d->markersLeft = 1;
+            break;
+        }
+        
+        case BusyExecuterError: {
+            d->description = "The executer is being used by another application.";
+            d->markersLeft = 0;
+            break;
+        }
+        
+        case ExecutionError: {
+            d->description = "An error occurred while executing the action \"%0\": %1.";
+            d->markersLeft = 2;
             break;
         }
         

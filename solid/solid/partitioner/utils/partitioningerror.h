@@ -21,6 +21,7 @@
 #define SOLID_PARTITIONER_PARTITIONINGERROR_H
 
 #include <QtCore/QString>
+#include <QtCore/QSharedDataPointer>
 
 namespace Solid
 {
@@ -28,6 +29,8 @@ namespace Solid
     {
         namespace Utils
         {
+            class PartitioningErrorPrivate;
+            
             /**
              * @class PartitioningError
              * @brief This class represents an error in the partitioning submodule.
@@ -57,6 +60,8 @@ namespace Solid
                     NoPartitionTableError,
                     BadPartitionTypeError,
                     DuplicateActionError,
+                    BusyExecuterError,
+                    ExecutionError
                 };
 
                 /**
@@ -65,6 +70,7 @@ namespace Solid
                  * @param type the error type, default to None.
                  */
                 PartitioningError(ErrorType type = None);
+                PartitioningError(const PartitioningError &);
                 virtual ~PartitioningError();
 
                 /**
@@ -95,9 +101,30 @@ namespace Solid
                  * @param type the error type.
                  */
                 void setType(ErrorType);
+                
             private:
-                class Private;
-                Private* d;
+                QSharedDataPointer<PartitioningErrorPrivate> d;
+            };
+            
+            class PartitioningErrorPrivate : public QSharedData
+            {
+            public:
+                PartitioningErrorPrivate()
+                {}
+                
+                PartitioningErrorPrivate(const PartitioningErrorPrivate& other)
+                    : QSharedData(other)
+                    , type(other.type)
+                    , description(other.description)
+                    , markersLeft(other.markersLeft)
+                {}
+                
+                ~PartitioningErrorPrivate()
+                {}
+                
+                PartitioningError::ErrorType type;
+                QString description;
+                int markersLeft;
             };
         }
     }
