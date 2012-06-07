@@ -45,6 +45,11 @@ FormatPartitionAction::FormatPartitionAction(const QString& partition, const Uti
     , d( new Private(fs) )
 {}
 
+FormatPartitionAction::FormatPartitionAction(const QString& partition, const QString& fsName)
+    : PartitionAction(partition)
+    , d( new Private(Utils::Filesystem(fsName)) )
+{}
+
 FormatPartitionAction::~FormatPartitionAction()
 {
     delete d;
