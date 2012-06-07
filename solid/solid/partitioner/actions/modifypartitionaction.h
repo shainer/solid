@@ -37,10 +37,28 @@ namespace Solid
             class SOLID_EXPORT ModifyPartitionAction : public Action
             {
             public:
+                
+                /**
+                 * Creates an action object.
+                 * 
+                 * @param partition the partition to be changed.
+                 * @param label the new label.
+                 * @param flagsToSet a list of flags to set.
+                 * @param flagsToUnset a list of flags to unset.
+                 */
                 explicit ModifyPartitionAction(const QString& partition,
                                                const QString& label,
                                                const QStringList& flagsToSet = QStringList(),
                                                const QStringList& flagsToUnset = QStringList());
+                
+                /**
+                 * Creates an action object where the label doesn't change.
+                 * This must be used when you don't want to change the label from the current value.
+                 * 
+                 * @param partition the partition to be changed.
+                 * @param flagsToSet a list of flags to set.
+                 * @param flagsToUnset a list of flags to unset.
+                 */
                 explicit ModifyPartitionAction(const QString& partition,
                                                const QStringList& flagsToSet,
                                                const QStringList& flagsToUnset = QStringList());
@@ -49,12 +67,29 @@ namespace Solid
                 virtual ActionType actionType() const;
                 virtual QString description() const;
                 
+                /**
+                 * @returns the partition to change.
+                 */
                 QString partition() const;
+                
+                /**
+                 * @returns the new label.
+                 */
                 QString label() const;
                 
+                /**
+                 * @returns a list of flags to set.
+                 */
                 QStringList flagsToSet() const;
+                
+                /**
+                 * @returns a list of flags to unset.
+                 */
                 QStringList flagsToUnset() const;
                 
+                /**
+                 * @returns true if the user requested to change the label.
+                 */
                 bool isLabelChanged() const;
             private:
                 class Private;
