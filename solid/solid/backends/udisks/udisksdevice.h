@@ -64,6 +64,27 @@ public:
     QString errorToString(const QString & error) const;
     Solid::ErrorType errorToSolidError(const QString & error) const;
     
+    
+    bool format(const QString& filesystemName,
+                        const QStringList& filesystemFlags = QStringList());
+    bool deletePartition(const QStringList& options = QStringList());
+    
+    bool modifyPartition(const QString& type,
+                         const QString& label,
+                         const QStringList& flags = QStringList());
+    bool createTable(const QString& scheme, const QStringList& options = QStringList());
+    
+    QDBusObjectPath createPartition(qulonglong offset,
+                                    qulonglong size,
+                                    const QString& type,
+                                    const QString& label = QString(),
+                                    const QStringList& flags = QStringList(),
+                                    const QStringList& options = QStringList(),
+                                    const QString& filesystem = QString(),
+                                    const QStringList& filesystemFlags = QStringList());
+    
+    QString latestError() const;
+    
 Q_SIGNALS:
     void changed();
 
@@ -76,6 +97,7 @@ private:
     mutable QDBusInterface *m_device;
     QString m_udi;
     mutable QVariantMap m_cache;
+    QString errorDescription;
 
     void checkCache(const QString &key) const;
 };

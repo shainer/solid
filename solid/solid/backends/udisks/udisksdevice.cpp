@@ -765,3 +765,80 @@ Solid::ErrorType UDisksDevice::errorToSolidError(const QString & error) const
     else
         return Solid::UnauthorizedOperation;
 }
+
+bool UDisksDevice::format(const QString& filesystemName, const QStringList& filesystemFlags)
+{
+    QDBusPendingReply<void> reply = m_device->asyncCall("FilesystemCreate", filesystemName, filesystemFlags);
+    reply.waitForFinished();
+    
+    if (reply.isValid()) {
+        return true;
+    }
+
+    errorDescription = reply.error().message();
+    return false;
+}
+
+QDBusObjectPath UDisksDevice::createPartition(qulonglong offset,
+                                              qulonglong size,
+                                              const QString& type, 
+                                              const QString& label,
+                                              const QStringList& flags,
+                                              const QStringList& options,
+                                              const QString& filesystem,
+                                              const QStringList& filesystemFlags)
+{
+    QDBusPendingReply<QDBusObjectPath> reply = m_device->asyncCall("PartitionCreate", offset, size, type, label, flags, options, filesystem, filesystemFlags);
+    reply.waitForFinished();
+    
+    if (reply.isValid()) {
+        return reply.value();
+    }
+
+    errorDescription = reply.error().message();
+    return QDBusObjectPath();
+}
+
+bool UDisksDevice::deletePartition(const QStringList& options)
+{
+    QDBusPendingReply<void> reply = m_device->asyncCall("PartitionDelete", options);
+    reply.waitForFinished();
+    
+    if (reply.isValid()) {
+        return true;
+    }
+
+    errorDescription = reply.error().message();
+    return false;
+}
+
+bool UDisksDevice::modifyPartition(const QString& type, const QString& label, const QStringList& flags)
+{
+    QDBusPendingReply<void> reply = m_device->asyncCall("PartitionModify", type, label, flags);
+    reply.waitForFinished();
+    
+    if (reply.isValid()) {
+        return true;
+    }
+
+    errorDescription = reply.error().message();
+    return false;
+}
+
+bool UDisksDevice::createTable(const QString& scheme, const QStringList& options)
+{
+    QDBusPendingReply<void> reply = m_device->asyncCall("PartitionTableCreate", scheme, options);
+    reply.waitForFinished();
+    
+    if (reply.isValid()) {
+        return true;
+    }
+
+    errorDescription = reply.error().message();
+    return false;
+}
+
+QString UDisksDevice::latestError() const
+{
+    return errorDescription;
+}

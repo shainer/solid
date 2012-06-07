@@ -385,25 +385,14 @@ bool VolumeManager::registerAction(Actions::Action* action)
             Disk* parent = dynamic_cast< Disk* >( tree.searchNode( mpa->partition() )->parent()->volume() );
             QStringList supportedFlags = PartitionTableUtils::instance()->supportedFlags( parent->partitionTableScheme() );
 
-            foreach (const QString& flag, mpa->flagsToSet()) {
+            foreach (const QString& flag, mpa->flags()) {
                 if (!supportedFlags.contains(flag)) {
                     d->error.setType(PartitioningError::PartitionFlagsError);
                     d->error.arg(flag);
                     return false;
                 }
-
-                p->setFlag(flag);
             }
-
-            foreach (const QString& flag, mpa->flagsToUnset()) {
-                if (!supportedFlags.contains(flag)) {
-                    d->error.setType(PartitioningError::PartitionFlagsError);
-                    d->error.arg(flag);
-                    return false;
-                }
-
-                p->unsetFlag(flag);
-            }
+            p->setFlags(mpa->flags());
             
             mpa->setOwnerDisk(tree.root());
             break;
@@ -438,6 +427,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
     }
     
     d->actionstack.push(action);
+    emit diskChanged(action->ownerDisk()->name());
     return true;
 }
 
@@ -466,27 +456,45 @@ void VolumeManager::doDeviceRemoved(QString udi)
     emit deviceRemoved(udi);
 }
 
-QMap<QString, VolumeTree> VolumeManager::allDiskTrees() const
+VolumeTree VolumeManager::diskTree(const QString& udi) const
+{
+    return d->volumeTreeMap[udi];
+}
+
+QMap< QString, VolumeTree > VolumeManager::allDiskTrees() const
 {
     return d->volumeTreeMap.deviceTrees();
 }
 
-VolumeTree VolumeManager::diskTree(const QString& diskName) const
-{
-    return d->volumeTreeMap[diskName];
-}
-
 bool VolumeManager::apply()
 {
-    ActionExecuter executer;
+    ActionExecuter executer( d->actionstack.list(), d->volumeTreeMap );
     
-    if (executer.isValid()) {
-        return executer.execute();
+    if (!executer.isValid()) {
+        d->error.setType(PartitioningError::BusyExecuterError);
+        return false;
     }
     
-   
-    /* FIXME: set error */
-    return false;
+    QObject::connect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
+    bool success = executer.execute();
+    
+    QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
+    d->actionstack.clear();
+    d->volumeTreeMap.build();
+    
+    if (!success) {
+        d->error = executer.error();
+        return false;
+    }
+    
+    return true;
+}
+
+void VolumeManager::doNextActionCompleted(int completed)
+{
+    int actionNumber = d->actionstack.size();
+    double progress = (double)completed / (double)actionNumber;
+    emit progressChanged(progress);
 }
 
 QString VolumeManager::errorDescription() const

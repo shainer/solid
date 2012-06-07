@@ -27,6 +27,7 @@
 #include <solid/partitioner/volumetree.h>
 #include <solid/partitioner/actionstack.h>
 #include <solid/partitioner/actionexecuter.h>
+#include "volumetreemap.h"
 
 namespace Solid
 {
@@ -77,19 +78,17 @@ namespace Solid
             bool apply();
             
             /**
-             * Retrieves all the trees representing drives.
+             * Retrieves the layout of a disk.
              * 
-             * @returns a map with pairs of type (disk name, disk layout).
-             */
-            QMap<QString, VolumeTree> allDiskTrees() const;
-            
-            /**
-             * Retrieves the tree representing a given drive.
-             * 
-             * @param diskName the disk name.
-             * @returns the associated tree, or an invalid object if the disk doesn't exist.
+             * @param udi the disk UDI.
+             * @returns the layout tree, or an invalid object if not found.
              */
             VolumeTree diskTree(const QString &) const;
+            
+            /**
+             * @returns all the disk layouts.
+             */
+            QMap<QString, VolumeTree> allDiskTrees() const;
             
             /**
              * Retrieves the latest error occurred.
@@ -112,8 +111,16 @@ namespace Solid
              */
             void doDeviceAdded(VolumeTree);
             void doDeviceRemoved(QString);
+            void doNextActionCompleted(int);
             
         signals:
+            
+            /**
+             * This signal is emitted whenever a disk layout changes, not in the hardware but in our internal representation.
+             * 
+             * @param name the disk name.
+             */
+            void diskChanged(QString);
             
             /**
              * This signal is emitted when a new device (disk or partition) is added to the system.
@@ -128,6 +135,13 @@ namespace Solid
              * @param name the device UDI.
              */
             void deviceRemoved(QString);
+            
+            /**
+             * This signal is used to report progress when executing a list of actions.
+             * 
+             * @param progress the current progress (between 0 and 100).
+             */
+            void progressChanged(double);
             
         private:
             VolumeManager();
