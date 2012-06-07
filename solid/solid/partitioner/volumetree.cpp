@@ -328,8 +328,16 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
     
     VolumeTreeItem* leftNode = leftSibling(partitionNode);
     VolumeTreeItem* rightNode = rightSibling(partitionNode);
-    DeviceModified* leftSibling = leftNode->volume();
-    DeviceModified* rightSibling = rightNode->volume();
+    DeviceModified* leftSibling = 0;
+    DeviceModified* rightSibling = 0;
+    
+    if (leftNode) {
+        leftSibling = leftNode->volume();
+    }
+    
+    if (rightNode) {
+        rightSibling = rightNode->volume();
+    }
     
     qulonglong size = partitionNode->volume()->size();
     qulonglong offset = partitionNode->volume()->offset();
@@ -406,9 +414,9 @@ VolumeTreeItem* VolumeTree::rootNode() const
 VolumeTreeItem* VolumeTree::extendedNode() const
 {
     foreach (VolumeTreeItem* child, d->root->children()) {
-        Partition* part = dynamic_cast<Partition *>(child->volume());
+        Partition* part = dynamic_cast< Partition* >(child->volume());
         
-        if (part->partitionType() == ExtendedPartition) {
+        if (part && part->partitionType() == ExtendedPartition) {
             return child;
         }
     }
