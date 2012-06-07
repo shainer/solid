@@ -94,6 +94,11 @@ namespace Solid
                 gid_t ownerGid() const;
                 
                 /**
+                 * @returns a list of flags in the format required by partitioning services.
+                 */
+                QStringList flags() const;
+                
+                /**
                  * @returns if the string list was used to pass flags, a list of those flags who weren't
                  * recognized: either they were wrong in some part or this filesystem doesn't support them.
                  */

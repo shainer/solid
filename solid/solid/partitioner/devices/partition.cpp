@@ -135,6 +135,11 @@ PartitionType Partition::partitionType() const
     return d->partitionType;
 }
 
+QStringList Partition::flags() const
+{
+    return d->flags;
+}
+
 qulonglong Partition::size() const
 {
     return d->size;
@@ -148,11 +153,6 @@ qulonglong Partition::offset() const
 qulonglong Partition::rightBoundary() const
 {
     return (d->offset + d->size);
-}
-
-bool Partition::isFlagSet(const QString& flag) const
-{
-    return d->flags.contains(flag);
 }
 
 void Partition::setIgnored(bool ign)
@@ -190,19 +190,9 @@ void Partition::setOffset(qulonglong offset)
     d->offset = offset;
 }
 
-void Partition::setFlag(const QString& flag)
-{
-    d->flags.append(flag);
-}
-
 void Partition::setFlags(const QStringList& flags)
 {
     d->flags = flags;
-}
-
-void Partition::unsetFlag(const QString& flag)
-{
-    d->flags.removeOne(flag);
 }
 
 }

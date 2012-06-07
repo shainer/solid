@@ -75,7 +75,7 @@ Filesystem::Filesystem(const QString& name, const QString& label, uid_t ownerUid
 {}
 
 Filesystem::Filesystem()
-    : d( new Private("none", QStringList()) )
+    : d( new Private(QString(), QStringList()) )
 {}
 
 Filesystem::Filesystem(const Filesystem &other)
@@ -105,6 +105,21 @@ uid_t Filesystem::ownerUid() const
 gid_t Filesystem::ownerGid() const
 {
     return d->ownerGid;
+}
+
+QStringList Filesystem::flags() const
+{
+    QStringList fsOptions;
+    fsOptions.append( QString("label=") + d->label );
+    
+    if (d->ownerUid != -1) {
+        fsOptions.append( QString("take_ownership_uid=") + QString::number(d->ownerUid) );
+    }
+    if (d->ownerGid != -1) {
+        fsOptions.append( QString("take_ownership_gid=") + QString::number(d->ownerGid) );
+    }
+    
+    return fsOptions;
 }
 
 QStringList Filesystem::unsupportedFlags() const

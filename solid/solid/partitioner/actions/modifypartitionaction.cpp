@@ -29,19 +29,17 @@ namespace Actions
 class ModifyPartitionAction::Private
 {
 public:    
-    Private(const QString& p, const QStringList& fs, const QStringList& fu)
+    Private(const QString& p, const QStringList& fs)
         : isLabelChanged(false)
         , partition(p)
-        , flagsToSet(fs)
-        , flagsToUnset(fu)
+        , flags(fs)
     {}
     
-    Private(const QString& p, const QString& l, const QStringList& fs, const QStringList& fu)
+    Private(const QString& p, const QString& l, const QStringList& fs)
         : isLabelChanged(true)
         , partition(p)
         , label(l)
-        , flagsToSet(fs)
-        , flagsToUnset(fu)
+        , flags(fs)
     {}
     
     ~Private()
@@ -51,21 +49,19 @@ public:
     
     QString partition;
     QString label;
-    QStringList flagsToSet;
-    QStringList flagsToUnset;
+    QStringList flags;
 };
 
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QString& label,
-                                             const QStringList& flagsToSet,
-                                             const QStringList& flagsToUnset)
-    : d( new Private(partition, label, flagsToSet, flagsToUnset) )
+                                             const QStringList& flags)
+    : d( new Private(partition, label, flags) )
 {}
 
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
-                                             const QStringList& flagsToSet,
-                                             const QStringList& flagsToUnset)
-    : d( new Private(partition, flagsToSet, flagsToUnset) )
+                                             const QStringList& flags)
+    : d( new Private(partition, flags) )
 {}
+
 
 ModifyPartitionAction::~ModifyPartitionAction()
 {
@@ -80,18 +76,14 @@ Action::ActionType ModifyPartitionAction::actionType() const
 QString ModifyPartitionAction::description() const
 {
     QString desc1 = "Setting the following flags for %0: %1.";
-    QString desc2 = "Unsetting the following flags for %0: %1.";
     QString desc3 = "Setting label of %0 to %1.";
     QString desc;
     
     if (d->isLabelChanged) {
         desc += desc3.arg(d->partition, d->label);
     }
-    else if (!d->flagsToSet.isEmpty()) {
-        desc += desc1.arg(d->partition, d->flagsToSet.join(" "));
-    }
-    else if (!d->flagsToUnset.isEmpty()) {
-        desc += desc2.arg(d->partition, d->flagsToUnset.join(" "));
+    else if (!d->flags.isEmpty()) {
+        desc += desc1.arg(d->partition, d->flags.join(" "));
     }
 
     return desc;
@@ -112,16 +104,10 @@ bool ModifyPartitionAction::isLabelChanged() const
     return d->isLabelChanged;
 }
 
-QStringList ModifyPartitionAction::flagsToSet() const
+QStringList ModifyPartitionAction::flags() const
 {
-    return d->flagsToSet;
+    return d->flags;
 }
-
-QStringList ModifyPartitionAction::flagsToUnset() const
-{
-    return d->flagsToUnset;
-}
-
 
 }
 }

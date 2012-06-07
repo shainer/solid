@@ -106,10 +106,9 @@ namespace Solid
                 Utils::PartitionType partitionType() const;
                 
                 /**
-                 * @returns true if a particular partition flag is set here.
-                 * Supported flags can vary depending on the ptable scheme used on the disk.
+                 * @returns the list of flags set for this partition.
                  */
-                bool isFlagSet(const QString &) const;
+                QStringList flags() const;
                 
                 /**
                  * Sets whether this partition should be displayed by the system.
@@ -159,20 +158,6 @@ namespace Solid
                  * @param type the new type.
                  */
                 void setPartitionType(Utils::PartitionType);
-                
-                /**
-                 * Sets a new flag as valid for this partition.
-                 * 
-                 * @param flag a string representation of the flag.
-                 */
-                void setFlag(const QString &);
-                
-                /**
-                 * Unset a flag which was valid for this partition.
-                 * 
-                 * @param flag a string representation of the flag.
-                 */
-                void unsetFlag(const QString &);
                 
                 /**
                  * Sets a list of flags to be valid for this partition.
