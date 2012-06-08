@@ -112,11 +112,17 @@ bool VolumeTreeItem::operator==(const VolumeTreeItem& other) const
 /******* VolumeTreePrivate *********/
 VolumeTreePrivate::VolumeTreePrivate(VolumeTreeItem *r)
     : root(r)
+    , valid(true)
 {}
 
 VolumeTreePrivate::VolumeTreePrivate(const VolumeTreePrivate &other)
     : QSharedData(other)
     , root(other.root)
+    , valid(other.valid)
+{}
+
+VolumeTreePrivate::VolumeTreePrivate()
+    : valid(false)
 {}
 
 VolumeTreePrivate::~VolumeTreePrivate()
@@ -400,6 +406,11 @@ VolumeTree::VolumeTree(const VolumeTree& other)
 
 VolumeTree::~VolumeTree()
 {}
+
+bool VolumeTree::valid() const
+{
+    return d->valid;
+}
 
 DeviceModified* VolumeTree::root() const
 {

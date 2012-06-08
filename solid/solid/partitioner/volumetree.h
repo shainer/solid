@@ -160,6 +160,11 @@ namespace Solid
             ~VolumeTree();
             
             /**
+             * @returns whether the current object represents a valid tree.
+             */
+            bool valid() const;
+            
+            /**
              * @returns the root item.
              */
             VolumeTreeItem* rootNode() const;
@@ -223,6 +228,9 @@ namespace Solid
             QSharedDataPointer<VolumeTreePrivate> d;
         };
         
+        /*
+         * FIXME: move these declarations.
+         */
         class VolumeTreeItem::Private
         {
         public:
@@ -238,6 +246,7 @@ namespace Solid
         {
         public:
             VolumeTreePrivate(VolumeTreeItem *);
+            VolumeTreePrivate();
             VolumeTreePrivate(const VolumeTreePrivate& other);
             ~VolumeTreePrivate();
             
@@ -301,6 +310,7 @@ namespace Solid
             void destroy(VolumeTreeItem *);
             
             VolumeTreeItem* root;
+            bool valid;
         };
         
     }
