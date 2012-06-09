@@ -53,18 +53,18 @@ namespace Solid
             void push(Action *op);
             
             /**
-             * Deletes the last action registered from the list, if one is present, otherwise nothing happens.
+             * Puts the first action on the list in the "undone" list, if one is present, otherwise nothing happens.
              * 
-             * @returns the list of "valid" actions, minus the one just undone.
+             * @returns the list of registered actions, minus of course the one just undone.
              */
             QList<Action *> undo();
             
             /**
-             * Redoes the last action undone, if one is present, otherwise nothing happens.
+             * Puts the first action on the list in the "done" list, if one is present, otherwise nothing happens.
              * 
-             * @returns the list of "valid" actions, including the one just redone.
+             * @returns the action that just became registered again.
              */
-            QList<Action *> redo();
+            Action* redo();
             
             /**
              * Removes all the actions which concern the given disk. 

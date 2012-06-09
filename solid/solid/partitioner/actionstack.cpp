@@ -71,7 +71,7 @@ QList< Action* > ActionStack::undo()
     return d->actions;
 }
 
-QList< Action* > ActionStack::redo()
+Action* ActionStack::redo()
 {
     Action* firstUndone = NULL;
     
@@ -80,7 +80,7 @@ QList< Action* > ActionStack::redo()
         d->actions.push_back(firstUndone);
     }
     
-    return d->actions;
+    return firstUndone;
 }
 
 void ActionStack::removeActionsOfDisk(const QString& diskName)
