@@ -103,9 +103,9 @@ namespace Solid
             /**
              * Retrieves the latest error occurred.
              * 
-             * @returns a description of the error, or "Success" if everything went fine.
+             * @returns an error object, with None as type for success.
              */
-            QString errorDescription() const;
+            Utils::PartitioningError error() const;
             
             /**
              * Retrieves the list of registered actions.

@@ -236,9 +236,9 @@ void VolumeManager::doNextActionCompleted(int completed)
     emit progressChanged(progress);
 }
 
-QString VolumeManager::errorDescription() const
+PartitioningError VolumeManager::error() const
 {
-    return d->error.description();
+    return d->error;
 }
 
 QList< Action* > VolumeManager::registeredActions() const
@@ -281,8 +281,14 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             
             volume = dynamic_cast<Partition *>(p);
-            volume->setFilesystem(fs);
             
+            if (volume->usage() != StorageVolume::FileSystem) {
+                error.setType(PartitioningError::CannotFormatPartition);
+                error.arg(volume->name());
+                return false;
+            }
+            
+            volume->setFilesystem(fs);
             fpa->setOwnerDisk(tree.root());
             break;
         }

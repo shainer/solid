@@ -125,7 +125,7 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
         }
         
         case CannotFormatPartition: {
-            d->description = "The filesystem of partition %0 cannot be changed.";
+            d->description = "The partition %0 cannot be formatted.";
             d->markersLeft = 1;
             break;
         }
