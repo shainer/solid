@@ -381,7 +381,15 @@ void VolumeTreePrivate::destroy(VolumeTreeItem* node)
 
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
-    qDebug() << r->volume()->description() << "parent" << (r->parent() ? r->parent()->volume()->name() : "nessuno") << "offset" << r->volume()->offset() << "size" << r->volume()->size();
+    QTextStream out(stdout);
+    out << r->volume()->description() << " parent " << (r->parent() ? r->parent()->volume()->name() : " nessuno ") << " offset " << r->volume()->offset() << " size " << r->volume()->size();
+    
+    if (r->volume()->deviceType() == DeviceModified::PartitionDevice) {
+        Partition* p = dynamic_cast< Partition* >(r->volume());
+        out << " -- " << p->filesystem().name();
+    }
+    
+    out << endl;
     
     foreach (VolumeTreeItem *c, r->children()) {
         print(c);

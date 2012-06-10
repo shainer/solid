@@ -51,6 +51,8 @@ namespace Solid
              */
             void build();
             
+            void backToOriginal();
+            
             /**
              * Retrieves the map of trees.
              * 

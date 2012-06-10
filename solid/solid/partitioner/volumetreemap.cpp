@@ -45,11 +45,13 @@ public:
     {}
     
     QMap<QString, VolumeTree> devices;
+    QMap<QString, VolumeTree> beginningCopies;
+    
     Ifaces::DeviceManager* backend;
 
-    Disk* addDisk(StorageDrive *, const QString &);
-    void detectPartitionsOfDisk(const QString &);
-    void detectFreeSpaceOfDisk(const QString &);
+    Disk* addDisk(StorageDrive *, const QString &, QMap<QString, VolumeTree> &);
+    void detectPartitionsOfDisk(const QString &, QMap<QString, VolumeTree> &);
+    void detectFreeSpaceOfDisk(const QString &, QMap<QString, VolumeTree> &);
     
     /* The following functions help detecting free space blocks between partitions */
     QList< FreeSpace* > freeSpaceOfDisk(const VolumeTree &);
@@ -94,18 +96,35 @@ void VolumeTreeMap::build()
         
         if (drive->driveType() == StorageDrive::HardDisk)
         {
-            Disk* newDisk = d->addDisk(drive, udi);
+            Disk* newDiskCopy = d->addDisk(drive, udi, d->beginningCopies);
+            Disk* newDisk = d->addDisk(drive, udi, d->devices);
             
             /*
              * Loop partitions, identified by a particular major number, aren't considered for partitioning.
              * The same applies to disks without a partition table.
              */
             if (block->deviceMajor() != LOOPDEVICE_MAJOR && newDisk->partitionTableScheme() != Utils::NoneScheme) {
-                d->detectPartitionsOfDisk(udi);
-                d->detectFreeSpaceOfDisk(udi);
+                d->detectPartitionsOfDisk(udi, d->beginningCopies);
+                d->detectPartitionsOfDisk(udi, d->devices);
+                
+                d->detectFreeSpaceOfDisk(udi, d->beginningCopies);
+                d->detectFreeSpaceOfDisk(udi, d->devices);
             }
         }
     }
+}
+
+void VolumeTreeMap::backToOriginal()
+{
+    d->devices.clear();
+    
+    qDebug() << "beginning copy";
+    d->beginningCopies["/org/freedesktop/UDisks/devices/sda"].print();
+    
+    d->devices = d->beginningCopies;
+    
+    qDebug() << "dopo copia";
+    d->devices["/org/freedesktop/UDisks/devices/sda"].print();
 }
 
 QMap< QString, VolumeTree > VolumeTreeMap::deviceTrees() const
@@ -175,22 +194,22 @@ void VolumeTreeMap::doDeviceRemoved(QString udi)
     Q_UNUSED(udi)
 }
 
-Disk* VolumeTreeMap::Private::addDisk(StorageDrive* drive, const QString& udi)
+Disk* VolumeTreeMap::Private::addDisk(StorageDrive* drive, const QString& udi, QMap<QString, VolumeTree>& devList)
 {
     Devices::Disk* disk = new Devices::Disk( drive );
     disk->setName(udi);
-    
+
     VolumeTree tree( disk );
-    devices.insert(disk->name(), tree);
-        
+    devList.insert(disk->name(), tree);
+
     return disk;
 }
 
-void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi)
+void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QMap<QString, VolumeTree>& devList)
 {
     QList<Device> devs = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
     Devices::Partition* extended = 0;
-    VolumeTree tree = devices[parentUdi];
+    VolumeTree tree = devList[parentUdi];
     
     /*
      * Every detection removes the previous one. This is useful when the detection is repeated
@@ -255,9 +274,9 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi)
     }    
 }
 
-void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi)
+void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi, QMap<QString, VolumeTree>& devList)
 {
-    VolumeTree tree = devices[parentUdi];
+    VolumeTree tree = devList[parentUdi];
     tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
     
     foreach (FreeSpace* space, freeSpaceOfDisk(tree)) {

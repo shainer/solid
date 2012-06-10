@@ -72,6 +72,16 @@ namespace Solid
             void redo();
             
             /**
+             * @returns true if there's one action to undo, false otherwise.
+             */
+            bool isUndoPossible() const;
+            
+            /**
+             * @returns true if there's one action to redo, false otherwise.
+             */
+            bool isRedoPossible() const;
+            
+            /**
              * Applies a list of actions to the hardware.
              * @see class ActionExecuter.
              */
