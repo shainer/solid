@@ -204,6 +204,7 @@
                         <property key="isIgnored">false</property>
                         <property key="isMounted">false</property>
                         <property key="usage">other</property>
+                        <property key="partitionType">0x05</property>
                         <property key="size">246960716288</property>
                         <property key="offset">21475885056</property>
                     </device>

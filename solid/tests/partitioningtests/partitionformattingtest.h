@@ -17,13 +17,13 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef PARTITIONINGTEST_H
-#define PARTITIONINGTEST_H
+#ifndef VOLUMEDETECTIONTEST_H
+#define VOLUMEDETECTIONTEST_H
 
 #include <QtCore/QObject>
 #include <fakemanager.h>
 
-class PartitioningTest : public QObject
+class PartitionFormattingTest : public QObject
 {
     Q_OBJECT
     
