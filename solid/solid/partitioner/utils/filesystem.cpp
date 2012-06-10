@@ -27,67 +27,62 @@ namespace Partitioner
 namespace Utils
 {
 
-class Filesystem::Private
+FilesystemPrivate::FilesystemPrivate(const QString& n, const QStringList& flags)
+    : name(n)
 {
-public:
-    Private(const QString& n, const QStringList& flags)
-        : name(n)
-        , ownerUid(-1)
-        , ownerGid(-1)
-    {
-        foreach (const QString& flag, flags) {
-            if (flag.startsWith("label")) {
-                label = flag.split("=").last();
-            }
-            else if (flag.startsWith("take_ownership_uid")) {
-                ownerUid = flag.split("=").last().toUInt();
-            }
-            else if (flag.startsWith("take_ownership_gid")) {
-                ownerGid = flag.split("=").last().toUInt();
-            }
-            else {
-                unsupported.append( flag.split("=").first() );
-            }
+    foreach (const QString& flag, flags) {
+        if (flag.startsWith("label")) {
+            label = flag.split("=").last();
+        }
+        else if (flag.startsWith("take_ownership_uid")) {
+            ownerUid = flag.split("=").last().toInt();
+        }
+        else if (flag.startsWith("take_ownership_gid")) {
+            ownerGid = flag.split("=").last().toInt();
+        }
+        else {
+            unsupported.append(flag);
         }
     }
-
-    Private(const QString& n, const QString& l, uid_t ouid, gid_t ogid)
-        : name(n)
-        , label(l)
-        , ownerUid(ouid)
-        , ownerGid(ogid)
-    {}
-
-    ~Private()
-    {}
-
-    QString name;
-    QString label;
-    uid_t ownerUid;
-    gid_t ownerGid;
-    QStringList unsupported;
-};
-
-Filesystem::Filesystem(const QString &name, const QStringList &flags)
-    : d( new Private(name, flags) )
+}
+    
+FilesystemPrivate::FilesystemPrivate(const QString& n, const QString& l, int ouid, int ogid)
+    : name(n)
+    , label(l)
+    , ownerUid(ouid)
+    , ownerGid(ogid)
+{}
+    
+FilesystemPrivate::FilesystemPrivate(const FilesystemPrivate& other)
+    : QSharedData(other)
+    , name(other.name)
+    , label(other.label)
+    , ownerUid(other.ownerUid)
+    , ownerGid(other.ownerGid)
+    , unsupported(other.unsupported)
+{}
+    
+FilesystemPrivate::~FilesystemPrivate()
 {}
 
-Filesystem::Filesystem(const QString& name, const QString& label, uid_t ownerUid, gid_t ownerGid)
-    : d( new Private(name, label, ownerUid, ownerGid) )
+Filesystem::Filesystem(const QString &name, const QStringList &flags)
+    : d( new FilesystemPrivate(name, flags) )
+{}
+
+Filesystem::Filesystem(const QString& name, const QString& label, int ownerUid, int ownerGid)
+    : d( new FilesystemPrivate(name, label, ownerUid, ownerGid) )
 {}
 
 Filesystem::Filesystem()
-    : d( new Private(QString(), QStringList()) )
+    : d( new FilesystemPrivate(QString(), QStringList()) )
 {}
 
 Filesystem::Filesystem(const Filesystem &other)
-    : d( new Private(other.name(), other.label(), other.ownerUid(), other.ownerGid()) )
+    : d( other.d )
 {}
 
 Filesystem::~Filesystem()
-{
-    delete d;
-}
+{}
 
 QString Filesystem::name() const
 {
@@ -99,12 +94,12 @@ QString Filesystem::label() const
     return d->label;
 }
 
-uid_t Filesystem::ownerUid() const
+int Filesystem::ownerUid() const
 {
     return d->ownerUid;
 }
 
-gid_t Filesystem::ownerGid() const
+int Filesystem::ownerGid() const
 {
     return d->ownerGid;
 }

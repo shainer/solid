@@ -438,7 +438,7 @@ install( FILES partitioner/devices/partition.h
                partitioner/devices/disk.h
                partitioner/devices/freespace.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/devices COMPONENT Devel)
-install( FILES partitioner/utils/filesystem.h
+install( FILES partitioner/utils/filesystem.h partitioner/utils/filesystem_p.h
 	       partitioner/utils/partitioningerror.h
                partitioner/utils/partitiontableutils.h
                partitioner/utils/partitioner_enums.h

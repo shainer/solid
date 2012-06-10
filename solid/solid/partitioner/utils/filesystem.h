@@ -22,20 +22,23 @@
 
 #include <unistd.h>
 #include <QtCore/QStringList>
+#include <QtCore/QSharedDataPointer>
 #include <solid/solid_export.h>
+#include <solid/partitioner/utils/filesystem_p.h>
 
 namespace Solid
 {
     namespace Partitioner
     {
         namespace Utils
-        {
+        {            
             /**
              * @class Filesystem
              * @brief This class represents a filesystem with its properties.
              */
             class SOLID_EXPORT Filesystem
             {
+                
             public:
                 /**
                  * Creates a new filesystem.
@@ -47,8 +50,8 @@ namespace Solid
                  */
                 explicit Filesystem(const QString &name,
                                     const QString &label,
-                                    uid_t ownerUid,
-                                    gid_t ownerGid);
+                                    int ownerUid = -1,
+                                    int ownerGid = -1);
 
                 /**
                  * Creates a new filesystem.
@@ -85,13 +88,13 @@ namespace Solid
                  * @returns the owner UID; -1 means either no UID was set or this filesystem doesn't support
                  * owernship.
                  */
-                uid_t ownerUid() const;
+                int ownerUid() const;
 
                 /**
                  * @returns the owner GID; -1 means either no GID was set or this filesystem doesn't support
                  * ownership.
                  */
-                gid_t ownerGid() const;
+                int ownerGid() const;
                 
                 /**
                  * @returns a list of flags in the format required by partitioning services.
@@ -105,8 +108,7 @@ namespace Solid
                 QStringList unsupportedFlags() const;
                 
             private:
-                class Private;
-                Private* d;
+                QSharedDataPointer<FilesystemPrivate> d;
             };
         }
     }
