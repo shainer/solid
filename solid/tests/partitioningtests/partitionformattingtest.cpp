@@ -67,7 +67,7 @@ void PartitionFormattingTest::test()
      */
     DeviceModified* foreign = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I").searchDevice("/org/kde/solid/fakehw/foreign_logical");
     Partition* p = dynamic_cast< Partition* >(foreign);
-    QCOMPARE(p->filesystem().name(), "fat32"); /* check if the new filesystem has been set to this partition */
+    QCOMPARE(p->filesystem().name(), QString("fat32")); /* check if the new filesystem has been set to this partition */
     
     /*
      * This action isn't legal, as you can't format an extended partition.
