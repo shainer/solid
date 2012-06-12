@@ -254,7 +254,7 @@
                         <property key="device">/dev/hda7</property>
 
                         <property key="isIgnored">false</property>
-                        <property key="isMounted">true</property>
+                        <property key="isMounted">false</property>
                         <property key="mountPoint">/foreign</property>
                         <property key="usage">filesystem</property>
                         <property key="fsType">ntfs</property>
