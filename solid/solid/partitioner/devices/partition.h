@@ -26,6 +26,8 @@
 #include <solid/partitioner/utils/filesystem.h>
 #include <solid/storagevolume.h>
 #include <unistd.h>
+#include <solid/storageaccess.h>
+#include <solid/device.h>
 
 namespace Solid
 {
@@ -40,7 +42,7 @@ namespace Solid
              * This class represents a partition for the partitioning module.
              */
             class SOLID_EXPORT Partition : public DeviceModified
-            {
+            {                
             public:
                 
                 /**
@@ -48,7 +50,7 @@ namespace Solid
                  * 
                  * @param volume the StorageVolume object representing said partition in Solid.
                  */
-                explicit Partition(StorageVolume *);
+                explicit Partition(Device &);
                 
                 /**
                  * Creates a new partition from an application request.
@@ -56,6 +58,7 @@ namespace Solid
                  * @param action the action registered for creating the new partition.
                  */
                 explicit Partition(Actions::CreatePartitionAction *);
+                explicit Partition(Partition *);
                 virtual ~Partition();
                 
                 DeviceModified::DeviceModifiedType deviceType() const;
@@ -109,6 +112,21 @@ namespace Solid
                  * @returns the list of flags set for this partition.
                  */
                 QStringList flags() const;
+                
+                /**
+                 * @returns true if the partition is mounted.
+                 */
+                bool isMounted() const;
+                
+                /**
+                 * @returns the path the partition is mounted on, or an empty string if not mounted.
+                 */
+                QString mountFile() const;
+                
+                /**
+                 * @returns the StorageAccess object, which can be used to mount or unmount.
+                 */
+                StorageAccess* access() const;
                 
                 /**
                  * Sets whether this partition should be displayed by the system.

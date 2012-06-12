@@ -136,6 +136,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case MountedPartitionError: {
+            d->description = "Cannot apply the action on a mounted partition.";
+            d->markersLeft = 0;
+            break;
+        }
+        
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";
             d->markersLeft = 1;

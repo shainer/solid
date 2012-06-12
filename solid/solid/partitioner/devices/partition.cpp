@@ -20,6 +20,7 @@
 #include <solid/partitioner/devices/partition.h>
 #include <solid/partitioner/utils/utils.h>
 #include <backends/udisks/udisksdevice.h>
+#include <solid/storageaccess.h>
 
 namespace Solid
 {
@@ -33,7 +34,7 @@ using namespace Utils;
 class Partition::Private
 {
 public:
-    Private(StorageVolume* v)
+    Private(StorageVolume* v, StorageAccess* a)
         : iface(v)
         , ignored(v->isIgnored())
         , usage(v->usage())
@@ -44,6 +45,7 @@ public:
         , offset(v->offset())
         , partitionType(PrimaryPartition)
         , flags(v->flags())
+        , access(a)
     {
         if (v->partitionType() == EXTENDED_TYPE_STRING) {
             partitionType = ExtendedPartition;
@@ -61,6 +63,18 @@ public:
         , flags(action->flags())
     {}
     
+    Private(Devices::Partition* other)
+        : ignored(false)
+        , usage(other->usage())
+        , filesystem(other->filesystem())
+        , label(other->label())
+        , uuid(other->uuid())
+        , size(other->size())
+        , offset(other->offset())
+        , partitionType(other->partitionType())
+        , flags(other->flags())
+    {}
+    
     StorageVolume *iface;
     
     bool ignored;
@@ -72,12 +86,16 @@ public:
     qulonglong offset;
     PartitionType partitionType;
     QStringList flags;
+    
+    StorageAccess* access;
 };
     
-Partition::Partition(StorageVolume* volume)
-    : DeviceModified(volume)
-    , d( new Private(volume) )
-{}
+Partition::Partition(Device& dev)
+{
+    StorageVolume* volume = dev.as<StorageVolume>();
+    StorageAccess* access = dev.as<StorageAccess>();
+    d = new Private(volume, access);
+}
 
 Partition::Partition(Actions::CreatePartitionAction* action)
     : DeviceModified()
@@ -93,6 +111,13 @@ Partition::Partition(Actions::CreatePartitionAction* action)
     DeviceModified::setDescription( partitionName.arg(offsetStr, sizeStr) );
     
     DeviceModified::setParentName(action->disk());
+}
+
+Partition::Partition(Devices::Partition* other)
+    : d( new Private(other) )
+{
+    DeviceModified::setName(other->name());
+    DeviceModified::setParentName(other->parentName());
 }
 
 Partition::~Partition()
@@ -153,6 +178,21 @@ qulonglong Partition::offset() const
 qulonglong Partition::rightBoundary() const
 {
     return (d->offset + d->size);
+}
+
+bool Partition::isMounted() const
+{
+    return d->access->isAccessible();
+}
+
+QString Partition::mountFile() const
+{
+    return d->access->filePath();
+}
+
+StorageAccess* Partition::access() const
+{
+    return d->access;
 }
 
 void Partition::setIgnored(bool ign)

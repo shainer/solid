@@ -122,6 +122,7 @@ void VolumeTreeMap::backToOriginal()
     d->beginningCopies["/org/freedesktop/UDisks/devices/sda"].print();
     
     d->devices = d->beginningCopies;
+    d->devices.detach();
     
     qDebug() << "dopo copia";
     d->devices["/org/freedesktop/UDisks/devices/sda"].print();
@@ -237,7 +238,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
         StorageVolume* volume = device.as<StorageVolume>();
 
         if (volume->partitionType() == EXTENDED_TYPE_STRING) {
-            extended = new Partition(volume);
+            extended = new Partition(device);
             extended->setPartitionType(Utils::ExtendedPartition);
             extended->setName(device.udi());
             extended->setParentName(parentUdi);
@@ -258,7 +259,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
             continue;
         }
         
-        Partition* part = new Partition(volume);
+        Partition* part = new Partition(device);
         
         if (extended && (part->offset() >= extended->offset() && part->rightBoundary() <= extended->rightBoundary())) {
             part->setPartitionType(Utils::LogicalPartition);

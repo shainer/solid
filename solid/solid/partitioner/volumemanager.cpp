@@ -182,9 +182,7 @@ bool VolumeManager::isRedoPossible() const
 void VolumeManager::doDeviceAdded(VolumeTree tree)
 {
     QString diskName = tree.root()->name();
-    d->actionstack.removeActionsOfDisk(diskName);
-    
-    tree.print();
+    d->actionstack.removeActionsOfDisk(diskName);;
     
     emit deviceAdded(tree);
 }
@@ -246,10 +244,11 @@ QList< Action* > VolumeManager::registeredActions() const
     return d->actionstack.list();
 }
 
+/*
+ * FIXME: less duplicate code
+ */
 bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
-{
-    Partition* volume;
-    
+{    
     switch (action->actionType()) {
         case Action::FormatPartition: {
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
@@ -280,11 +279,16 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 return false;
             }
             
-            volume = dynamic_cast<Partition *>(p);
+            Partition* volume = dynamic_cast<Partition *>(p);
             
             if (volume->usage() != StorageVolume::FileSystem) {
                 error.setType(PartitioningError::CannotFormatPartition);
                 error.arg(volume->name());
+                return false;
+            }
+            
+            if (volume->isMounted()) {
+                error.setType(PartitioningError::MountedPartitionError);
                 return false;
             }
             
@@ -378,6 +382,12 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 error.arg("partition");
             }
             
+            Partition* p = dynamic_cast< Partition* >(dev);
+            if (p->isMounted()) {
+                error.setType(PartitioningError::MountedPartitionError);
+                return false;
+            }
+            
             /* Deletes the partition merging adjacent free blocks if present. */
             tree.d->mergeAndDelete(rpa->partition());
             rpa->setOwnerDisk(tree.root());
@@ -401,6 +411,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
             
             qlonglong boundary = 0;
+            
+            if (toResize->isMounted()) {
+                error.setType(PartitioningError::MountedPartitionError);
+                return false;
+            }
             
             if (rpa->newSize() == 0) {
                 error.setType(PartitioningError::ResizingToZeroError);
@@ -508,6 +523,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             
             Partition* p = dynamic_cast< Partition* >(device);
+            
+            if (p->isMounted()) {
+                error.setType(PartitioningError::MountedPartitionError);
+                return false;
+            }
             
             if (mpa->isLabelChanged()) {
                 p->setLabel( mpa->label() );
