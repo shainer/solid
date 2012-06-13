@@ -82,8 +82,17 @@ namespace Solid
                  */
                 virtual bool operator==(Action *) const;
                 
-                /** EXPERIMENT **/
+                /**
+                 * Sets the "owner disk", i.e. the disk on which this action is to be performed.
+                 * 
+                 * @param dev the owner disk.
+                 */
                 virtual void setOwnerDisk(DeviceModified *);
+                
+                /**
+                 * @returns the owner disk of this action.
+                 * @see setOwnerDisk().
+                 */
                 virtual DeviceModified* ownerDisk() const;
                 
             private:
