@@ -94,6 +94,12 @@ QString Solid::StorageVolume::partitionType() const
     return_SOLID_CALL(Ifaces::StorageVolume *, d->backendObject(), QString(), partitionType());
 }
 
+QString Solid::StorageVolume::partitionTableScheme() const
+{
+    Q_D(const StorageVolume);
+    return_SOLID_CALL(Ifaces::StorageVolume *, d->backendObject(), QString(), partitionTableScheme());
+}
+
 Solid::Device Solid::StorageVolume::encryptedContainer() const
 {
     Q_D(const StorageVolume);

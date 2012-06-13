@@ -101,6 +101,11 @@ QString FakeVolume::partitionType() const
     return fakeDevice()->property("partitionType").toString();
 }
 
+QString FakeVolume::partitionTableScheme() const
+{
+    return fakeDevice()->property("partitionTableScheme").toString();
+}
+
 QString Solid::Backends::Fake::FakeVolume::encryptedContainerUdi() const
 {
     return QString();

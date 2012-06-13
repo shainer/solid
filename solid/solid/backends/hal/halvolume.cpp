@@ -133,6 +133,11 @@ QString Volume::partitionType() const
     return QString();
 }
 
+QString Volume::partitionTableScheme() const
+{
+    return QString();
+}
+
 QString Solid::Backends::Hal::Volume::encryptedContainerUdi() const
 {
     return m_device->prop("volume.crypto_luks.clear.backing_volume").toString();

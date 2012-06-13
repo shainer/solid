@@ -109,6 +109,11 @@ namespace Solid
                 Utils::PartitionType partitionType() const;
                 
                 /**
+                 * @returns the ptable scheme this partition is part of. 
+                 */
+                QString partitionTableScheme() const;
+                
+                /**
                  * @returns the list of flags set for this partition.
                  */
                 QStringList flags() const;
@@ -176,6 +181,13 @@ namespace Solid
                  * @param type the new type.
                  */
                 void setPartitionType(Utils::PartitionType);
+                
+                /**
+                 * Sets the ptable scheme this partition is part of.
+                 * 
+                 * @param scheme the ptable scheme.
+                 */
+                void setPartitionTableScheme(const QString &);
                 
                 /**
                  * Sets a list of flags to be valid for this partition.

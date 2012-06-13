@@ -115,6 +115,13 @@ namespace Ifaces
          * @return a string representation of the partition type, or an empty string if this volume isn't a partition.
          */
         virtual QString partitionType() const = 0;
+        
+        /**
+         * Retrieves the partition table scheme this partition is part of.
+         * 
+         * @returns the ptable scheme.
+         */
+        virtual QString partitionTableScheme() const = 0;
 
         /**
          * Retrieves the crypto container UDI of this volume.

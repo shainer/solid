@@ -44,6 +44,7 @@ public:
         , size(v->size())
         , offset(v->offset())
         , partitionType(PrimaryPartition)
+        , scheme(v->partitionTableScheme())
         , flags(v->flags())
         , access(a)
     {
@@ -72,6 +73,7 @@ public:
         , size(other->size())
         , offset(other->offset())
         , partitionType(other->partitionType())
+        , scheme(other->partitionTableScheme())
         , flags(other->flags())
     {}
     
@@ -85,6 +87,7 @@ public:
     qulonglong size;
     qulonglong offset;
     PartitionType partitionType;
+    QString scheme;
     QStringList flags;
     
     StorageAccess* access;
@@ -160,6 +163,11 @@ PartitionType Partition::partitionType() const
     return d->partitionType;
 }
 
+QString Partition::partitionTableScheme() const
+{
+    return d->scheme;
+}
+
 QStringList Partition::flags() const
 {
     return d->flags;
@@ -203,6 +211,11 @@ void Partition::setIgnored(bool ign)
 void Partition::setPartitionType(PartitionType type)
 {
     d->partitionType = type;
+}
+
+void Partition::setPartitionTableScheme(const QString& scheme)
+{
+    d->scheme = scheme;
 }
 
 void Partition::setUsage(StorageVolume::UsageType usage)

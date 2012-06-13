@@ -60,6 +60,11 @@ QString UDisksStorageVolume::partitionType() const
     return m_device->prop("PartitionType").toString();
 }
 
+QString UDisksStorageVolume::partitionTableScheme() const
+{
+    return m_device->prop("PartitionScheme").toString();
+}
+
 QString UDisksStorageVolume::uuid() const
 {
     return m_device->prop("IdUuid").toString();

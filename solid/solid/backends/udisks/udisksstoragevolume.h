@@ -49,6 +49,7 @@ public:
     virtual QString label() const;
     virtual QString fsType() const;
     virtual QString partitionType() const;
+    virtual QString partitionTableScheme() const;
     virtual Solid::StorageVolume::UsageType usage() const;
     virtual bool isIgnored() const;
 };

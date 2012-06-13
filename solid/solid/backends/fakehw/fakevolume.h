@@ -49,6 +49,7 @@ public Q_SLOTS:
     virtual qulonglong offset() const;
     virtual QStringList flags() const;
     virtual QString partitionType() const;
+    virtual QString partitionTableScheme() const;
     virtual QString encryptedContainerUdi() const;
 };
 }

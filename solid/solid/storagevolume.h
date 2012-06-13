@@ -49,6 +49,8 @@ namespace Solid
         Q_PROPERTY(qulonglong size READ size)
         Q_PROPERTY(qulonglong offset READ offset)
         Q_PROPERTY(QStringList flags READ flags)
+        Q_PROPERTY(QString type READ partitionType)
+        Q_PROPERTY(QString scheme READ partitionTableScheme)
         Q_DECLARE_PRIVATE(StorageVolume)
         friend class Device;
 
@@ -168,6 +170,13 @@ namespace Solid
          * @note valid types depend on the partition table in use.
          */
         QString partitionType() const;
+        
+        /**
+         * Retrieves the partition table scheme this partition is part of.
+         * 
+         * @return the partition table scheme.
+         */
+        QString partitionTableScheme() const;
 
         /**
          * Retrieves the crypto container of this volume.
