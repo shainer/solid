@@ -21,9 +21,10 @@
 #ifndef SOLID_PARTITIONER_UTILS_UTILS_H
 #define SOLID_PARTITIONER_UTILS_UTILS_H
 
-#define SPACE_BETWEEN_LOGICALS 32256
-#define EXTENDED_TYPE_STRING   "0x05"
-#define LOOPDEVICE_MAJOR           7
+#define SPACE_BETWEEN_LOGICALS   32256
+#define EXTENDED_TYPE_STRING     "0x05"
+#define EXTENDED_TYPE_STRING_LBA "0x0F"
+#define LOOPDEVICE_MAJOR             7
 
 #include <QtCore/QString>
 #include <solid/solid_export.h>

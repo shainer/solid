@@ -47,7 +47,7 @@ public:
         , flags(v->flags())
         , access(a)
     {
-        if (v->partitionType() == EXTENDED_TYPE_STRING) {
+        if (v->partitionType() == EXTENDED_TYPE_STRING || v->partitionType() == EXTENDED_TYPE_STRING_LBA) {
             partitionType = ExtendedPartition;
         }
     }
