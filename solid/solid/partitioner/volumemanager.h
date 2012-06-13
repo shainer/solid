@@ -120,7 +120,7 @@ namespace Solid
              * @see class VolumeTreeMap.
              */
             void doDeviceAdded(VolumeTree);
-            void doDeviceRemoved(QString);
+            void doDeviceRemoved(QString, QString);
             void doNextActionCompleted(int);
             
         signals:
@@ -142,7 +142,7 @@ namespace Solid
             /**
              * This signal is emitted when a device is removed from the system.
              * 
-             * @param name the device UDI.
+             * @param udi the device UDI.
              */
             void deviceRemoved(QString);
             

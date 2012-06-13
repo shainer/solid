@@ -67,9 +67,9 @@ namespace Solid
             Action* redo();
             
             /**
-             * Removes all the actions which concern the given disk. 
+             * Removes all the actions (undone or active) which concern the given disk. 
              * 
-             * @param diskName the name of the disk;
+             * @param diskName the name of the disk.
              */
             void removeActionsOfDisk(const QString &);
             

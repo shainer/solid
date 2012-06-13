@@ -84,13 +84,16 @@ Action* ActionStack::redo()
 }
 
 void ActionStack::removeActionsOfDisk(const QString& diskName)
-{
-    qDeleteAll(d->undoneActions);
-    d->undoneActions.clear();
-    
+{    
     for (QList< Action* >::iterator it = d->actions.begin(); it != d->actions.end(); it++) {
         if ((*it)->ownerDisk()->name() == diskName) {
             d->actions.erase(it);
+        }
+    }
+    
+    for (QList< Action* >::iterator it = d->undoneActions.begin(); it != d->undoneActions.end(); it++) {
+        if ((*it)->ownerDisk()->name() == diskName) {
+            d->undoneActions.erase(it);
         }
     }
 }

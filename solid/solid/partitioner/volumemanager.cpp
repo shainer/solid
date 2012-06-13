@@ -106,7 +106,7 @@ VolumeManager::VolumeManager()
 
     d->volumeTreeMap.build();
     QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree)), this, SLOT(doDeviceAdded(VolumeTree)));
-    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
+    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString,QString)), this, SLOT(doDeviceRemoved(QString,QString)));
 }
 
 VolumeManager::~VolumeManager()
@@ -179,17 +179,25 @@ bool VolumeManager::isRedoPossible() const
     return !d->actionstack.undoEmpty();
 }
 
+/*
+ * When a partition is added, deletes all the action which took place on the disk (undone ones included).
+ * This is because the layout and/or properties have changed so those actions could be out-of-context.
+ * Of course when a disk is added no action has to be removed at all.
+ */
 void VolumeManager::doDeviceAdded(VolumeTree tree)
 {
     QString diskName = tree.root()->name();
-    d->actionstack.removeActionsOfDisk(diskName);;
+    d->actionstack.removeActionsOfDisk(diskName);
     
     emit deviceAdded(tree);
 }
 
-void VolumeManager::doDeviceRemoved(QString udi)
+/*
+ * See above.
+ */
+void VolumeManager::doDeviceRemoved(QString udi, QString parentUdi)
 {
-    d->actionstack.removeActionsOfDisk(udi);
+    d->actionstack.removeActionsOfDisk(parentUdi);
     emit deviceRemoved(udi);
 }
 

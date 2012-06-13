@@ -111,18 +111,20 @@ namespace Solid
         signals:
             
             /**
-             * This signal is emitted when a new device (disk or partition) is added to the system.
+             * This signal is emitted when a new disk or partition is added to the system.
              * 
              * @param tree the updated disk layout's tree.
              */
             void deviceAdded(VolumeTree);
             
             /**
-             * This signal is emitted when a device is removed from the system.
+             * This signal is emitted when a disk or partition is removed from the system.
              * 
-             * @param name the name of the disk where the device is contained, if any.
+             * @param udi the device UDI.
+             * @param parentUdi the UDI of the disk on which this device is found.
+             * @note if the deleted device is a disk, the two params contain the same value.
              */
-            void deviceRemoved(QString);
+            void deviceRemoved(QString, QString);
             
         private:
             class Private;

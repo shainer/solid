@@ -19,7 +19,8 @@
 */
 
 #include <solid/partitioner/volumetree.h>
-#include "devices/freespace.h"
+#include <solid/partitioner/devices/freespace.h>
+#include <solid/partitioner/devices/disk.h>
 #include <QtCore/QDebug>
 
 namespace Solid
@@ -208,6 +209,7 @@ void VolumeTreePrivate::removeAllOfType(DeviceModified::DeviceModifiedType type)
             }
             
             delete currentNode;
+            continue;
         }
             
         foreach (VolumeTreeItem* child, currentNode->children()) {
@@ -382,7 +384,7 @@ void VolumeTreePrivate::destroy(VolumeTreeItem* node)
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
     QTextStream out(stdout);
-    out << r->volume()->description() << " parent " << (r->parent() ? r->parent()->volume()->name() : " nessuno ") << " offset " << r->volume()->offset() << " size " << r->volume()->size();
+    out << "-- " << r->volume()->description() << " PARENT " << (r->parent() ? r->parent()->volume()->name() : " nessuno ") << " OFFSET " << r->volume()->offset() << " SIZE " << r->volume()->size();
     
     if (r->volume()->deviceType() == DeviceModified::PartitionDevice) {
         Partition* p = dynamic_cast< Partition* >(r->volume());
