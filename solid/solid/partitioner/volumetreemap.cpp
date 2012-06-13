@@ -136,6 +136,23 @@ QPair< VolumeTree, DeviceModified* > VolumeTreeMap::searchTreeWithDevice(const Q
     return pair;
 }
 
+QPair< VolumeTree, Partition* > VolumeTreeMap::searchTreeWithPartition(const QString& partitionName) const
+{
+    QPair< VolumeTree, Partition* > pair;
+    
+    foreach (VolumeTree tree, d->devices.values()) {
+        DeviceModified* dev = tree.searchDevice(partitionName);
+        
+        if (dev && dev->deviceType() == DeviceModified::PartitionDevice) {
+            Partition* p = dynamic_cast< Partition* >(dev);
+            pair = qMakePair< VolumeTree, Partition* >(tree, p);
+            break;
+        }
+    }
+    
+    return pair;
+}
+
 DeviceModified* VolumeTreeMap::searchDevice(const QString& udi) const
 {
     foreach (const VolumeTree& tree, d->devices.values()) {
@@ -147,6 +164,17 @@ DeviceModified* VolumeTreeMap::searchDevice(const QString& udi) const
     }
     
     return NULL;
+}
+
+Partition* VolumeTreeMap::searchPartition(const QString& udi) const
+{
+    DeviceModified* device = searchDevice(udi);
+    
+    if (!device || device->deviceType() != DeviceModified::PartitionDevice) {
+        return NULL;
+    }
+    
+    return dynamic_cast< Partition* >(device);
 }
 
 void VolumeTreeMap::remove(const QString& diskName)
@@ -211,11 +239,11 @@ void VolumeTreeMap::Private::buildDisk(Device& dev)
         addDisk(drive, udi, beginningCopies);
         Disk* newDisk = addDisk(drive, udi, devices);
         
-        /*
-            * Loop partitions, identified by a particular major number, aren't considered for partitioning.
+           /*
+            * Loop partitions, identified by a particular major number, aren't considered for partition detection.
             * The same applies to disks without a partition table.
             */
-        if (block->deviceMajor() != LOOPDEVICE_MAJOR && newDisk->partitionTableScheme() != Utils::NoneScheme) {
+        if (block->deviceMajor() != LOOPDEVICE_MAJOR && !newDisk->partitionTableScheme().isEmpty()) {
             detectChildrenOfDisk(udi);
         }
     }

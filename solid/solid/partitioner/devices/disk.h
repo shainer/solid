@@ -47,6 +47,7 @@ namespace Solid
                  * @param drive the StorageDrive.
                  */
                 explicit Disk(StorageDrive *);
+                explicit Disk(Disk *);
                 virtual ~Disk();
                 
                 DeviceModifiedType deviceType() const;
@@ -68,9 +69,9 @@ namespace Solid
                 qulonglong rightBoundary() const;
                 
                 /**
-                 * @returns an enum value for the ptable scheme, or None if there isn't a table.
+                 * @returns the partition table scheme, or an empty string if there isn't one.
                  */
-                Utils::PartitionTableScheme partitionTableScheme() const;
+                QString partitionTableScheme() const;
                 
                 /**
                  * Sets a size.
@@ -91,9 +92,9 @@ namespace Solid
                 /**
                  * Sets a new partition table scheme for the disk.
                  * 
-                 * @param scheme the new scheme.
+                 * @param scheme the new scheme name, empty for none.
                  */
-                void setPartitionTableScheme(Utils::PartitionTableScheme);
+                void setPartitionTableScheme(const QString &);
 
             private:
                 class Private;

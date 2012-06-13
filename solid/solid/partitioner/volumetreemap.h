@@ -51,6 +51,9 @@ namespace Solid
              */
             void build();
             
+            /**
+             * EXPERIMENTAL
+             */
             void backToOriginal();
             
             /**
@@ -77,12 +80,28 @@ namespace Solid
             QPair<VolumeTree, Devices::DeviceModified *> searchTreeWithDevice(const QString &) const;
             
             /**
+             * Searches the map for a tree which contains the specified device.
+             * 
+             * @param devName the name of the device.
+             * @returns a pair containing the device object and the tree in which it was found.
+             */
+            QPair<VolumeTree, Devices::Partition *> searchTreeWithPartition(const QString &) const;
+            
+            /**
              * Searches a specific device inside the map.
              * 
              * @param udi the device UDI.
              * @returns the device object, or NULL if not found.
              */
             Devices::DeviceModified* searchDevice(const QString &) const;
+            
+            /**
+             * Searches a partition inside the map.
+             * 
+             * @param udi the partition UDI.
+             * @returns the partition object, or NULL if there isn't a partition with this name.
+             */
+            Devices::Partition* searchPartition(const QString &) const;
             
             /**
              * Searches the map for a disk layout.

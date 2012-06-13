@@ -34,30 +34,32 @@ public:
     Private(StorageDrive *i)
         : iface(i)
         , size(i->size())
+        , scheme(i->partitionTableScheme())
     {
-        if (i->partitionTableScheme() == "mbr") {
-            ptableType = Utils::MBRScheme;
-        }
-        else if (i->partitionTableScheme() == "gpt") {
-            ptableType = Utils::GPTScheme;
-        }
-        else if (i->partitionTableScheme() == "apm") {
-            ptableType = Utils::APMScheme;
-        }
-        else {
-            ptableType = Utils::NoneScheme;
-        }
+
     }
+    
+    Private(qulonglong s, const QString& t)
+        : size(s)
+        , scheme(t)
+    {}
     
     StorageDrive* iface;
     qulonglong size;
-    Utils::PartitionTableScheme ptableType;
+    QString scheme;
 };
 
 Disk::Disk(StorageDrive* drive)
     : DeviceModified(drive)
     , d( new Private( drive ) )
 {}
+
+Disk::Disk(Disk* other)
+    : d( new Private(other->size(), other->partitionTableScheme()) )
+{
+    DeviceModified::setName(other->name());
+    DeviceModified::setParentName(other->parentName());
+}
 
 Disk::~Disk()
 {
@@ -74,7 +76,7 @@ qulonglong Disk::size() const
     qulonglong s = d->size;
     s -= offset();
 
-    if (d->ptableType == Utils::GPTScheme) {
+    if (d->scheme == "gpt") {
         s -= 512 * 34; /* secondary GPT table which replicates the first at the end for safety purposes */
     }
 
@@ -85,31 +87,20 @@ qulonglong Disk::offset() const
 {
     qulonglong off = 0;
 
-    switch (d->ptableType)
-    {
-        case Utils::MBRScheme: {
-            off = 1024 * 1024; /* the first MB is reserved */
-            break;
-        }
-
-        /*
-         * FIXME: this value assumes the LBA size is the standard 512 bytes. However, this is not always the case.
-         */
-        case Utils::GPTScheme: {
-            off = 512 * 40;
-            break;
-        }
-
-        default:
-            break;
+    if (d->scheme == "mbr") {
+        off = 1024 * 1024; /* the first MB is reserved */
     }
+    else if (d->scheme == "gpt") {
+        /* FIXME: this value assumes the LBA size is the standard 512 bytes. However, this is not always the case. */
+        off = 512 * 40;
+   }
 
     return off;
 }
 
-Utils::PartitionTableScheme Disk::partitionTableScheme() const
+QString Disk::partitionTableScheme() const
 {
-    return d->ptableType;
+    return d->scheme;
 }
 
 qulonglong Disk::rightBoundary() const
@@ -127,9 +118,9 @@ void Disk::setSize(qulonglong s)
     Q_UNUSED(s)
 }
 
-void Disk::setPartitionTableScheme(Utils::PartitionTableScheme type)
+void Disk::setPartitionTableScheme(const QString& scheme)
 {
-    d->ptableType = type;
+    d->scheme = scheme;
 }
     
 }

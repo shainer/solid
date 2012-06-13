@@ -63,6 +63,12 @@ public:
      */
     bool applyAction(Action* action, bool isInStack = false);
     
+    /*
+     * Utility method used from applyAction() to perform some checks on the partition interested by the action,
+     * if there is one. 
+     */
+    bool partitionChecks(Action *);
+    
     /* Resize a partition. */
     void resizePartition(Partition *, qlonglong, DeviceModified *, VolumeTree &);
     
@@ -74,7 +80,7 @@ public:
     bool gptPartitionChecks(Actions::CreatePartitionAction *);
     
     /* Set a new ptable scheme for a disk, deleting all the partitions. */
-    bool setPartitionTableScheme(const QString &, Utils::PartitionTableScheme);
+    bool setPartitionTableScheme(const QString &, const QString &);
     
     VolumeTreeMap volumeTreeMap; /* set of trees with disk layouts */
     ActionStack actionstack; /* stack of registered actions */
@@ -256,14 +262,18 @@ QList< Action* > VolumeManager::registeredActions() const
  * FIXME: less duplicate code
  */
 bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
-{    
+{
+    if (!partitionChecks(action)) {
+        return false;
+    }
+    
     switch (action->actionType()) {
         case Action::FormatPartition: {
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
             
-            QPair<VolumeTree, DeviceModified* > pair = volumeTreeMap.searchTreeWithDevice(fpa->partition());
+            QPair<VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition(fpa->partition());
             VolumeTree tree = pair.first;
-            DeviceModified* p = pair.second;
+            Partition* volume = pair.second;
             Utils::Filesystem fs = fpa->filesystem();
 
             /* At least one flag of the specified filesystem is out-of-context */
@@ -273,30 +283,9 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 return false;
             }
             
-            /* Unexistent device */
-            if (!p) {
-                error.setType(PartitioningError::PartitionNotFoundError);
-                error.arg(fpa->partition());
-                return false;
-            }
-            
-            /* The specified device isn't a partition. */
-            if (p->deviceType() != DeviceModified::PartitionDevice) {
-                error.setType(PartitioningError::WrongDeviceTypeError);
-                error.arg("partition");
-                return false;
-            }
-            
-            Partition* volume = dynamic_cast<Partition *>(p);
-            
             if (volume->usage() != StorageVolume::FileSystem) {
                 error.setType(PartitioningError::CannotFormatPartition);
                 error.arg(volume->name());
-                return false;
-            }
-            
-            if (volume->isMounted()) {
-                error.setType(PartitioningError::MountedPartitionError);
                 return false;
             }
             
@@ -318,33 +307,18 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             
             Disk* disk = dynamic_cast< Disk* >( pair.second );
-            Utils::PartitionTableScheme scheme = disk->partitionTableScheme();
-
-            switch (scheme) {
-                case Utils::NoneScheme: {
-                    error.setType(PartitioningError::NoPartitionTableError);
-                    error.arg( cpa->disk() );
-                    return false;
-                }
-                
-                case Utils::MBRScheme: {
-                    if (!mbrPartitionChecks(cpa)) {
-                        return false;
-                    }
-                    
-                    break;
-                }
-                
-                case Utils::GPTScheme: {
-                    if (!gptPartitionChecks(cpa)) {
-                        return false;
-                    }
-                    
-                    break;
-                }
-                
-                default:
-                    break;
+            QString scheme = disk->partitionTableScheme();
+            
+            if (scheme.isEmpty()) {
+                error.setType(PartitioningError::NoPartitionTableError);
+                error.arg( cpa->disk() );
+                return false;
+            }
+            else if (scheme == "mbr" && !mbrPartitionChecks(cpa)) {
+                return false;
+            }
+            else if (scheme == "gpt" && !gptPartitionChecks(cpa)) {
+                return false;
             }
 
             /* Checks whether the partition table supports all the given flags */
@@ -365,6 +339,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
 
             Partition* newPartition = new Partition(cpa);
+            newPartition->setPartitionTableScheme(scheme);
             newPartition->setFilesystem(cpa->filesystem());
             tree.d->addDevice(cpa->disk(), newPartition);
             
@@ -374,27 +349,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         
         case Action::RemovePartition: {
             Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
-            
-            QPair< VolumeTree, DeviceModified* > pair = volumeTreeMap.searchTreeWithDevice( rpa->partition() );
-            VolumeTree tree = pair.first;
-            DeviceModified* dev = pair.second;
-
-            if (!tree.d) {
-                error.setType(PartitioningError::PartitionNotFoundError);
-                error.arg(rpa->partition());
-                return false;
-            }
-            
-            if (dev->deviceType() != DeviceModified::PartitionDevice) {
-                error.setType(PartitioningError::WrongDeviceTypeError);
-                error.arg("partition");
-            }
-            
-            Partition* p = dynamic_cast< Partition* >(dev);
-            if (p->isMounted()) {
-                error.setType(PartitioningError::MountedPartitionError);
-                return false;
-            }
+            VolumeTree tree = volumeTreeMap.searchTreeWithPartition( rpa->partition() ).first;
             
             /* Deletes the partition merging adjacent free blocks if present. */
             tree.d->mergeAndDelete(rpa->partition());
@@ -405,25 +360,13 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         case Action::ResizePartition: {
             Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
             
-            VolumeTree tree = volumeTreeMap.searchTreeWithDevice(rpa->partition()).first;
-            
-            if (!tree.d) {
-                error.setType(PartitioningError::PartitionNotFoundError);
-                error.arg(rpa->partition());
-                return false;
-            }
-            
+            VolumeTree tree = volumeTreeMap.searchTreeWithDevice(rpa->partition()).first;            
             VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());            
             Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
             DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
             DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
             
             qlonglong boundary = 0;
-            
-            if (toResize->isMounted()) {
-                error.setType(PartitioningError::MountedPartitionError);
-                return false;
-            }
             
             if (rpa->newSize() == 0) {
                 error.setType(PartitioningError::ResizingToZeroError);
@@ -514,35 +457,15 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         
         case Action::ModifyPartition: {
             Actions::ModifyPartitionAction* mpa = dynamic_cast< Actions::ModifyPartitionAction* >(action);
-            QPair< VolumeTree, DeviceModified* > pair = volumeTreeMap.searchTreeWithDevice( mpa->partition() );
-            DeviceModified* device = pair.second;
+            QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition( mpa->partition() );
             VolumeTree tree = pair.first;
-            
-            if (!device) {
-                error.setType(PartitioningError::PartitionNotFoundError);
-                error.arg(mpa->partition());
-                return false;
-            }
-            
-            if (device->deviceType() != DeviceModified::PartitionDevice) {
-                error.setType(PartitioningError::WrongDeviceTypeError);
-                error.arg("partition");
-                return false;
-            }
-            
-            Partition* p = dynamic_cast< Partition* >(device);
-            
-            if (p->isMounted()) {
-                error.setType(PartitioningError::MountedPartitionError);
-                return false;
-            }
+            Partition* p = pair.second;
             
             if (mpa->isLabelChanged()) {
                 p->setLabel( mpa->label() );
             }
 
-            Disk* parent = dynamic_cast< Disk* >( tree.searchNode( mpa->partition() )->parent()->volume() );
-            QStringList supportedFlags = PartitionTableUtils::instance()->supportedFlags( parent->partitionTableScheme() );
+            QStringList supportedFlags = PartitionTableUtils::instance()->supportedFlags( p->partitionTableScheme() );
 
             foreach (const QString& flag, mpa->flags()) {
                 if (!supportedFlags.contains(flag)) {
@@ -560,7 +483,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         case Action::CreatePartitionTable: {
             Actions::CreatePartitionTableAction* cpta = dynamic_cast< Actions::CreatePartitionTableAction* >(action);
             
-            if (!setPartitionTableScheme(cpta->disk(), cpta->partitionTableScheme())) {
+            if (!setPartitionTableScheme(cpta->disk(), cpta->schemeName())) {
                 return false;
             }
             
@@ -572,7 +495,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         case Action::RemovePartitionTable: {
             Actions::RemovePartitionTableAction* rpta = dynamic_cast< Actions::RemovePartitionTableAction* >(action);
             
-            if (!setPartitionTableScheme(rpta->disk(), Utils::NoneScheme)) {
+            if (!setPartitionTableScheme(rpta->disk(), QString())) {
                 return false;
             }
             
@@ -591,10 +514,32 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
     return true;
 }
 
+bool VolumeManager::Private::partitionChecks(Action* a)
+{
+    if (Utils::isPartitionAction(a)) {
+        PartitionAction* action = dynamic_cast< PartitionAction* >(a);
+        Partition* partition = volumeTreeMap.searchPartition( action->partition() );
+        
+        if (!partition) {
+            error.setType(PartitioningError::PartitionNotFoundError);
+            error.arg( partition->name() );
+            return false;
+        }
+        
+        if (partition->isMounted()) {
+            error.setType(PartitioningError::MountedPartitionError);
+            error.arg( partition->name() );
+            return false;
+        }
+    }
+    
+    return true; /* no need to check anything for those actions not concerning partitions */
+}
+
 void VolumeManager::Private::resizePartition(Partition* partition,
-                                    qlonglong ns,
-                                    DeviceModified* rightDevice,
-                                    VolumeTree& tree)
+                                             qlonglong ns,
+                                             DeviceModified* rightDevice,
+                                             VolumeTree& tree)
 {  
     if (ns == -1 || ns == partition->size()) {
         return;
@@ -647,11 +592,11 @@ void VolumeManager::Private::resizePartition(Partition* partition,
 }
 
 void VolumeManager::Private::movePartition(Partition* partition,
-                                  qlonglong no,
-                                  DeviceModified* leftDevice,
-                                  DeviceModified* rightDevice,
-                                  DeviceModified* parent,
-                                  VolumeTree& tree)
+                                           qlonglong no,
+                                           DeviceModified* leftDevice,
+                                           DeviceModified* rightDevice,
+                                           DeviceModified* parent,
+                                           VolumeTree& tree)
 {
     if (no == -1) {
         return;
@@ -786,7 +731,7 @@ bool VolumeManager::Private::gptPartitionChecks(Actions::CreatePartitionAction* 
     return true;
 }
 
-bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, PartitionTableScheme scheme)
+bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, const QString& scheme)
 {
     VolumeTree tree = volumeTreeMap[diskName];
 

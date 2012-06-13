@@ -43,6 +43,15 @@ namespace Solid
              * @returns the disk size in bytes.
              */
             qulonglong getDiskSize(const QString &);
+            
+            /**
+             * Checks whether the action operates a partition.
+             * 
+             * @param action the action.
+             * @returns true if the action operates on a partition, false otherwise.
+             * @note CreatePartition operates on a disk, so in that case false is returned.
+             */
+            bool isPartitionAction(Actions::Action *);
         }
     }
 }

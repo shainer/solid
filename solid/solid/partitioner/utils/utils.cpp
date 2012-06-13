@@ -37,6 +37,17 @@ qulonglong getDiskSize(const QString& udi)
     return tree.root()->size();
 }
 
+bool isPartitionAction(Action* action)
+{
+    QList< Action::ActionType > partitionTypes;
+    partitionTypes << Action::FormatPartition
+                   << Action::ModifyPartition
+                   << Action::RemovePartition
+                   << Action::ResizePartition;
+                   
+    return partitionTypes.contains(action->actionType());
+}
+
 }
 }
 }

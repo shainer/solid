@@ -49,7 +49,6 @@ namespace Solid
                     PartitionNotFoundError,
                     DiskNotFoundError,
                     ContainerNotFoundError,
-                    WrongDeviceTypeError,
                     ResizingToZeroError,
                     ResizingToTheSameError,
                     ResizeOutOfBoundsError,

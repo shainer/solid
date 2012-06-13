@@ -76,12 +76,6 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
-        case WrongDeviceTypeError: {
-            d->description = "A %0 was expected, got another device type instead.";
-            d->markersLeft = 1;
-            break;
-        }
-        
         case ResizingToZeroError: {
             d->description = "Could not change a partition to have 0 size.";
             d->markersLeft = 0;
@@ -137,8 +131,8 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
         }
         
         case MountedPartitionError: {
-            d->description = "Cannot apply the action on a mounted partition.";
-            d->markersLeft = 0;
+            d->description = "Cannot apply the action on mounted partition %0.";
+            d->markersLeft = 1;
             break;
         }
         

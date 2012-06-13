@@ -37,8 +37,9 @@ namespace Solid
                 virtual ~PartitionTableUtils();
                 static PartitionTableUtils* instance();
 
-                QStringList supportedFlags(PartitionTableScheme);
-                QString typeString(PartitionTableScheme, QString);
+                QStringList supportedFlags(const QString &);
+                
+                QString typeString(const QString &, QString);
 
             private:
                 PartitionTableUtils();

@@ -37,8 +37,8 @@ public:
     ~Private()
     {}
 
-    QHash< PartitionTableScheme, QStringList > supportedFlags;
-    QHash< PartitionTableScheme, QHash<QString, QString> > types;
+    QHash< QString, QStringList > supportedFlags;
+    QHash< QString, QHash<QString, QString> > types;
 };
 
 class PartitionTableUtilsHelper
@@ -72,9 +72,9 @@ PartitionTableUtils::PartitionTableUtils()
                                             << "boot_code_is_pic"
                                             << "in_use";
 
-    d->supportedFlags.insert(MBRScheme, mbrFlags);
-    d->supportedFlags.insert(GPTScheme, gptFlags);
-    d->supportedFlags.insert(APMScheme, apmFlags);
+    d->supportedFlags.insert("mbr", mbrFlags);
+    d->supportedFlags.insert("gpt", gptFlags);
+    d->supportedFlags.insert("apm", apmFlags);
     
     /*
      * FIXME: for MBR, check CHS vs. LBA.
@@ -124,9 +124,9 @@ PartitionTableUtils::PartitionTableUtils()
     mbr.insert("vfat", "0x0b");
     mbr.insert("xfs", "0x83");
     
-    d->types.insert(Utils::APMScheme, apm);
-    d->types.insert(Utils::GPTScheme, gpt);
-    d->types.insert(Utils::MBRScheme, mbr);
+    d->types.insert("apm", apm);
+    d->types.insert("gpt", gpt);
+    d->types.insert("mbr", mbr);
     
     s_ptableutils->q = this;
 }
@@ -145,12 +145,12 @@ PartitionTableUtils* PartitionTableUtils::instance()
     return s_ptableutils->q;
 }
 
-QStringList PartitionTableUtils::supportedFlags(PartitionTableScheme scheme)
+QStringList PartitionTableUtils::supportedFlags(const QString& scheme)
 {
     return d->supportedFlags.value(scheme);
 }
 
-QString PartitionTableUtils::typeString(PartitionTableScheme scheme, QString type)
+QString PartitionTableUtils::typeString(const QString & scheme, QString type)
 {
     if (type.isEmpty()) {
         type = "unformatted";

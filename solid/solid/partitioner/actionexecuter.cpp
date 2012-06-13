@@ -19,17 +19,20 @@
 */
 #include <solid/partitioner/actionexecuter.h>
 #include <solid/partitioner/volumemanager.h>
+#include <solid/partitioner/utils/partitiontableutils.h>
+#include <solid/partitioner/utils/utils.h>
+
 #include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/createpartitiontableaction.h>
 #include <solid/partitioner/actions/removepartitiontableaction.h>
 #include <solid/partitioner/actions/removepartitionaction.h>
 #include <solid/partitioner/actions/modifypartitionaction.h>
 #include <solid/partitioner/actions/resizepartitionaction.h>
-#include <solid/partitioner/utils/partitiontableutils.h>
+
 #include <ifaces/devicemanager.h>
 #include <backends/udisks/udisksmanager.h>
-#include <kglobal.h>
 
+#include <kglobal.h>
 #include <QtCore/QDebug>
 #include <QtDBus/QDBusConnection>
 
@@ -52,19 +55,13 @@ public:
         , map(m)
         , connection("connection")
         , valid(true)
-    {
-        partitionTypes << Action::RemovePartition
-                       << Action::ResizePartition
-                       << Action::FormatPartition
-                       << Action::ModifyPartition;
-    }
+    {}
     
     ~Private()
     {}
     
     void translateFutureNames(QList< Action* >::iterator, const QString &);
     
-    QList< Action::ActionType > partitionTypes;
     QList< Action* > actions;
     VolumeTreeMap map;
     QDBusConnection connection;
@@ -239,7 +236,7 @@ void ActionExecuter::Private::translateFutureNames(QList< Action* >::iterator cu
     for (QList< Action* >::iterator it = currentpos + 1; it != actions.end(); it++) {
         Action* current = (*it);
         
-        if (partitionTypes.contains( current->actionType() )) {
+        if (Utils::isPartitionAction(current)) {
             PartitionAction* pAction = dynamic_cast< PartitionAction* >(current);
             pAction->setPartitionName(newPartitionName);
         }
