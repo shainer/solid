@@ -33,6 +33,8 @@
 #include <QtCore/QDebug>
 #include <QtDBus/QDBusConnection>
 
+#define EXECUTION_SERVICE "org.kde.Solid.Partitioner.Execution"
+
 namespace Solid
 {
 namespace Partitioner
@@ -48,6 +50,7 @@ public:
     Private(const QList< Action* >& a, const VolumeTreeMap& m)
         : actions(a)
         , map(m)
+        , connection("connection")
         , valid(true)
     {
         partitionTypes << Action::RemovePartition
@@ -60,10 +63,11 @@ public:
     {}
     
     void translateFutureNames(QList< Action* >::iterator, const QString &);
-        
+    
     QList< Action::ActionType > partitionTypes;
     QList< Action* > actions;
     VolumeTreeMap map;
+    QDBusConnection connection;
     bool valid;
     Utils::PartitioningError error;
 };
@@ -71,10 +75,23 @@ public:
 ActionExecuter::ActionExecuter(const QList< Action* >& actions, const VolumeTreeMap& map)
     : QObject()
     , d( new Private(actions, map) )
-{}
+{
+    /*
+     * We register a dummy service on the bus to avoid having two executers calling UDisks services together.
+     * If another instance try to register this same service, it will fail.
+     * The service is unregistered when this executer is destroyed.
+     */
+    d->connection = QDBusConnection::systemBus();
+    d->valid = d->connection.registerService(EXECUTION_SERVICE);
+    
+    if (!d->valid) {
+        d->error.setType(PartitioningError::BusyExecuterError);
+    }
+}
 
 ActionExecuter::~ActionExecuter()
 {
+    d->connection.unregisterService(EXECUTION_SERVICE);
     delete d;
 }
 
