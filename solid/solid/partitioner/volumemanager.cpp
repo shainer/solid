@@ -132,6 +132,8 @@ VolumeManager* VolumeManager::instance()
 
 bool VolumeManager::registerAction(Actions::Action* action)
 {
+    d->error.setType(PartitioningError::None); /* erase any previous error */
+    
     /* A duplicate isn't accepted */
     if (d->actionstack.contains(action)) {
         d->error.setType(PartitioningError::DuplicateActionError);
@@ -259,7 +261,7 @@ QList< Action* > VolumeManager::registeredActions() const
 }
 
 bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
-{
+{    
     if (!partitionChecks(action)) {
         return false;
     }
