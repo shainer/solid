@@ -28,6 +28,7 @@
 
 #include <QtDBus/QDBusInterface>
 #include <QtCore/QSet>
+#include <QtCore/QStringList>
 
 QString formatByteSize(double);
 

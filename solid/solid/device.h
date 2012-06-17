@@ -30,8 +30,6 @@
 #include <solid/solid_export.h>
 
 #include <solid/deviceinterface.h>
-#include <solid/partitioner/volumetree.h>
-#include <solid/partitioner/devices/freespace.h>
 
 namespace Solid
 {
