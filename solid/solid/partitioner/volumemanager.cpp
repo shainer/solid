@@ -340,8 +340,18 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             Partition* newPartition = new Partition(cpa);
             newPartition->setPartitionTableScheme(scheme);
             newPartition->setFilesystem(cpa->filesystem());
-            tree.d->addDevice(cpa->disk(), newPartition);
             
+            if (cpa->partitionType() == ExtendedPartition) {
+                newPartition->setPartitionType(ExtendedPartition);
+            }
+            
+            DeviceModified* extended = tree.extendedPartition();
+            if (extended && (cpa->offset() >= extended->offset() && ((cpa->offset() + cpa->size()) <= extended->rightBoundary()))) {
+                newPartition->setPartitionType(LogicalPartition);
+                newPartition->setParentName(extended->name());
+            }
+            
+            tree.d->addDevice(newPartition->parentName(), newPartition);
             cpa->setOwnerDisk(disk);
             break;
         }
