@@ -69,8 +69,8 @@ void VolumeDetectionTest::test()
      * The name contains offset and size so we're implicitly checking the geometry is what we expect it to be.
      */
     DeviceModified* freeSpace1 = diskTree.searchDevice("Free space of offset 21475875056 and size 10000");
-    DeviceModified* freeSpace2 = diskTree.searchDevice("Free space of offset 23623300960 and size 100000");
-    DeviceModified* freeSpace3 = diskTree.searchDevice("Free space of offset 268436501344 and size 67744");
+    DeviceModified* freeSpace2 = diskTree.searchDevice("Free space of offset 23623300960 and size 132256");
+    DeviceModified* freeSpace3 = diskTree.searchDevice("Free space of offset 268436501344 and size 100000");
     
     QCOMPARE(freeSpace1 == NULL, false);
     QCOMPARE(freeSpace2 == NULL, false);

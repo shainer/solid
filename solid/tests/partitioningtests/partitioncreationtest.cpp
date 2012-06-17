@@ -54,11 +54,11 @@ void PartitionCreationTest::test()
                                                                            50000,
                                                                            false);
     CreatePartitionAction* actionGood1 = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
-                                                                   23623300960,
-                                                                   50000);
+                                                                   21475875056,
+                                                                   5000);
     CreatePartitionAction* actionGood2 = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
-                                                                   23623350960,
-                                                                   50000);
+                                                                   23623300960,
+                                                                   132256);
     
     /* This action tries to create an extended partition when one is already present */
     manager->registerAction(actionExtended);
@@ -68,23 +68,21 @@ void PartitionCreationTest::test()
     manager->registerAction(actionWrongGeometry);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::PartitionGeometryError);
     
-    /* These two last actions in turn take up all the space in one free block */
+    /* This action takes some space in a normal free blocks */
     manager->registerAction(actionGood1);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
     
     /* Check if the block has shrinked accordingly */
     VolumeTree diskTree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
-    QCOMPARE(diskTree.searchDevice("Free space of offset 23623350960 and size 50000") == NULL, false);
+    QCOMPARE(diskTree.searchDevice("Free space of offset 21475880056 and size 5000") == NULL, false);
     
+    /* This action takes all the space in a free block between logical partitions */
     manager->registerAction(actionGood2);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
     
-    /* Now the block should have been deleted, so we count all the "logical" blocks and see if this is the case */
-    QList< DeviceModified* > logicalDevices = diskTree.logicalPartitions(true);
-    int count;
-    
-    foreach (DeviceModified* device, logicalDevices) {
-        if (device->deviceType() == DeviceModified::FreeSpaceDevice) {
+    /* Check if the free space block was actually deleted */
+    int count = 0;
+    foreach (DeviceModified* dev, diskTree.logicalPartitions(true)) {
+        if (dev->deviceType() == DeviceModified::FreeSpaceDevice) {
             count++;
         }
     }
