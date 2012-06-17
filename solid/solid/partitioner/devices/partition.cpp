@@ -65,7 +65,7 @@ public:
     {}
     
     Private(Devices::Partition* other)
-        : ignored(false)
+        : ignored(other->ignored())
         , usage(other->usage())
         , filesystem(other->filesystem())
         , label(other->label())

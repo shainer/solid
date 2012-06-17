@@ -65,6 +65,7 @@ namespace Solid
                 
                 /**
                  * @returns true if this partition should be ignored by the application.
+                 * @see StorageVolume::isIgnored()
                  */
                 bool ignored() const;
                 

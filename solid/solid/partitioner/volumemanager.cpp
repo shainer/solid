@@ -258,9 +258,6 @@ QList< Action* > VolumeManager::registeredActions() const
     return d->actionstack.list();
 }
 
-/*
- * FIXME: less duplicate code
- */
 bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
 {
     if (!partitionChecks(action)) {
@@ -522,8 +519,13 @@ bool VolumeManager::Private::partitionChecks(Action* a)
         
         if (!partition) {
             error.setType(PartitioningError::PartitionNotFoundError);
-            error.arg( partition->name() );
+            error.arg( action->partition() );
             return false;
+        }
+        
+        if (partition->ignored()) {
+            error.setType(PartitioningError::IgnoredPartitionError);
+            error.arg( partition->name() );
         }
         
         if (partition->isMounted()) {

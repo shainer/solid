@@ -136,6 +136,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case IgnoredPartitionError: {
+            d->description = "Cannot register an action on %0: this partition must be ignored by applications.";
+            d->markersLeft = 1;
+            break;
+        }
+        
         case DuplicateActionError: {
             d->description = "The action \"%0\" was already registered.";
             d->markersLeft = 1;
