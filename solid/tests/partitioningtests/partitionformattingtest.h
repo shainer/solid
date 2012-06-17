@@ -17,8 +17,8 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef VOLUMEDETECTIONTEST_H
-#define VOLUMEDETECTIONTEST_H
+#ifndef PARTITIONFORMATTINGTEST_H
+#define PARTITIONFORMATTINGTEST_H
 
 #include <QtCore/QObject>
 #include <fakemanager.h>
