@@ -37,3 +37,12 @@ kde4_add_unit_test(partitionremovaltest ${partitionremoval_SRCS})
 add_definitions(-DFAKE_PARTITIONS_XML="\\"${CMAKE_CURRENT_SOURCE_DIR}/../../solid/backends/fakehw/fakepartitions.xml\\"")
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../solid/backends/fakehw )
 target_link_libraries(partitionremovaltest ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTTEST_LIBRARY} ${LIBS} solid_static)
+
+# Test for partition tables
+set(partitiontable_SRCS
+    partitiontabletest.cpp )
+
+kde4_add_unit_test(partitiontabletest ${partitiontable_SRCS})
+add_definitions(-DFAKE_PARTITIONS_XML="\\"${CMAKE_CURRENT_SOURCE_DIR}/../../solid/backends/fakehw/fakepartitions.xml\\"")
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../solid/backends/fakehw )
+target_link_libraries(partitiontabletest ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTTEST_LIBRARY} ${LIBS} solid_static)
