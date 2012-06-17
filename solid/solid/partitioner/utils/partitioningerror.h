@@ -22,6 +22,7 @@
 
 #include <QtCore/QString>
 #include <QtCore/QSharedDataPointer>
+#include <solid/solid_export.h>
 
 namespace Solid
 {
@@ -35,7 +36,7 @@ namespace Solid
              * @class PartitioningError
              * @brief This class represents an error in the partitioning submodule.
              */
-            class PartitioningError
+            class SOLID_EXPORT PartitioningError
             {
             public:
 
