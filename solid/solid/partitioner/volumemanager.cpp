@@ -538,6 +538,7 @@ bool VolumeManager::Private::partitionChecks(Action* a)
         if (partition->ignored()) {
             error.setType(PartitioningError::IgnoredPartitionError);
             error.arg( partition->name() );
+            return false;
         }
         
         if (partition->isMounted()) {
