@@ -21,6 +21,7 @@
 #include <solid/partitioner/volumetree.h>
 #include <solid/partitioner/devices/freespace.h>
 #include <solid/partitioner/devices/disk.h>
+#include <solid/partitioner/utils/utils.h>
 #include <QtCore/QDebug>
 
 namespace Solid
@@ -288,7 +289,7 @@ VolumeTreeItem* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong
        
         if (currentDevice->deviceType() == DeviceModified::FreeSpaceDevice) {
             FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
-            
+                        
             if (space->offset() <= offset && space->size() >= size) {
                 return currentNode;
             }
@@ -304,25 +305,28 @@ VolumeTreeItem* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong
 
 bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong size)
 {
-    VolumeTreeItem* containerNode = searchContainer(offset, size);   
+    VolumeTreeItem* containerNode = searchContainer(offset, size);
     
     if (!containerNode) {
         return false;
     }
     
     FreeSpace* container = dynamic_cast< FreeSpace* >(containerNode->volume());
-    FreeSpace* leftSpace = 0;
-    FreeSpace* rightSpace = 0;
     qulonglong containerOffset = container->offset();
     qulonglong containerSize = container->size();
     
     if (offset > containerOffset) {
-        leftSpace = new FreeSpace(containerOffset, offset - containerOffset, container->parentName());
+        qulonglong leftSize = offset - containerOffset;
+        
+        FreeSpace* leftSpace = new FreeSpace(containerOffset, leftSize, container->parentName());
         addDevice(container->parentName(), leftSpace);
     }
     
     if (containerSize > size) {
-        rightSpace = new FreeSpace((offset + size), (container->rightBoundary()) - (offset + size), container->parentName());
+        qulonglong rightOffset = (offset + size);
+        qulonglong rightSize = container->rightBoundary() - (offset + size);
+        
+        FreeSpace* rightSpace = new FreeSpace(rightOffset, rightSize, container->parentName());
         addDevice(container->parentName(), rightSpace);
     }
     
@@ -349,7 +353,7 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
     
     qulonglong size = partitionNode->volume()->size();
     qulonglong offset = partitionNode->volume()->offset();
-    QString parentName = partitionNode->volume()->parentName();
+    DeviceModified* parent = partitionNode->parent()->volume();
     
     delete partitionNode;
     
@@ -360,6 +364,7 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
     if (leftSibling && leftSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
         offset = leftSibling->offset();
         size += leftSibling->size();
+        
         delete leftNode;
     }
     
@@ -368,8 +373,8 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
         delete rightNode;
     }
     
-    FreeSpace* newSpace = new FreeSpace(offset, size, parentName);
-    addDevice(parentName, newSpace);
+    FreeSpace* newSpace = new FreeSpace(offset, size, parent->name());
+    addDevice(parent->name(), newSpace);
 }
 
 void VolumeTreePrivate::destroy(VolumeTreeItem* node)

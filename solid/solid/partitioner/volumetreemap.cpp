@@ -417,23 +417,31 @@ FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(Partition* partition1,
 {
     FreeSpace* sp = 0;
     
-    /* The logical partition are separated by some bytes used for the Extended Boot Record */
+    /*
+     * Each logical partition is preceeded by some bytes reserved for the Extended Boot Record entry.
+     */
     int spaceBetween = (parent->deviceType() == DeviceModified::PartitionDevice ? SPACE_BETWEEN_LOGICALS : 0);
     
     if (!partition1) {
         qulonglong initialOffset = parent->offset() + spaceBetween;
         if (partition2->offset() > initialOffset) {
-            sp = new FreeSpace(initialOffset, partition2->offset() - initialOffset, parent->name());
+            sp = new FreeSpace(initialOffset,
+                               partition2->offset() - parent->offset(),
+                               parent->name());
         }
     }
     else if (!partition2) {
-        if (partition1->rightBoundary() + spaceBetween < parent->rightBoundary()) {
-            sp = new FreeSpace(partition1->rightBoundary(), parent->rightBoundary() - partition1->rightBoundary() - spaceBetween, parent->name());
+        if (partition1->rightBoundary() < parent->rightBoundary()) {
+            sp = new FreeSpace(partition1->rightBoundary(),
+                               parent->rightBoundary() - partition1->rightBoundary(),
+                               parent->name());
         }
     }
     else {
         if (partition1->rightBoundary() + spaceBetween < partition2->offset()) {
-            sp = new FreeSpace(partition1->rightBoundary(), (partition2->offset() - partition1->rightBoundary() - spaceBetween), parent->name());
+            sp = new FreeSpace(partition1->rightBoundary(),
+                               (partition2->offset() - partition1->rightBoundary()),
+                               parent->name());
         }
     }
     
