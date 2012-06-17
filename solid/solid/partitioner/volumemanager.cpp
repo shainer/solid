@@ -358,7 +358,26 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         
         case Action::RemovePartition: {
             Actions::RemovePartitionAction* rpa = dynamic_cast< Actions::RemovePartitionAction* >(action);
-            VolumeTree tree = volumeTreeMap.searchTreeWithPartition( rpa->partition() ).first;
+            
+            QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition( rpa->partition() );
+            VolumeTree tree = pair.first;
+            Partition* partition = pair.second;
+            
+            if (!partition) {
+                error.setType(PartitioningError::PartitionNotFoundError);
+                error.arg( rpa->partition() );
+                return false;
+            }
+            
+            if (partition->partitionType() == Utils::ExtendedPartition) {
+                foreach (Partition* logical, tree.logicalPartitions()) {
+                    if (logical->isMounted()) {
+                        error.setType(PartitioningError::MountedLogicalError);
+                        return false;
+                    }
+                }
+            }
+            
             
             /* Deletes the partition merging adjacent free blocks if present. */
             tree.d->mergeAndDelete(rpa->partition());

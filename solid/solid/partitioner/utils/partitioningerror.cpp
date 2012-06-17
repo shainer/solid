@@ -136,6 +136,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case MountedLogicalError: {
+            d->description = "Cannot operate on an extended while at least one logical is mounted.";
+            d->markersLeft = 0;
+            break;
+        }
+        
         case IgnoredPartitionError: {
             d->description = "Cannot register an action on %0: this partition must be ignored by applications.";
             d->markersLeft = 1;
