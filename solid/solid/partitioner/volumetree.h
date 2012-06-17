@@ -25,7 +25,7 @@
 #include <solid/storagedrive.h>
 #include <solid/solid_export.h>
 #include <solid/partitioner/devices/devicemodified.h>
-#include <solid/partitioner/devices/partition.h>
+#include "devices/partition.h"
 #include "devices/freespace.h"
 
 #include <QtCore/QDebug>
@@ -204,16 +204,20 @@ namespace Solid
             VolumeTreeItem* searchNode(const QString &) const;
             
             /**
-             * @param free include blocks of free space too.
              * @returns a sorted list of primary and extended partitions.
              */
-            QList<DeviceModified *> partitions(bool free = false) const;
+            QList< Partition* > partitions() const;
             
             /**
-             * @param free include blocks of free space too.
              * @returns a sorted list of logical partitions.
              */
-            QList<DeviceModified *> logicalPartitions(bool free = false) const;
+            QList< Partition* > logicalPartitions() const;
+            
+            /**
+             * @param parentName the name of the parent
+             * @returns a sorted list of free space blocks
+             */
+            QList< FreeSpace* > freeSpaceBlocks(const QString& parentName) const;
             
             /**
              * @returns a list of all devices stored in this tree.
