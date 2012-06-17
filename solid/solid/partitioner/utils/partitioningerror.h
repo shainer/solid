@@ -49,7 +49,7 @@ namespace Solid
                     None,
                     PartitionNotFoundError,
                     DiskNotFoundError,
-                    ContainerNotFoundError,
+                    PartitionGeometryError,
                     ResizingToZeroError,
                     ResizingToTheSameError,
                     ResizeOutOfBoundsError,

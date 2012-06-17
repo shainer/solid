@@ -70,7 +70,7 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
-        case ContainerNotFoundError: {
+        case PartitionGeometryError: {
             d->description = "There is no suitable free space to create a new partition with offset %0 and size %1.";
             d->markersLeft = 2;
             break;

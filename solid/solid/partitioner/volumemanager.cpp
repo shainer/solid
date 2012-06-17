@@ -329,7 +329,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             
             /* Looks for the block of free space that will contain this partition. */
             if (!tree.d->splitCreationContainer(cpa->offset(), cpa->size())) {
-                error.setType(PartitioningError::ContainerNotFoundError);
+                error.setType(PartitioningError::PartitionGeometryError);
                 error.arg(QString::number(cpa->offset()));
                 error.arg(QString::number(cpa->size()));
                 return false;
