@@ -80,14 +80,7 @@ void PartitionCreationTest::test()
     manager->registerAction(actionGood2);
     
     /* Check if the free space block was actually deleted */
-    int count = 0;
-    foreach (DeviceModified* dev, diskTree.logicalPartitions(true)) {
-        if (dev->deviceType() == DeviceModified::FreeSpaceDevice) {
-            count++;
-        }
-    }
-    
-    QCOMPARE(count, 1);
+    QCOMPARE(diskTree.freeSpaceBlocks("/org/kde/solid/fakehw/extended_volume").size(), 1);
 }
 
 #include "partitioncreationtest.moc"
