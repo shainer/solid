@@ -29,6 +29,8 @@ namespace Utils
 
 FilesystemPrivate::FilesystemPrivate(const QString& n, const QStringList& flags)
     : name(n)
+    , ownerUid(-1)
+    , ownerGid(-1)
 {
     foreach (const QString& flag, flags) {
         if (flag.startsWith("label")) {
@@ -122,6 +124,17 @@ QStringList Filesystem::flags() const
 QStringList Filesystem::unsupportedFlags() const
 {
     return d->unsupported;
+}
+
+Filesystem& Filesystem::operator=(const Filesystem& other)
+{
+    d->name = other.name();
+    d->label = other.label();
+    d->ownerUid = other.ownerUid();
+    d->ownerGid = other.ownerGid();
+    d->unsupported = other.unsupportedFlags();
+    
+    return *this;
 }
 
 }
