@@ -78,7 +78,7 @@ ActionExecuter::ActionExecuter(const QList< Action* >& actions, const VolumeTree
      * If another instance try to register this same service, it will fail.
      * The service is unregistered when this executer is destroyed.
      */
-    d->connection = QDBusConnection::systemBus();
+    d->connection = QDBusConnection::sessionBus();
     d->valid = d->connection.registerService(EXECUTION_SERVICE);
     
     if (!d->valid) {
@@ -108,6 +108,7 @@ bool ActionExecuter::execute()
         return false;
     }
     
+    d->map.backToOriginal();
     int actionCount = 0;
     
     for (QList< Action* >::iterator it = d->actions.begin(); it < d->actions.end(); it++) {
@@ -152,6 +153,25 @@ bool ActionExecuter::execute()
             
             case Action::RemovePartition: {
                 RemovePartitionAction* rpa = dynamic_cast< RemovePartitionAction* >(action);
+                QPair< VolumeTree, Partition* > pair = d->map.searchTreeWithPartition( rpa->partition() );
+                
+                /*
+                 * If we are deleting an extended, automatically removes the logicals (UDisks doesn't do it, but
+                 * instead fails)
+                 */
+                if (pair.second->partitionType() == ExtendedPartition) {
+                    foreach (DeviceModified* l, pair.first.logicalPartitions()) {
+                        UDisksDevice* logical = new UDisksDevice( l->name() );
+                        success = logical->deletePartition();
+                        
+                        if (!success) {
+                            logical->deleteLater();
+                            break;
+                        }
+                        
+                        logical->deleteLater();
+                    }
+                }
                 
                 device = new UDisksDevice( rpa->partition() );
                 success = device->deletePartition();

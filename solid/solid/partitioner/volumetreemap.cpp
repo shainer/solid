@@ -74,6 +74,7 @@ VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
     , d( new Private )
 {
     d->devices = other.d->devices;
+    d->beginningCopies = other.d->beginningCopies;
 }
 
 VolumeTreeMap::~VolumeTreeMap()
@@ -101,7 +102,6 @@ void VolumeTreeMap::build()
  */
 void VolumeTreeMap::backToOriginal()
 {
-    d->devices.clear();
     d->devices = d->beginningCopies;
 }
 
@@ -185,6 +185,7 @@ void VolumeTreeMap::remove(const QString& diskName)
 void VolumeTreeMap::clear()
 {
     d->devices.clear();
+    d->beginningCopies.clear();
 }
 
 /*
@@ -426,7 +427,7 @@ FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(Partition* partition1,
         qulonglong initialOffset = parent->offset() + spaceBetween;
         if (partition2->offset() > initialOffset) {
             sp = new FreeSpace(initialOffset,
-                               partition2->offset() - parent->offset(),
+                               partition2->offset() - initialOffset - spaceBetween,
                                parent->name());
         }
     }
@@ -440,7 +441,7 @@ FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(Partition* partition1,
     else {
         if (partition1->rightBoundary() + spaceBetween < partition2->offset()) {
             sp = new FreeSpace(partition1->rightBoundary(),
-                               (partition2->offset() - partition1->rightBoundary()),
+                               (partition2->offset() - partition1->rightBoundary() - spaceBetween),
                                parent->name());
         }
     }
