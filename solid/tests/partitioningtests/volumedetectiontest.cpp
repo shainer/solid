@@ -48,6 +48,8 @@ void VolumeDetectionTest::test()
 {
     VolumeManager* manager = VolumeManager::instance();
     VolumeTree diskTree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
+    
+    diskTree.print();
  
     QCOMPARE(diskTree.valid(), true); /* a tree has been created for this drive? */
     QCOMPARE(diskTree.extendedPartition() == NULL, false); /* there should be an extended partition... */
@@ -68,9 +70,9 @@ void VolumeDetectionTest::test()
      * Checks if all the free space blocks have been detected in the correct position.
      * The name contains offset and size so we're implicitly checking the geometry is what we expect it to be.
      */
-    DeviceModified* freeSpace1 = diskTree.searchDevice("Free space of offset 21475875056 and size 10000");
-    DeviceModified* freeSpace2 = diskTree.searchDevice("Free space of offset 23623300960 and size 132256");
-    DeviceModified* freeSpace3 = diskTree.searchDevice("Free space of offset 268436501344 and size 100000");
+    DeviceModified* freeSpace1 = diskTree.searchDevice("Free space of offset 21465885056 and size 10000000");
+    DeviceModified* freeSpace2 = diskTree.searchDevice("Free space of offset 23613400960 and size 10000000");
+    DeviceModified* freeSpace3 = diskTree.searchDevice("Free space of offset 268426601344 and size 10000000");
     
     QCOMPARE(freeSpace1 == NULL, false);
     QCOMPARE(freeSpace2 == NULL, false);

@@ -50,15 +50,15 @@ void PartitionCreationTest::test()
                                                                       10000,
                                                                       true);
     CreatePartitionAction* actionWrongGeometry = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
-                                                                           21475875056,
+                                                                           23613300960,
                                                                            50000,
                                                                            false);
     CreatePartitionAction* actionGood1 = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
-                                                                   21475875056,
-                                                                   5000);
+                                                                   21465885056,
+                                                                   5000000);
     CreatePartitionAction* actionGood2 = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
-                                                                   23623300960,
-                                                                   132256);
+                                                                   23613500960,
+                                                                   5000000);
     
     /* This action tries to create an extended partition when one is already present */
     manager->registerAction(actionExtended);
@@ -66,21 +66,28 @@ void PartitionCreationTest::test()
     
     /* This action specifies an offset and size which doesn't fall inside a free space block */
     manager->registerAction(actionWrongGeometry);
+    qDebug() << manager->error().description();
     QCOMPARE(manager->error().type(), Utils::PartitioningError::PartitionGeometryError);
     
     /* This action takes some space in a normal free blocks */
     manager->registerAction(actionGood1);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
     
-    /* Check if the block has shrinked accordingly */
-    VolumeTree diskTree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
-    QCOMPARE(diskTree.searchDevice("Free space of offset 21475880056 and size 5000") == NULL, false);
-    
-    /* This action takes all the space in a free block between logical partitions */
+    /* This action takes some space in a free block between logical partitions */
     manager->registerAction(actionGood2);
+    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
     
-    /* Check if the free space block was actually deleted */
-    QCOMPARE(diskTree.freeSpaceBlocks("/org/kde/solid/fakehw/extended_volume").size(), 1);
+    /* Check all the right free space blocks are present and there isn't anything else */
+    VolumeTree disk = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
+    DeviceModified* freeSpace1 = disk.searchDevice("Free space of offset 21470885056 and size 5000000");
+    DeviceModified* freeSpace2 = disk.searchDevice("Free space of offset 23613400960 and size 100000");
+    DeviceModified* freeSpace3 = disk.searchDevice("Free space of offset 23618500960 and size 4900000");
+    
+    QCOMPARE(freeSpace1 == NULL, false);
+    QCOMPARE(freeSpace2 == NULL, false);
+    QCOMPARE(freeSpace3 == NULL, false);
+    QCOMPARE(disk.freeSpaceBlocks("/org/kde/solid/fakehw/storage_serial_HD56890I").size(), 1);
+    
 }
 
 #include "partitioncreationtest.moc"

@@ -52,7 +52,7 @@ void PartitionFormattingTest::initTestCase()
 void PartitionFormattingTest::test()
 {
     VolumeManager* manager = VolumeManager::instance();
-    FormatPartitionAction* action1 = new FormatPartitionAction("/org/kde/solid/fakehw/foreign_logical", "fat32");
+    FormatPartitionAction* action1 = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "swap");
     FormatPartitionAction* action2 = new FormatPartitionAction("/org/kde/solid/fakehw/extended_volume", "ntfs");
     
     /*
@@ -65,9 +65,9 @@ void PartitionFormattingTest::test()
      * NOTE: this device always exists and the cast doesn't fail, otherwise the previous instructions would have failed
      * at some point (either throught QCOMPARE, or with a segfault in registerAction()
      */
-    DeviceModified* foreign = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I").searchDevice("/org/kde/solid/fakehw/foreign_logical");
+    DeviceModified* foreign = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I").searchDevice("/org/kde/solid/fakehw/home_volume");
     Partition* p = dynamic_cast< Partition* >(foreign);
-    QCOMPARE(p->filesystem().name(), QString("fat32")); /* check if the new filesystem has been set to this partition */
+    QCOMPARE(p->filesystem().name(), QString("swap")); /* check if the new filesystem has been set to this partition */
     
     /*
      * This action isn't legal, as you can't format an extended partition.

@@ -189,7 +189,7 @@
                         <property key="fsType">ext3</property>
                         <property key="label">Root</property>
                         <property key="uuid">feedface</property>
-                        <property key="size">21474826480</property> <!-- real size: 21474836480 -->
+                        <property key="size">21464836480</property> <!-- real size: 21474836480 -->
                         <property key="offset">1048576</property>
                     </device>
                     <device udi="/org/kde/solid/fakehw/extended_volume"> <!-- extended partition -->
@@ -222,7 +222,7 @@
                         <property key="uuid">volume_part5_size_1048576</property>
                         <property key="usage">other</property>
                         <property key="fsType">swap</property>
-                        <property key="size">2147383648</property> <!-- real size: 2147483648 -->
+                        <property key="size">2137483648</property> <!-- real size: 2147483648 -->
                         <property key="offset">21475917312</property>
                     </device>
                     <device udi="/org/kde/solid/fakehw/home_volume"> <!-- home volume -->
@@ -260,7 +260,7 @@
                         <property key="fsType">ntfs</property>
                         <property key="label">Foreign</property>
                         <property key="uuid">f00ba7</property>
-                        <property key="size">21474736480</property> <!-- real size: 21474836480 -->
+                        <property key="size">21464836480</property> <!-- real size: 21474836480 -->
                         <property key="offset">246961764864</property>
                     </device>
 
