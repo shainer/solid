@@ -88,6 +88,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case ExtendedResizingError: {
+            d->description = "It's not allowed to resize an extended partition.";
+            d->markersLeft = 0;
+            break;
+        }
+        
         case ResizeOutOfBoundsError: {
             d->description = "Resizing out of bounds.";
             d->markersLeft = 0;

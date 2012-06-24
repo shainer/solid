@@ -52,6 +52,7 @@ namespace Solid
                     PartitionGeometryError,
                     ResizingToZeroError,
                     ResizingToTheSameError,
+                    ExtendedResizingError,
                     ResizeOutOfBoundsError,
                     ExceedingPrimariesError,
                     FilesystemFlagsError,
