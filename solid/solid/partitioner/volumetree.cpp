@@ -289,8 +289,8 @@ VolumeTreeItem* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong
        
         if (currentDevice->deviceType() == DeviceModified::FreeSpaceDevice) {
             FreeSpace* space = dynamic_cast< FreeSpace* >(currentDevice);
-                        
-            if (space->offset() <= offset && space->size() >= size) {
+
+            if (space->offset() <= offset && space->rightBoundary() >= (offset + size)) {
                 return currentNode;
             }
         }
@@ -354,6 +354,7 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
     qulonglong size = partitionNode->volume()->size();
     qulonglong offset = partitionNode->volume()->offset();
     DeviceModified* parent = partitionNode->parent()->volume();
+    qulonglong spaceBetween = (parent->deviceType() == DeviceModified::PartitionDevice) ? SPACE_BETWEEN_LOGICALS : 0;
     
     delete partitionNode;
     
@@ -363,22 +364,17 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
      */
     if (leftSibling && leftSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
         offset = leftSibling->offset();
-        size += leftSibling->size();
+        size += leftSibling->size() + spaceBetween;
         
         delete leftNode;
+    } else if (leftSibling) {
+        offset -= spaceBetween;
+        size += spaceBetween;
     }
     
-    /*
-     * If we have a logical partition on the right, take also the space MBR reserves for its EBR.
-     * Althought it's reserved space, we show it for clarity, and udisks won't overwrite it.
-     */
     if (rightSibling && rightSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
         size += rightSibling->size();
         delete rightNode;
-    }
-    else if (parent->deviceType() == DeviceModified::PartitionDevice /* if this is true, we are removing a logical partition */
-             && rightSibling && rightSibling->deviceType() == DeviceModified::PartitionDevice) {
-        size += SPACE_BETWEEN_LOGICALS;
     }
     
     FreeSpace* newSpace = new FreeSpace(offset, size, parent->name());
