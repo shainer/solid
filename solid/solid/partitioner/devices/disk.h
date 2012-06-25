@@ -74,6 +74,12 @@ namespace Solid
                 QString partitionTableScheme() const;
                 
                 /**
+                 * @returns the minimum size a partition can have on this disk. Geometry constraints force partitions to be
+                 * at least of size equals to the minimum between 1MB and 1% of the disk size.
+                 */
+                qulonglong minimumPartitionSize() const;
+                
+                /**
                  * Sets a size.
                  * 
                  * @note the partitioning module cannot change the size of a disk. This method doesn't do anything.

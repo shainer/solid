@@ -122,7 +122,16 @@ void Disk::setPartitionTableScheme(const QString& scheme)
 {
     d->scheme = scheme;
 }
+
+qulonglong Disk::minimumPartitionSize() const
+{
+    qulonglong megabyte = 1024 * 1024;
+    qulonglong onePercent = d->size / 100;
+    qulonglong min = (onePercent > megabyte) ? megabyte : onePercent;
     
+    return min;
+}
+
 }
 }
 }

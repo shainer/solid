@@ -321,6 +321,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             else if (scheme == "gpt" && !gptPartitionChecks(cpa)) {
                 return false;
             }
+            
+            if (cpa->size() < disk->minimumPartitionSize()) {
+                error.setType(PartitioningError::PartitionTooSmallError);
+                return false;
+            }
 
             /* Checks whether the partition table supports all the given flags */
             foreach (const QString& flag, cpa->flags()) {
@@ -392,7 +397,9 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
         case Action::ResizePartition: {
             Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
             
-            VolumeTree tree = volumeTreeMap.searchTreeWithDevice(rpa->partition()).first;            
+            VolumeTree tree = volumeTreeMap.searchTreeWithDevice(rpa->partition()).first;
+            Disk* disk = dynamic_cast< Disk* >(tree.root());
+            
             VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());            
             Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
             DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
@@ -413,6 +420,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             if (newOffset == oldOffset && newSize == oldSize) {
                 error.setType(PartitioningError::ResizingToTheSameError);
                 error.arg(rpa->partition());
+                return false;
+            }
+            
+            if (newSize < disk->minimumPartitionSize()) {
+                error.setType(PartitioningError::PartitionTooSmallError);
                 return false;
             }
             

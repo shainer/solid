@@ -111,6 +111,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             d->markersLeft = 1;
             break;
         }
+        
+        case PartitionTooSmallError: {
+            d->description = "The partition you wish to create or resize is below the minimum size allowed.";
+            d->markersLeft = 0;
+            break;
+        }
 
         case PartitionFlagsError: {
             d->description = "The following flags aren't supported for this partitioning scheme: %0";

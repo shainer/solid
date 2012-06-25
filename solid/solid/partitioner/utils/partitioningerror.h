@@ -57,6 +57,7 @@ namespace Solid
                     ExceedingPrimariesError,
                     FilesystemFlagsError,
                     PartitionFlagsError,
+                    PartitionTooSmallError,
                     CannotFormatPartition,
                     NoPartitionTableError,
                     BadPartitionTypeError,
