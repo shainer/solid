@@ -39,6 +39,17 @@ public:
     ~Private()
     {}
     
+    void setDeviceName()
+    {
+        QString offsetStr = formatByteSize((double)(offset));
+        QString sizeStr = formatByteSize((double)(size));
+        
+        QString uniqueName = "Free space of offset %0 and size %1";
+        q->setName( uniqueName.arg(QString::number(offset), QString::number(size)) );
+        q->setDescription( uniqueName.arg(offsetStr, sizeStr) );   
+    }
+    
+    FreeSpace* q;
     qulonglong offset;
     qulonglong size;
 };
@@ -47,13 +58,8 @@ FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUd
     : DeviceModified()
     , d( new Private( offset, size ) )
 {
-    QString offsetStr = formatByteSize((double)(d->offset));
-    QString sizeStr = formatByteSize((double)(d->size));
-    
-    QString uniqueName = "Free space of offset %0 and size %1";
-    DeviceModified::setName( uniqueName.arg(QString::number(offset), QString::number(size)) );
-    DeviceModified::setDescription( uniqueName.arg(offsetStr, sizeStr) );
-    
+    d->q = this;
+    d->setDeviceName();
     DeviceModified::setParentName(parentUdi);
 }
 
@@ -94,11 +100,13 @@ bool FreeSpace::isMinimumSize() const
 void FreeSpace::setSize(qulonglong s)
 {
     d->size = s;
+    d->setDeviceName();
 }
 
 void FreeSpace::setOffset(qulonglong o)
 {
     d->offset = o;
+    d->setDeviceName();
 }
 
 }
