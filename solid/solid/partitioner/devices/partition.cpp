@@ -44,11 +44,12 @@ public:
         , size(v->size())
         , offset(v->offset())
         , partitionType(PrimaryPartition)
+        , partitionTypeString(v->partitionType())
         , scheme(v->partitionTableScheme())
         , flags(v->flags())
         , access(a)
     {
-        if (v->partitionType() == EXTENDED_TYPE_STRING || v->partitionType() == EXTENDED_TYPE_STRING_LBA) {
+        if (partitionTypeString == EXTENDED_TYPE_STRING || partitionTypeString == EXTENDED_TYPE_STRING_LBA) {
             partitionType = ExtendedPartition;
         }
     }
@@ -73,6 +74,7 @@ public:
         , size(other->size())
         , offset(other->offset())
         , partitionType(other->partitionType())
+        , partitionTypeString(other->partitionTypeString())
         , scheme(other->partitionTableScheme())
         , flags(other->flags())
     {}
@@ -87,6 +89,7 @@ public:
     qulonglong size;
     qulonglong offset;
     PartitionType partitionType;
+    QString partitionTypeString;
     QString scheme;
     QStringList flags;
     
@@ -96,7 +99,12 @@ public:
 Partition::Partition(Device& dev)
 {
     StorageVolume* volume = dev.as<StorageVolume>();
-    StorageAccess* access = dev.as<StorageAccess>();
+    StorageAccess* access = 0;
+    
+    if (dev.is<StorageAccess>()) {
+        access = dev.as<StorageAccess>();
+    }
+    
     d = new Private(volume, access);
 }
 
@@ -163,6 +171,11 @@ PartitionType Partition::partitionType() const
     return d->partitionType;
 }
 
+QString Partition::partitionTypeString() const
+{
+    return d->partitionTypeString;
+}
+
 QString Partition::partitionTableScheme() const
 {
     return d->scheme;
@@ -190,11 +203,19 @@ qulonglong Partition::rightBoundary() const
 
 bool Partition::isMounted() const
 {
+    if (!d->access) {
+        return false;
+    }
+    
     return d->access->isAccessible();
 }
 
 QString Partition::mountFile() const
 {
+    if (!d->access) {
+        return QString();
+    }
+    
     return d->access->filePath();
 }
 

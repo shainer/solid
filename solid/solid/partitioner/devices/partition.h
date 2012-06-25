@@ -110,6 +110,12 @@ namespace Solid
                 Utils::PartitionType partitionType() const;
                 
                 /**
+                 * @returns the string describing this partition's type.
+                 * An example are the GUID string used in GPT tables.
+                 */
+                QString partitionTypeString() const;
+                
+                /**
                  * @returns the ptable scheme this partition is part of. 
                  */
                 QString partitionTableScheme() const;

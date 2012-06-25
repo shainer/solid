@@ -183,8 +183,10 @@ bool ActionExecuter::execute()
                 ModifyPartitionAction* mpa = dynamic_cast< ModifyPartitionAction* >(action);
                 
                 device = new UDisksDevice( mpa->partition() );
-                QString type = device->property("PartitionType").toString();
-                QString oldLabel = device->property("PartitionLabel").toString();
+                Partition* partition = d->map.searchPartition( mpa->partition() );
+                
+                QString type = partition->partitionTypeString();
+                QString oldLabel = partition->label();
                 QString newLabel = mpa->isLabelChanged() ? mpa->label() : oldLabel;
                 
                 success = device->modifyPartition(type, newLabel, mpa->flags());
@@ -195,9 +197,11 @@ bool ActionExecuter::execute()
                 ResizePartitionAction* rpa = dynamic_cast< ResizePartitionAction* >(action);
                 device = new UDisksDevice( rpa->partition() );
                 
-                QString oldType = device->property("PartitionType").toString();
-                QString oldLabel = device->property("PartitionLabel").toString();
-                QStringList oldFlags = device->property("PartitionFlags").toStringList();
+                Partition* partition = d->map.searchPartition( rpa->partition() );
+                
+                QString oldType = partition->partitionTypeString();
+                QString oldLabel = partition->label();
+                QStringList oldFlags = partition->flags();
                 
                 success = device->deletePartition();
                 device->deleteLater();
@@ -212,7 +216,6 @@ bool ActionExecuter::execute()
                     success = false;
                 }
                 
-                qDebug() << "nuovo nome: " << p.path();
                 break;
             }
             
