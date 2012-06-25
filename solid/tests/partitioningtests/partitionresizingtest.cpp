@@ -54,7 +54,7 @@ void PartitionResizingTest::test()
     VolumeTree tree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
     Actions::ResizePartitionAction* offsetBBad = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
                                                                            1000000,
-                                                                           -1);
+                                                                           21464836480);
     Actions::ResizePartitionAction* extendedResizing = new ResizePartitionAction("/org/kde/solid/fakehw/extended_volume",
                                                                                  21475885056,
                                                                                  246950716288);
@@ -66,19 +66,19 @@ void PartitionResizingTest::test()
                                                                                 223338399492);
     Actions::ResizePartitionAction* offsetB = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
                                                                         23613433216,
-                                                                        -1);
+                                                                        223338399392);
     Actions::ResizePartitionAction* sizeB = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                      -1,
+                                                                      23613433216,
                                                                       223338299392);
     Actions::ResizePartitionAction* mounted = new ResizePartitionAction("/org/kde/solid/fakehw/foreign_logical",
                                                                         246971764864,
-                                                                        -1);
+                                                                        21464836480);
     Actions::ResizePartitionAction* offsetF = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
                                                                         11048576,
-                                                                        -1);
+                                                                        21464836480);
     Actions::ResizePartitionAction* offsetFBad = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
                                                                            12048576,
-                                                                           -1);
+                                                                           21464836480);
     Actions::ResizePartitionAction* offsetBsizeB = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
                                                                              10048576,
                                                                              21463836480);
@@ -112,7 +112,7 @@ void PartitionResizingTest::test()
     
     manager->registerAction(sizeB);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
-    
+
     manager->registerAction(mounted);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::MountedPartitionError);
     
@@ -136,9 +136,6 @@ void PartitionResizingTest::test()
     
     manager->registerAction(offsetFsizeF);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
-    
-    tree.print();
-    
 }
 
 

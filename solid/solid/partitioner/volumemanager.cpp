@@ -70,10 +70,10 @@ public:
     bool partitionChecks(Action *);
     
     /* Resize a partition. */
-    void resizePartition(VolumeTreeItem *, qlonglong, VolumeTree &);
+    void resizePartition(VolumeTreeItem *, qulonglong, VolumeTree &);
     
     /* Moves a partition. */
-    void movePartition(VolumeTreeItem *, qlonglong, DeviceModified *, VolumeTree &);
+    void movePartition(VolumeTreeItem *, qulonglong, DeviceModified *, VolumeTree &);
     
     /* Perform necessary checks when creating a new partition on either MBR or GPT tables. */
     bool mbrPartitionChecks(Actions::CreatePartitionAction *);
@@ -398,12 +398,10 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
             DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
             
-            qlonglong oldOffset = (qlonglong)(toResize->offset());
-            qlonglong oldSize = (qlonglong)(toResize->size());
-            qlonglong newOffset = (rpa->newOffset() == -1) ? toResize->offset() : rpa->newOffset();
-            qlonglong newSize = (rpa->newSize() == -1) ? toResize->size() : rpa->newSize();
-            bool isOffsetChanging = newOffset != oldOffset;
-            bool isSizeChanging = newSize != oldSize;
+            qlonglong oldOffset = (qlonglong)toResize->offset();
+            qlonglong oldSize = (qlonglong)toResize->size();
+            qlonglong newOffset = (qlonglong)rpa->newOffset();
+            qlonglong newSize = (qlonglong)rpa->newSize();
             qlonglong rightBoundary = 0;
             qlonglong leftBoundary = 0;
             
@@ -412,7 +410,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 return false;
             }
             
-            if (!isOffsetChanging && !isSizeChanging) {
+            if (newOffset == oldOffset && newSize == oldSize) {
                 error.setType(PartitioningError::ResizingToTheSameError);
                 error.arg(rpa->partition());
                 return false;
@@ -440,13 +438,13 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 leftBoundary = leftDevice->offset() + spaceBetween;
             }
             
-            if (isOffsetChanging && newOffset < leftBoundary) {
+            if (newOffset != oldOffset && newOffset < leftBoundary) {
                 error.setType(PartitioningError::ResizeOutOfBoundsError);
                 return false;
             }
             
             /* If the size is increased beyond the legal boundary... */
-            if (isSizeChanging && (oldOffset + newSize > rightBoundary)) {
+            if (newSize != oldSize && (oldOffset + newSize > rightBoundary)) {
                 qlonglong difference = oldOffset + newSize - rightBoundary;
                 
                 /* ... but the offset is reduced of at least that quantity, OK */
@@ -463,7 +461,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 resizePartition(itemToResize, newSize, tree);
             }
             /* If the partition is moved forward beyond the legal boundary... */
-            else if (isOffsetChanging && (newOffset + oldSize >= rightBoundary)) {
+            else if (newOffset != oldOffset && (newOffset + oldSize >= rightBoundary)) {
                 qlonglong difference = newOffset + oldSize - rightBoundary;
                 
                 /* ... but the size is reduced of at least that quantity, OK */
@@ -566,17 +564,16 @@ bool VolumeManager::Private::partitionChecks(Action* a)
 }
 
 void VolumeManager::Private::resizePartition(VolumeTreeItem* itemToResize,
-                                             qlonglong ns,
+                                             qulonglong newSize,
                                              VolumeTree& tree)
 {  
-    if (ns == itemToResize->volume()->size()) {
+    if (newSize == itemToResize->volume()->size()) {
         return;
     }
     
     Partition* partition = dynamic_cast< Partition* >(itemToResize->volume());
     DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
     
-    qulonglong newSize = (qulonglong)ns;
     qulonglong spaceBetween = (partition->partitionType() == LogicalPartition) ? SPACE_BETWEEN_LOGICALS : 0;
     
     if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
@@ -603,11 +600,11 @@ void VolumeManager::Private::resizePartition(VolumeTreeItem* itemToResize,
 }
 
 void VolumeManager::Private::movePartition(VolumeTreeItem* itemToResize,
-                                           qlonglong no,
+                                           qulonglong newOffset,
                                            DeviceModified* parent,
                                            VolumeTree& tree)
 {
-    if (no == itemToResize->volume()->offset()) {
+    if (newOffset == itemToResize->volume()->offset()) {
         return;
     }
     
@@ -615,7 +612,6 @@ void VolumeManager::Private::movePartition(VolumeTreeItem* itemToResize,
     DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
     DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
     
-    qulonglong newOffset = (qulonglong)no;
     qulonglong oldOffset = partition->offset();
     FreeSpace *freeSpaceRight = 0;
     FreeSpace *freeSpaceLeft = 0;

@@ -48,8 +48,7 @@ namespace Solid
                  * Passing -1 means you don't want the offset or size to change.
                  * If you use the second constructor the new offset is automatically set to -1.
                  */
-                explicit ResizePartitionAction(const QString& partition, qlonglong newOffset, qlonglong newSize = -1);
-                explicit ResizePartitionAction(const QString& partition, qlonglong newSize);
+                explicit ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize);
                 virtual ~ResizePartitionAction();
                 
                 virtual ActionType actionType() const;
@@ -58,12 +57,12 @@ namespace Solid
                 /**
                  * @returns the new size, in bytes.
                  */
-                qlonglong newSize() const;
+                qulonglong newSize() const;
                 
                 /**
                  * @returns the new offset, in bytes.
                  */
-                qlonglong newOffset() const;
+                qulonglong newOffset() const;
                 
             private:
                 class Private;

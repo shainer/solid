@@ -30,7 +30,7 @@ namespace Actions
 class ResizePartitionAction::Private
 {
 public:
-    Private(qlonglong o, qlonglong s)
+    Private(qulonglong o, qulonglong s)
         : newOffset(o)
         , newSize(s)
     {}
@@ -42,14 +42,9 @@ public:
     qlonglong newSize;
 };
     
-ResizePartitionAction::ResizePartitionAction(const QString& partition, qlonglong newOffset, qlonglong newSize)
+ResizePartitionAction::ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize)
     : PartitionAction(partition)
     , d( new Private(newOffset, newSize) )
-{}
-
-ResizePartitionAction::ResizePartitionAction(const QString& partition, qlonglong newSize)
-    : PartitionAction(partition)
-    , d( new Private(-1, newSize) )
 {}
 
 ResizePartitionAction::~ResizePartitionAction()
@@ -70,12 +65,12 @@ QString ResizePartitionAction::description() const
     return QObject::tr(desc.toUtf8().data());
 }
 
-qlonglong ResizePartitionAction::newOffset() const
+qulonglong ResizePartitionAction::newOffset() const
 {
     return d->newOffset;
 }
 
-qlonglong ResizePartitionAction::newSize() const
+qulonglong ResizePartitionAction::newSize() const
 {
     return d->newSize;
 }
