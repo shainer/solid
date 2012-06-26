@@ -43,16 +43,23 @@ namespace Solid
              * Creates an empty tree map.
              */
             explicit VolumeTreeMap();
+            
+            /**
+             * Copy constructor.
+             */
             VolumeTreeMap(const VolumeTreeMap &);
             virtual ~VolumeTreeMap();
             
             /**
-             * Builds all the trees detecting devices.
+             * Builds all the trees, detecting devices.
              */
             void build();
             
             /**
-             * EXPERIMENTAL
+             * We internally store two copies of the map. One is modified as the application registers new actions,
+             * while the other isn't; thus the latter always maintains the actual state of the hardware.
+             * 
+             * This method synchronizes the modified copy with the original one; it's used when undoing actions.
              */
             void backToOriginal();
             
@@ -74,21 +81,21 @@ namespace Solid
             /**
              * Searches the map for a tree which contains the specified device.
              * 
-             * @param devName the name of the device.
+             * @param devName the device name.
              * @returns a pair containing the device object and the tree in which it was found.
              */
             QPair<VolumeTree, Devices::DeviceModified *> searchTreeWithDevice(const QString &) const;
             
             /**
-             * Searches the map for a tree which contains the specified device.
+             * Searches the map for a tree which contains the specified partition.
              * 
-             * @param devName the name of the device.
-             * @returns a pair containing the device object and the tree in which it was found.
+             * @param devName the partition name.
+             * @returns a pair containing the partition object and the tree in which it was found.
              */
             QPair<VolumeTree, Devices::Partition *> searchTreeWithPartition(const QString &) const;
             
             /**
-             * Searches a specific device inside the map.
+             * Searches for a device inside the map.
              * 
              * @param udi the device UDI.
              * @returns the device object, or NULL if not found.
@@ -98,7 +105,7 @@ namespace Solid
             /**
              * Searches a partition inside the map.
              * 
-             * @param udi the partition UDI.
+             * @param udi the partition identifier.
              * @returns the partition object, or NULL if there isn't a partition with this name.
              */
             Devices::Partition* searchPartition(const QString &) const;
@@ -106,7 +113,7 @@ namespace Solid
             /**
              * Searches the map for a disk layout.
              * 
-             * @param diskName the name of a disk.
+             * @param diskName a disk's name.
              * @returns true if there's a layout tree for the disk, false otherwise.
              */
             bool contains(const QString &) const;
@@ -114,12 +121,12 @@ namespace Solid
             /**
              * Removes a tree from the map.
              * 
-             * @param diskName the name of the disk to remove.
+             * @param diskName the UDI of the disk layout to remove.
              */
             void remove(const QString &);
             
             /**
-             * Clears the map and destroys all the disks.
+             * Clears the map and destroys all the trees.
              */
             void clear();
             

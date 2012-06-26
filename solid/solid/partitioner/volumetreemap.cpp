@@ -45,10 +45,15 @@ public:
     {}
     
     QMap<QString, VolumeTree> devices;
-    QMap<QString, VolumeTree> beginningCopies;
+    QMap<QString, VolumeTree> beginningCopies; /* the original copy */
     
+    /* This manager sends us the notifications about added and removed devices. */
     Ifaces::DeviceManager* backend;
 
+    /*
+     * NOTE: while detecting, either because we have to build the map or because a new device was added/removed,
+     * we must update both maps.
+     */
     void buildDisk(Device &);
     Disk* addDisk(StorageDrive *, const QString &, QMap<QString, VolumeTree> &);
     void detectChildrenOfDisk(const QString &);
@@ -58,7 +63,7 @@ public:
     /* The following functions help detecting free space blocks between partitions */
     QList< FreeSpace* > freeSpaceOfDisk(const VolumeTree &);
     QList< FreeSpace* > findSpace(QList< VolumeTreeItem* >, DeviceModified *);
-    FreeSpace* spaceBetweenPartitions(Partition *, Partition *, DeviceModified *);
+    FreeSpace* spaceBetweenPartitions(DeviceModified *, DeviceModified *, DeviceModified *);
 };
 
 VolumeTreeMap::VolumeTreeMap()
@@ -68,7 +73,6 @@ VolumeTreeMap::VolumeTreeMap()
     QObject::connect(d->backend, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
 }
 
-/* FIXME */
 VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
     : QObject()
     , d( new Private )
@@ -88,6 +92,7 @@ VolumeTreeMap::~VolumeTreeMap()
 void VolumeTreeMap::build()
 {
     clear();
+    
     /*
      * Detection of drives.
      * A new tree is built for each disk on the system.
@@ -189,8 +194,8 @@ void VolumeTreeMap::clear()
 }
 
 /*
- * For a disk, add a new tree.
- * For a partition, repeat all the detection in the correspondent disk, because the layout change can affect free
+ * For a disk, adds a new tree.
+ * For a partition, repeats all the detection in the correspondent disk, because the layout change can affect free
  * space blocks too.
  */
 void VolumeTreeMap::doDeviceAdded(QString udi)
@@ -240,10 +245,10 @@ void VolumeTreeMap::Private::buildDisk(Device& dev)
         addDisk(drive, udi, beginningCopies);
         Disk* newDisk = addDisk(drive, udi, devices);
         
-           /*
-            * Loop partitions, identified by a particular major number, aren't considered for partition detection.
-            * The same applies to disks without a partition table.
-            */
+       /*
+        * Loop partitions, identified by a particular major number, aren't considered for partition detection.
+        * The same applies to disks without a partition table.
+        */
         if (block->deviceMajor() != LOOPDEVICE_MAJOR && !newDisk->partitionTableScheme().isEmpty()) {
             detectChildrenOfDisk(udi);
         }
@@ -288,10 +293,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
     Devices::Partition* extended = 0;
     VolumeTree tree = devList[parentUdi];
     
-    /*
-     * For now doesn't consider all the volume types not supported.
-     * TODO: erase volumes when isIgnored() == true.
-     */
+    /* For now doesn't consider all the volume types not supported. */
     for (QList<Device>::iterator it = devs.begin(); it != devs.end(); it++) {
         StorageVolume* volume = it->as<StorageVolume>();
         
@@ -301,7 +303,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
     }
     
     /*
-     * Finds the extended partition, if any. This must be done separately because nobody assures us
+     * Finds the extended partition, if any. This must be done separately because nobody ensures us
      * that the extended partition comes before the logicals in the devices list.
      */
     foreach (Device device, devs) {
@@ -375,6 +377,7 @@ QList< FreeSpace* > VolumeTreeMap::Private::findSpace(QList< VolumeTreeItem* > p
 {
     QList< FreeSpace* > freeSpaces;
     
+    /* If there is no partition, just add a big block of free space. */
     if (partitions.isEmpty()) {
         freeSpaces.append( new FreeSpace(parent->offset(), parent->size(), parent->name()) );
         return freeSpaces;
@@ -387,19 +390,19 @@ QList< FreeSpace* > VolumeTreeMap::Private::findSpace(QList< VolumeTreeItem* > p
      * - between the last partition and the end of the parent.
      */
     for (int i = -1; i < partitions.size(); i++) {
-        Partition* volume1 = NULL;
-        Partition* volume2 = NULL;
+        DeviceModified* volume1 = NULL;
+        DeviceModified* volume2 = NULL;
         FreeSpace *space = NULL;
         
         if (i == -1) {
-            volume2 = dynamic_cast< Partition* >(partitions[i+1]->volume());
+            volume2 = partitions[i+1]->volume();
         }
         else if (i < partitions.size() - 1) {
-            volume1 = dynamic_cast< Partition* >(partitions[i]->volume());
-            volume2 = dynamic_cast< Partition* >(partitions[i+1]->volume());
+            volume1 = partitions[i]->volume();
+            volume2 = partitions[i+1]->volume();
         }
         else {
-            volume1 = dynamic_cast< Partition* >(partitions[i]->volume());
+            volume1 = partitions[i]->volume();
         }
         
         space = spaceBetweenPartitions(volume1, volume2, parent);
@@ -412,15 +415,13 @@ QList< FreeSpace* > VolumeTreeMap::Private::findSpace(QList< VolumeTreeItem* > p
     return freeSpaces;
 }
 
-FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(Partition* partition1,
-                                                          Partition* partition2,
+FreeSpace* VolumeTreeMap::Private::spaceBetweenPartitions(DeviceModified* partition1,
+                                                          DeviceModified* partition2,
                                                           DeviceModified* parent)
 {
     FreeSpace* sp = 0;
     
-    /*
-     * Each logical partition is preceeded by some bytes reserved for the Extended Boot Record entry.
-     */
+    /* Each logical partition is preceeded by some bytes reserved for the Extended Boot Record entry. */
     int spaceBetween = (parent->deviceType() == DeviceModified::PartitionDevice ? SPACE_BETWEEN_LOGICALS : 0);
     
     if (!partition1) {
