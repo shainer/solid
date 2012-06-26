@@ -315,7 +315,7 @@ bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong siz
         return false;
     }
     
-    FreeSpace* container = dynamic_cast< FreeSpace* >(containerNode->volume());
+    DeviceModified* container = containerNode->volume();
     qulonglong containerOffset = container->offset();
     qulonglong containerSize = container->size();
     
@@ -365,13 +365,16 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
     /*
      * If there's free space to the left and/or right of the deleted partition, merge
      * all the free space in one single block.
+     * 
+     * All free space blocks before a logical partition don't consider the EBR (which always comes before the associated
+     * logical partition) as part of their size. With this deletion there isn't the EBR anymore so we consider it again.
      */
     if (leftSibling && leftSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
         offset = leftSibling->offset();
         size += leftSibling->size() + spaceBetween;
         
         delete left;
-    } else if (leftSibling) {
+    } else if (leftSibling) { /* same here */
         offset -= spaceBetween;
         size += spaceBetween;
     }
@@ -394,6 +397,7 @@ void VolumeTreePrivate::destroy(VolumeTreeItem* node)
     delete node;
 }
 
+/* DEBUG METHOD */
 void VolumeTreePrivate::print(VolumeTreeItem* r) const
 {
     QTextStream out(stdout);

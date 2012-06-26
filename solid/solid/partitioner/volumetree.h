@@ -44,9 +44,9 @@ namespace Solid
         
         /**
          * @class VolumeTreeItem
-         * @brief This class represents an element in the tree of volumes mantained by VolumeManager.
+         * @brief This class represents an element in the tree of devices mantained by VolumeManager.
          * 
-         * Each element in the tree can represent a drive that can contain a partition table, a partition or a chunk
+         * Each element in the tree represents a drive that can contain a partition table, a partition or a block
          * of free space inside a disk.
          * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
@@ -65,7 +65,7 @@ namespace Solid
             VolumeTreeItem(DeviceModified *, QList<VolumeTreeItem *> children = QList<VolumeTreeItem *>(), VolumeTreeItem* parent = 0);
             
             /**
-             * Destroys a tree item.
+             * Destroys a tree item and its subtree recursively.
              */
             ~VolumeTreeItem();
             
@@ -85,7 +85,7 @@ namespace Solid
             QList<VolumeTreeItem *> children() const;
             
             /**
-             * Adds a new child to the current device. Order is maintained.
+             * Adds a new child to the current device. The children are sorted in initial offset order.
              * 
              * @param dev the device object to add.
              */
@@ -145,7 +145,7 @@ namespace Solid
             VolumeTree(DeviceModified *);
             
             /**
-             * Constructs an empty tree.
+             * Constructs an invalid object.
              */
             VolumeTree();
             
@@ -156,7 +156,7 @@ namespace Solid
             
             /**
              * Destroys a tree and all the elements inside it.
-             * All the DeviceModified objects are destroyed too at this stage.
+             * All the device objects are destroyed too at this stage.
              */
             ~VolumeTree();
             
@@ -280,13 +280,19 @@ namespace Solid
              */
             VolumeTreeItem* searchNode(const QString &) const;
             
-            VolumeTreeItem* searchContainer(qulonglong, qulonglong);
+            /*
+             * When creating a new partition with given offset and size, finds the free space block that
+             * can accomodate it (if present, otherwise returns NULL). Returns the correspondent tree item.
+             */
+            VolumeTreeItem* searchContainer(qulonglong offset, qulonglong size);
             
             /*
-             * When a new partition is requested, checks if a suitable block of free space exists.
-             * If this block is bigger than the new partition, splits it around the partition.
+             * If the above method found a suitable container for the new partition, splits it around the partition.
+             * New FreeSpace objects, which represents the free space left from the partition if any, are created and
+             * added in the tree.
+             * 
              * Parameters are offset and the size of the new partition; returns true if it was able
-             * to find a suitable container (that means the split happened), false otherwise.
+             * to find a suitable container (and that means the split happened), false otherwise.
              */
             bool splitCreationContainer(qulonglong, qulonglong);
             
