@@ -60,7 +60,7 @@ public:
     ~Private()
     {}
     
-    void translateFutureNames(QList< Action* >::iterator, const QString &);
+    void translateFutureNames(QList< Action* >::iterator, const QString &, const QString &);
     
     QList< Action* > actions;
     VolumeTreeMap map;
@@ -77,6 +77,8 @@ ActionExecuter::ActionExecuter(const QList< Action* >& actions, const VolumeTree
      * We register a dummy service on the bus to avoid having two executers calling UDisks services together.
      * If another instance try to register this same service, it will fail.
      * The service is unregistered when this executer is destroyed.
+     * 
+     * FIXME: gives permissions to register the service on the system bus.
      */
     d->connection = QDBusConnection::sessionBus();
     d->valid = d->connection.registerService(EXECUTION_SERVICE);
@@ -108,7 +110,7 @@ bool ActionExecuter::execute()
         return false;
     }
     
-    d->map.backToOriginal();
+    d->map.backToOriginal(); /* this is necessary to have correct information for some actions */
     int actionCount = 0;
     
     for (QList< Action* >::iterator it = d->actions.begin(); it < d->actions.end(); it++) {
@@ -133,7 +135,9 @@ bool ActionExecuter::execute()
                 
                 device = new UDisksDevice( cpa->disk() );
                 Disk* disk = dynamic_cast< Disk* >( d->map.searchDevice(cpa->disk()) );
+                QString dummyPartitionName = cpa->partitionName();
                 
+                /* Finds the correct type strings for the partition given the scheme used. */
                 Filesystem fs = cpa->filesystem();
                 QString type = (cpa->partitionType() == ExtendedPartition) ? "extended" : fs.name();
                 QString typeUDisks = Utils::PartitionTableUtils::instance()->typeString(disk->partitionTableScheme(), type);
@@ -141,11 +145,17 @@ bool ActionExecuter::execute()
                 QDBusObjectPath newPartition = device->createPartition(cpa->offset(), cpa->size(), typeUDisks, cpa->label(),
                                                                        cpa->flags(), QStringList(),
                                                                        fs.name(), fs.flags());
+                
+                /*
+                 * Actions registered on this partition after this one used the temporary unique name we gave to the partition,
+                 * since we don't know what name the system will assign at this stage. So if the partition was created
+                 * successfully we have to change the partition in all the following actions concerning it.
+                 */
                 if (newPartition.path().isEmpty()) {
                     success = false;
                 }
                 else {
-                    d->translateFutureNames(it, newPartition.path());
+                    d->translateFutureNames(it, newPartition.path(), dummyPartitionName);
                 }
                 
                 break;
@@ -254,14 +264,19 @@ bool ActionExecuter::execute()
     return true;
 }
 
-void ActionExecuter::Private::translateFutureNames(QList< Action* >::iterator currentpos, const QString& newPartitionName)
+void ActionExecuter::Private::translateFutureNames(QList< Action* >::iterator currentpos,
+                                                   const QString& newPartitionName,
+                                                   const QString& currentPartitionName)
 {
     for (QList< Action* >::iterator it = currentpos + 1; it != actions.end(); it++) {
         Action* current = (*it);
         
         if (Utils::isPartitionAction(current)) {
             PartitionAction* pAction = dynamic_cast< PartitionAction* >(current);
-            pAction->setPartitionName(newPartitionName);
+            
+            if (pAction->partition() == currentPartitionName) {
+                pAction->setPartitionName(newPartitionName);
+            }
         }
     }
 }

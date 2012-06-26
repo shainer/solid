@@ -19,6 +19,7 @@
 */
 #include "createpartitionaction.h"
 #include <partitioner/volumemanager.h>
+#include <partitioner/utils/utils.h>
 
 namespace Solid
 {
@@ -32,7 +33,7 @@ using namespace Utils;
 class CreatePartitionAction::Private
 {
 public:
-    Private(const QString &d, qulonglong o, qulonglong s, bool e, Utils::Filesystem fs, const QString& l, const QStringList& f)
+    Private(const QString& d, qulonglong o, qulonglong s, bool e, Utils::Filesystem fs, const QString& l, const QStringList& f)
         : disk(d)
         , offset(o)
         , size(s)
@@ -43,9 +44,10 @@ public:
         , flags(f)
     {
         QMap<QString, VolumeTree> trees = VolumeManager::instance()->allDiskTrees();
+        VolumeTree diskLayout = trees[disk];
         
         if (trees.contains(disk)) {
-            DeviceModified* extended = trees[disk].extendedPartition();
+            DeviceModified* extended = diskLayout.extendedPartition();
             
             if (extended && (extended->offset() <= offset && extended->rightBoundary() >= offset + size)) {
                 logical = true;
@@ -64,6 +66,8 @@ public:
     Utils::Filesystem filesystem;
     QString label;
     QStringList flags;
+    
+    QString newPartitionName;
 };
 
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
@@ -146,6 +150,16 @@ QString CreatePartitionAction::label() const
 QStringList CreatePartitionAction::flags() const
 {
     return d->flags;
+}
+
+QString CreatePartitionAction::partitionName() const
+{
+    return d->newPartitionName;
+}
+
+void CreatePartitionAction::setPartitionName(const QString& name)
+{
+    d->newPartitionName = name;
 }
     
 }

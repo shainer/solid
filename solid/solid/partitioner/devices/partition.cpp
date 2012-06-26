@@ -31,8 +31,6 @@ namespace Devices
 
 using namespace Utils;
 
-static long int newPartitionId = 1;
-
 class Partition::Private
 {
 public:
@@ -114,9 +112,8 @@ Partition::Partition(Actions::CreatePartitionAction* action)
     : DeviceModified()
     , d( new Private(action) )
 {    
-    QString partitionName = "New partition " + QString::number(newPartitionId++);
-    DeviceModified::setName( partitionName );
-    DeviceModified::setDescription( partitionName );
+    DeviceModified::setName( action->partitionName() );
+    DeviceModified::setDescription( action->partitionName() );
     DeviceModified::setParentName(action->disk());
 }
 

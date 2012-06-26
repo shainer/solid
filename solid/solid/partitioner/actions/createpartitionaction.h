@@ -118,8 +118,15 @@ namespace Solid
                  * @returns the list of partition flags.
                  */
                 QStringList flags() const;
-
-            private:
+                
+                /**
+                 * @returns the unique name temporarily assigned to this new partition. This is valid only after the
+                 * action is successfully registered.
+                 */
+                QString partitionName() const;
+                void setPartitionName(const QString &);
+                
+            private:                
                 class Private;
                 Private* d;
             };

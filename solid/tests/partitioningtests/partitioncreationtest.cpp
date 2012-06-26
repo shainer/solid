@@ -71,10 +71,12 @@ void PartitionCreationTest::test()
     /* This action takes some space in a normal free blocks */
     manager->registerAction(actionGood1);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(actionGood1->partitionName(), QString("New partition 1"));
     
     /* This action takes some space in a free block between logical partitions */
     manager->registerAction(actionGood2);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(actionGood2->partitionName(), QString("New partition 2"));
     
     /* Check all the right free space blocks are present and there isn't anything else */
     VolumeTree disk = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
