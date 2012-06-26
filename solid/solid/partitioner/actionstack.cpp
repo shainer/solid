@@ -68,7 +68,10 @@ QList< Action* > ActionStack::undo()
         d->undoneActions.push_back(first);
     }
     
-    return d->actions;
+    QList< Action* > undone = d->actions;
+    d->actions.clear();
+    
+    return undone;
 }
 
 Action* ActionStack::redo()
@@ -77,7 +80,6 @@ Action* ActionStack::redo()
     
     if (!d->undoneActions.isEmpty()) {
         firstUndone = d->undoneActions.takeLast();
-        d->actions.push_back(firstUndone);
     }
     
     return firstUndone;

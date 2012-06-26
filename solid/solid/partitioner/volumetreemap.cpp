@@ -222,7 +222,7 @@ void VolumeTreeMap::doDeviceRemoved(QString udi)
             emit deviceRemoved(udi, udi);
         }
         else {
-            QString diskName = tree.root()->name();
+            QString diskName = tree.disk()->name();
             d->detectChildrenOfDisk(diskName);
             emit deviceRemoved(udi, diskName);
         }
@@ -357,7 +357,7 @@ void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi, QMa
 QList< FreeSpace* > VolumeTreeMap::Private::freeSpaceOfDisk(const VolumeTree& diskTree)
 {
     QList< VolumeTreeItem* > primaryPartitions = diskTree.rootNode()->children();
-    Disk* disk = dynamic_cast< Disk* >(diskTree.root());
+    Disk* disk = diskTree.disk();
     VolumeTreeItem* extended = diskTree.extendedNode();
     
     QList< FreeSpace* > freeSpaces;

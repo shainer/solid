@@ -224,8 +224,10 @@ void VolumeTreePrivate::clear()
     delete root;
 }
 
-VolumeTreeItem* VolumeTreePrivate::leftSibling(VolumeTreeItem* node)
+VolumeTreeItem* VolumeTreePrivate::leftNode(DeviceModified* dev)
 {
+    VolumeTreeItem* node = searchNode( dev->name() );
+    
     if (!node->parent()) {
         return NULL;
     }
@@ -240,8 +242,10 @@ VolumeTreeItem* VolumeTreePrivate::leftSibling(VolumeTreeItem* node)
     return NULL;
 }
 
-VolumeTreeItem* VolumeTreePrivate::rightSibling(VolumeTreeItem* node)
+VolumeTreeItem* VolumeTreePrivate::rightNode(DeviceModified* dev)
 {
+    VolumeTreeItem* node = searchNode( dev->name() );
+    
     if (!node->parent()) {
         return NULL;
     }
@@ -256,9 +260,9 @@ VolumeTreeItem* VolumeTreePrivate::rightSibling(VolumeTreeItem* node)
     return NULL;
 }
 
-DeviceModified* VolumeTreePrivate::leftDevice(VolumeTreeItem* node)
+DeviceModified* VolumeTreePrivate::leftDevice(DeviceModified* dev)
 {
-    VolumeTreeItem* left = leftSibling(node);
+    VolumeTreeItem* left = leftNode(dev);
     
     if (!left) {
         return NULL;
@@ -267,9 +271,9 @@ DeviceModified* VolumeTreePrivate::leftDevice(VolumeTreeItem* node)
     return left->volume();
 }
 
-DeviceModified* VolumeTreePrivate::rightDevice(VolumeTreeItem* node)
+DeviceModified* VolumeTreePrivate::rightDevice(DeviceModified* dev)
 {
-    VolumeTreeItem* right = rightSibling(node);
+    VolumeTreeItem* right = rightNode(dev);
     
     if (!right) {
         return NULL;
@@ -338,17 +342,17 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
 {
     VolumeTreeItem* partitionNode = searchNode(partitionName);
     
-    VolumeTreeItem* leftNode = leftSibling(partitionNode);
-    VolumeTreeItem* rightNode = rightSibling(partitionNode);
+    VolumeTreeItem* left = leftNode(partitionNode->volume());
+    VolumeTreeItem* right = rightNode(partitionNode->volume());
     DeviceModified* leftSibling = 0;
     DeviceModified* rightSibling = 0;
     
-    if (leftNode) {
-        leftSibling = leftNode->volume();
+    if (left) {
+        leftSibling = left->volume();
     }
     
-    if (rightNode) {
-        rightSibling = rightNode->volume();
+    if (right) {
+        rightSibling = right->volume();
     }
     
     qulonglong size = partitionNode->volume()->size();
@@ -366,7 +370,7 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
         offset = leftSibling->offset();
         size += leftSibling->size() + spaceBetween;
         
-        delete leftNode;
+        delete left;
     } else if (leftSibling) {
         offset -= spaceBetween;
         size += spaceBetween;
@@ -374,7 +378,7 @@ void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
     
     if (rightSibling && rightSibling->deviceType() == DeviceModified::FreeSpaceDevice) {
         size += rightSibling->size();
-        delete rightNode;
+        delete right;
     }
     
     FreeSpace* newSpace = new FreeSpace(offset, size, parent->name());
@@ -431,9 +435,9 @@ bool VolumeTree::valid() const
     return d->valid;
 }
 
-DeviceModified* VolumeTree::root() const
+Disk* VolumeTree::disk() const
 {
-    return d->root->volume();
+    return dynamic_cast< Disk* >(d->root->volume());
 }
 
 VolumeTreeItem* VolumeTree::rootNode() const

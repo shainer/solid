@@ -31,16 +31,34 @@ namespace Solid
     {
         namespace Utils
         {
+            /**
+             * @class PartitionTableUtils
+             * @brief This class includes some utility methods about partition tables
+             */
             class PartitionTableUtils
             {
             public:
                 virtual ~PartitionTableUtils();
                 static PartitionTableUtils* instance();
 
+                /**
+                 * Retrieves the supported partition flags for each scheme.
+                 * 
+                 * @param scheme the name of the table scheme.
+                 * @returns a list of accepted flags.
+                 */
                 QStringList supportedFlags(const QString &);
                 
+                /**
+                 * Converts a partition type to the appropriate string.
+                 * 
+                 * @param type the type.
+                 * @param scheme the scheme name.
+                 * 
+                 * @returns the correspondent type string.
+                 */
                 QString typeString(const QString &, QString);
-
+                
             private:
                 PartitionTableUtils();
 

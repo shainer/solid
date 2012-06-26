@@ -105,6 +105,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             d->markersLeft = 1;
             break;
         }
+        
+        case ExceedingGPTPartitionsError: {
+            d->description = "Disk %0 has reached the limit of 128 partitions.";
+            d->markersLeft = 1;
+            break;
+        }
 
         case FilesystemFlagsError: {
             d->description = "The following flags don't exist for this filesystem type: %0";

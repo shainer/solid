@@ -34,7 +34,7 @@ namespace Utils
 qulonglong getDiskSize(const QString& udi)
 {
     VolumeTree tree = VolumeManager::instance()->diskTree(udi);
-    return tree.root()->size();
+    return tree.disk()->size();
 }
 
 bool isPartitionAction(Action* action)

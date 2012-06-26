@@ -27,6 +27,7 @@
 #include <solid/partitioner/devices/devicemodified.h>
 #include "devices/partition.h"
 #include "devices/freespace.h"
+#include "devices/disk.h"
 
 #include <QtCore/QDebug>
 #include <QtCore/QSharedData>
@@ -170,9 +171,9 @@ namespace Solid
             VolumeTreeItem* rootNode() const;
             
             /**
-             * @returns the root device.
+             * @returns the root disk.
              */
-            DeviceModified* root() const;
+            Disk* disk() const;
             
             /**
              * @returns the item representing the extended partition, or NULL if there isn't one.
@@ -299,16 +300,16 @@ namespace Solid
              * Returns the node immediately to the left of the passed one.
              * Remember nodes are sorted by initial offset.
              */
-            VolumeTreeItem* leftSibling(VolumeTreeItem *);
+            VolumeTreeItem* leftNode(DeviceModified *);
             
             /*
              * Returns the node immediately to the right of the passed one.
              * Remember nodes are sorted by initial offset.
              */
-            VolumeTreeItem* rightSibling(VolumeTreeItem *);
+            VolumeTreeItem* rightNode(DeviceModified *);
             
-            DeviceModified* leftDevice(VolumeTreeItem *);
-            DeviceModified* rightDevice(VolumeTreeItem *);
+            DeviceModified* leftDevice(DeviceModified *);
+            DeviceModified* rightDevice(DeviceModified *);
             
             void print(VolumeTreeItem *) const;
             void destroy(VolumeTreeItem *);

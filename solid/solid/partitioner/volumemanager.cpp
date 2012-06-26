@@ -30,7 +30,6 @@
 #include <solid/partitioner/actions/removepartitiontableaction.h>
 #include <solid/partitioner/utils/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
-#include <solid/partitioner/volumetreemap.h>
 #include <solid/device.h>
 #include <backends/udisks/udisksmanager.h>
 #include <solid/block.h>
@@ -55,25 +54,19 @@ public:
     ~Private()
     {}
     
-    /* 
-    * Apply a new action on the stack. The boolean helps us distinguish between whether the action is being registered by
-    * the user or it's been applied by the manager as a result of an undo/redo operation. In the first case, we must push
-    * the action on the stack at the end and we also check another identical action hasn't already been pushed before.
-    * In the second case, we don't perform this check neither we push an useless duplicate.
-    */
-    bool applyAction(Action* action, bool isInStack = false);
+    /* Applies an action on the disks. */
+    bool applyAction(Action *);
     
-    /*
-    * Utility method used from applyAction() to perform some checks on the partition interested by the action,
-    * if there is one. 
-    */
+    /* Performs some standard checks on the partition interested by the action, if any. */
     bool partitionChecks(Action *);
     
+    bool resizeAndMoveSafely(Partition *, qlonglong, qlonglong, VolumeTree &);
+    
     /* Resize a partition. */
-    void resizePartition(VolumeTreeItem *, qulonglong, VolumeTree &);
+    void resizePartition(Partition *, DeviceModified *, qulonglong, VolumeTree &);
     
     /* Moves a partition. */
-    void movePartition(VolumeTreeItem *, qulonglong, DeviceModified *, VolumeTree &);
+    void movePartition(Partition *, qulonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
     
     /* Perform necessary checks when creating a new partition on either MBR or GPT tables. */
     bool mbrPartitionChecks(Actions::CreatePartitionAction *);
@@ -110,14 +103,16 @@ VolumeManager::VolumeManager()
     Q_ASSERT(!s_volumemanager->q);
     s_volumemanager->q = this;
 
-    d->volumeTreeMap.build();
+    d->volumeTreeMap.build(); /* builds all the layout detecting the current status of the hardware */
+    
+    /* Register this object for receiving notifications about changes in the system */
     QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree)), this, SLOT(doDeviceAdded(VolumeTree)));
     QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString,QString)), this, SLOT(doDeviceRemoved(QString,QString)));
 }
 
 VolumeManager::~VolumeManager()
 {
-    d->actionstack.clear();    
+    d->actionstack.clear();
     delete d;
 }
 
@@ -150,20 +145,14 @@ bool VolumeManager::registerAction(Actions::Action* action)
     return success;
 }
 
-/*
- * TODO: implement
- */
 void VolumeManager::undo()
 {
     if (!d->actionstack.empty()) {
         d->volumeTreeMap.backToOriginal();
         QList< Action* > undos = d->actionstack.undo();
         
-        qDebug() << "UNDO: " << undos.size();
-        
         foreach (Action* action, undos) {
-            qDebug() << "riapplico" << action->description();
-            d->applyAction(action, true);
+            d->applyAction(action);
         }
     }
 }
@@ -173,7 +162,7 @@ void VolumeManager::redo()
     if (!d->actionstack.undoEmpty()) {
         d->volumeTreeMap.backToOriginal();
         Action* newAction = d->actionstack.redo();
-        d->applyAction(newAction, true);
+        d->applyAction(newAction);
     }
 }
 
@@ -188,13 +177,13 @@ bool VolumeManager::isRedoPossible() const
 }
 
 /*
- * When a partition is added, deletes all the action which took place on the disk (undone ones included).
+ * When a partition is added, deletes all the actions which took place on the disk (undone ones included).
  * This is because the layout and/or properties have changed so those actions could be out-of-context.
  * Of course when a disk is added no action has to be removed at all.
  */
 void VolumeManager::doDeviceAdded(VolumeTree tree)
 {
-    QString diskName = tree.root()->name();
+    QString diskName = tree.disk()->name();
     d->actionstack.removeActionsOfDisk(diskName);
     
     emit deviceAdded(tree);
@@ -223,6 +212,10 @@ bool VolumeManager::apply()
 {
     ActionExecuter executer( d->actionstack.list(), d->volumeTreeMap );
     
+    /*
+     * This specific error is triggered when another application is using the executer right now, i.e. owns an instance.
+     * This way we avoid conflicts while changing the hardware.
+     */
     if (!executer.isValid()) {
         d->error.setType(PartitioningError::BusyExecuterError);
         return false;
@@ -233,7 +226,7 @@ bool VolumeManager::apply()
     
     QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
     d->actionstack.clear();
-    d->volumeTreeMap.build();
+    d->volumeTreeMap.build(); /* repeats hw detection */
     
     if (!success) {
         d->error = executer.error();
@@ -260,7 +253,7 @@ QList< Action* > VolumeManager::registeredActions() const
     return d->actionstack.list();
 }
 
-bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
+bool VolumeManager::Private::applyAction(Action* action)
 {    
     if (!partitionChecks(action)) {
         return false;
@@ -291,14 +284,13 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             
             volume->setFilesystem(fs);
-            fpa->setOwnerDisk(tree.root());
+            fpa->setOwnerDisk(tree.disk());
             break;
         }
         
         case Action::CreatePartition: {
             Actions::CreatePartitionAction* cpa = dynamic_cast< Actions::CreatePartitionAction* >(action);            
-            QPair<VolumeTree, DeviceModified* > pair = volumeTreeMap.searchTreeWithDevice( cpa->disk() );
-            VolumeTree tree = pair.first;
+            VolumeTree tree = volumeTreeMap.searchTreeWithDevice( cpa->disk() ).first;
             
             /* No disk */
             if (!tree.d) {
@@ -307,9 +299,10 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 return false;
             }
             
-            Disk* disk = dynamic_cast< Disk* >( pair.second );
+            Disk* disk = tree.disk();
             QString scheme = disk->partitionTableScheme();
             
+            /* Check if everything is ok with the current scheme. */
             if (scheme.isEmpty()) {
                 error.setType(PartitioningError::NoPartitionTableError);
                 error.arg( cpa->disk() );
@@ -352,11 +345,16 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 newPartition->setPartitionType(ExtendedPartition);
             }
             
+            /* GPT has only primary partitions so this check will be skipped in that case */
             DeviceModified* extended = tree.extendedPartition();
             if (extended && (cpa->offset() >= extended->offset() && ((cpa->offset() + cpa->size()) <= extended->rightBoundary()))) {
                 newPartition->setPartitionType(LogicalPartition);
                 newPartition->setParentName(extended->name());
                 
+                /*
+                 * This leaves some space for the EBR. It's not strictly necessary as udisks reserves it anyway, but
+                 * it keeps the layout cleaner and simplifies future actions.
+                 */
                 newPartition->setOffset( newPartition->offset() + SPACE_BETWEEN_LOGICALS );
                 newPartition->setSize( newPartition->size() - SPACE_BETWEEN_LOGICALS );
             }
@@ -373,13 +371,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             VolumeTree tree = pair.first;
             Partition* partition = pair.second;
             
-            if (!partition) {
-                error.setType(PartitioningError::PartitionNotFoundError);
-                error.arg( rpa->partition() );
-                return false;
-            }
-            
-            if (partition->partitionType() == Utils::ExtendedPartition) {
+            if (partition->partitionType() == ExtendedPartition) {
                 foreach (Partition* logical, tree.logicalPartitions()) {
                     if (logical->isMounted()) {
                         error.setType(PartitioningError::MountedLogicalError);
@@ -390,27 +382,22 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             
             /* Deletes the partition merging adjacent free blocks if present. */
             tree.d->mergeAndDelete(rpa->partition());
-            rpa->setOwnerDisk(tree.root());
+            rpa->setOwnerDisk(tree.disk());
             break;
         }
         
         case Action::ResizePartition: {
             Actions::ResizePartitionAction* rpa = dynamic_cast< Actions::ResizePartitionAction* >(action);
             
-            VolumeTree tree = volumeTreeMap.searchTreeWithDevice(rpa->partition()).first;
-            Disk* disk = dynamic_cast< Disk* >(tree.root());
-            
-            VolumeTreeItem* itemToResize = tree.searchNode(rpa->partition());            
-            Partition* toResize = dynamic_cast< Partition* >(itemToResize->volume());
-            DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
-            DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
+            QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition( rpa->partition() );
+            VolumeTree tree = pair.first;           
+            Partition* toResize = pair.second;
+            Disk* disk = tree.disk();
             
             qlonglong oldOffset = (qlonglong)toResize->offset();
             qlonglong oldSize = (qlonglong)toResize->size();
             qlonglong newOffset = (qlonglong)rpa->newOffset();
             qlonglong newSize = (qlonglong)rpa->newSize();
-            qlonglong rightBoundary = 0;
-            qlonglong leftBoundary = 0;
             
             if (newSize == 0) {
                 error.setType(PartitioningError::ResizingToZeroError);
@@ -434,63 +421,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
                 return false;
             }
             
-            qlonglong spaceBetween = (toResize->partitionType() == LogicalPartition) ? SPACE_BETWEEN_LOGICALS : 0;
-            
-            /* Finds what's the biggest right boundary this partition can have */
-            if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
-                rightBoundary = toResize->rightBoundary();
-            } else {
-                rightBoundary = rightDevice->rightBoundary();
-            }
-            
-            /* Finds what's the minimum offset this partition can have */
-            if (!leftDevice || leftDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
-                leftBoundary = toResize->offset();
-            } else {
-                leftBoundary = leftDevice->offset() + spaceBetween;
-            }
-            
-            if (newOffset != oldOffset && newOffset < leftBoundary) {
-                error.setType(PartitioningError::ResizeOutOfBoundsError);
+            if (!resizeAndMoveSafely(toResize, newOffset, newSize, tree)) {
                 return false;
             }
             
-            /* If the size is increased beyond the legal boundary... */
-            if (newSize != oldSize && (oldOffset + newSize > rightBoundary)) {
-                qlonglong difference = oldOffset + newSize - rightBoundary;
-                
-                /* ... but the offset is reduced of at least that quantity, OK */
-                if ((oldOffset - newOffset) < difference) {
-                    error.setType(PartitioningError::ResizeOutOfBoundsError);
-                    return false;
-                }
-                
-                /*
-                 * NOTE: defining an order of the operations isn't really necessary if we're sure everything is legal.
-                 * However, avoiding surpassing boundaries even temporarity prevents us from having any issue later.
-                 */
-                movePartition(itemToResize, newOffset, itemToResize->parent()->volume(), tree);
-                resizePartition(itemToResize, newSize, tree);
-            }
-            /* If the partition is moved forward beyond the legal boundary... */
-            else if (newOffset != oldOffset && (newOffset + oldSize >= rightBoundary)) {
-                qlonglong difference = newOffset + oldSize - rightBoundary;
-                
-                /* ... but the size is reduced of at least that quantity, OK */
-                if ((oldSize - newSize) < difference) {
-                    error.setType(PartitioningError::ResizeOutOfBoundsError);
-                    return false;
-                }
-                
-                resizePartition(itemToResize, newSize, tree);
-                movePartition(itemToResize, newOffset, itemToResize->parent()->volume(), tree);
-            }
-            else {
-                resizePartition(itemToResize, newSize, tree);
-                movePartition(itemToResize, newOffset, itemToResize->parent()->volume(), tree);
-            }
-            
-            rpa->setOwnerDisk(tree.root());
+            rpa->setOwnerDisk(disk);
             break;
         }
         
@@ -515,7 +450,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             p->setFlags(mpa->flags());
             
-            mpa->setOwnerDisk(tree.root());
+            mpa->setOwnerDisk(tree.disk());
             break;
         }
         
@@ -527,7 +462,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             
             VolumeTree tree = volumeTreeMap[cpta->disk()];
-            cpta->setOwnerDisk(tree.root());
+            cpta->setOwnerDisk(tree.disk());
             break;
         }
         
@@ -539,7 +474,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             }
             
             VolumeTree tree = volumeTreeMap[rpta->disk()];
-            rpta->setOwnerDisk(tree.root());
+            rpta->setOwnerDisk(tree.disk());
             break;
         }
         
@@ -547,9 +482,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool isInStack)
             break;
     }
         
-    if (!isInStack) {
-        actionstack.push(action);
-    }
+    actionstack.push(action);
     return true;
 }
 
@@ -575,16 +508,85 @@ bool VolumeManager::Private::partitionChecks(Action* a)
     return true; /* no need to check anything for those actions not concerning partitions */
 }
 
-void VolumeManager::Private::resizePartition(VolumeTreeItem* itemToResize,
-                                             qulonglong newSize,
-                                             VolumeTree& tree)
-{  
-    if (newSize == itemToResize->volume()->size()) {
-        return;
+bool VolumeManager::Private::resizeAndMoveSafely(Partition* toResize,
+                                                 qlonglong newOffset,
+                                                 qlonglong newSize,
+                                                 VolumeTree& disk)
+{
+    DeviceModified* rightDevice = disk.d->rightDevice(toResize);
+    DeviceModified* leftDevice = disk.d->leftDevice(toResize);
+    DeviceModified* parent = disk.searchNode(toResize->name())->parent()->volume();
+    
+    qlonglong oldOffset = (qlonglong)(toResize->offset());
+    qlonglong oldSize = (qlonglong)(toResize->size());
+    qlonglong spaceBetween = (toResize->partitionType() == LogicalPartition) ? SPACE_BETWEEN_LOGICALS : 0;
+    qlonglong rightBoundary = 0, leftBoundary = 0;
+    
+    /* Finds what's the biggest right boundary this partition can have */
+    if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+        rightBoundary = toResize->rightBoundary();
+    } else {
+        rightBoundary = rightDevice->rightBoundary();
     }
     
-    Partition* partition = dynamic_cast< Partition* >(itemToResize->volume());
-    DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
+    /* Finds what's the minimum offset this partition can have */
+    if (!leftDevice || leftDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
+        leftBoundary = toResize->offset();
+    } else {
+        leftBoundary = leftDevice->offset() + spaceBetween;
+    }
+    
+    if (newOffset < leftBoundary) {
+        error.setType(PartitioningError::ResizeOutOfBoundsError);
+        return false;
+    }
+    
+    /* If the size is increased beyond the legal boundary... */
+    if ((oldOffset + newSize > rightBoundary)) {
+        qlonglong difference = oldOffset + newSize - rightBoundary;
+        
+        /* ... but the offset is reduced of at least that quantity, OK */
+        if ((oldOffset - newOffset) < difference) {
+            error.setType(PartitioningError::ResizeOutOfBoundsError);
+            return false;
+        }
+        
+        /*
+            * NOTE: defining an order of the operations isn't really necessary if we're sure everything is legal.
+            * However, avoiding surpassing boundaries even temporarity prevents us from having any issue later.
+            */
+        movePartition(toResize, newOffset, parent, leftDevice, rightDevice, disk);
+        resizePartition(toResize, rightDevice, newSize, disk);
+    }
+    /* If the partition is moved forward beyond the legal boundary... */
+    else if (newOffset != oldOffset && (newOffset + oldSize >= rightBoundary)) {
+        qlonglong difference = newOffset + oldSize - rightBoundary;
+        
+        /* ... but the size is reduced of at least that quantity, OK */
+        if ((oldSize - newSize) < difference) {
+            error.setType(PartitioningError::ResizeOutOfBoundsError);
+            return false;
+        }
+        
+        resizePartition(toResize, rightDevice, newSize, disk);
+        movePartition(toResize, newOffset, parent, leftDevice, rightDevice, disk);
+    }
+    else {
+        resizePartition(toResize, rightDevice, newSize, disk);
+        movePartition(toResize, newOffset, parent, leftDevice, rightDevice, disk);
+    }
+    
+    return true;
+}
+
+void VolumeManager::Private::resizePartition(Partition* partition,
+                                             DeviceModified* rightDevice,
+                                             qulonglong newSize,
+                                             VolumeTree& disk)
+{  
+    if (newSize == partition->size()) {
+        return;
+    }
     
     qulonglong spaceBetween = (partition->partitionType() == LogicalPartition) ? SPACE_BETWEEN_LOGICALS : 0;
     
@@ -594,7 +596,7 @@ void VolumeManager::Private::resizePartition(VolumeTreeItem* itemToResize,
         
         if (spaceSize > 0) {
             FreeSpace* freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
-            tree.d->addDevice(partition->parentName(), freeSpaceRight);
+            disk.d->addDevice(partition->parentName(), freeSpaceRight);
         }
     } else {
         FreeSpace* spaceRight = dynamic_cast< FreeSpace* >(rightDevice);
@@ -602,7 +604,7 @@ void VolumeManager::Private::resizePartition(VolumeTreeItem* itemToResize,
         qulonglong rightSize = spaceRight->size() - (newSize - partition->size());
                         
         if (rightSize == 0) {
-            tree.d->removeDevice(spaceRight->name());
+            disk.d->removeDevice(spaceRight->name());
         } else {
             spaceRight->setOffset(rightOffset);
             spaceRight->setSize(rightSize);
@@ -611,23 +613,21 @@ void VolumeManager::Private::resizePartition(VolumeTreeItem* itemToResize,
     partition->setSize(newSize);
 }
 
-void VolumeManager::Private::movePartition(VolumeTreeItem* itemToResize,
+void VolumeManager::Private::movePartition(Partition* partition,
                                            qulonglong newOffset,
                                            DeviceModified* parent,
+                                           DeviceModified* leftDevice,
+                                           DeviceModified* rightDevice,
                                            VolumeTree& tree)
 {
-    if (newOffset == itemToResize->volume()->offset()) {
+    if (newOffset == partition->offset()) {
         return;
     }
-    
-    Partition* partition = dynamic_cast< Partition* >(itemToResize->volume());
-    DeviceModified* leftDevice = tree.d->leftDevice(itemToResize);
-    DeviceModified* rightDevice = tree.d->rightDevice(itemToResize);
     
     qulonglong oldOffset = partition->offset();
     FreeSpace *freeSpaceRight = 0;
     FreeSpace *freeSpaceLeft = 0;
-    qulonglong spaceBetween = (parent->deviceType() == DeviceModified::PartitionDevice) ? SPACE_BETWEEN_LOGICALS : 0;
+    qulonglong spaceBetween = (partition->partitionType() == LogicalPartition) ? SPACE_BETWEEN_LOGICALS : 0;
     
     if (!leftDevice || leftDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
         /*
@@ -695,7 +695,7 @@ bool VolumeManager::Private::mbrPartitionChecks(Actions::CreatePartitionAction* 
     DeviceModified* extended = tree.extendedPartition();
     qulonglong newRightBoundary = cpa->offset() + cpa->size();
     
-    /* Whether the new partition will be logical is detected automatically computing its boundaries */
+    /* Whether the new partition will be logical is detected automatically looking at its boundaries */
     bool isLogical = extended && (cpa->offset() >= extended->offset() && (newRightBoundary <= extended->rightBoundary()));
     
     /* If the new partition won't be logical, check that we're not surpassing the limit of 4 primary partitions */
@@ -718,13 +718,9 @@ bool VolumeManager::Private::gptPartitionChecks(Actions::CreatePartitionAction* 
 {
     VolumeTree tree = volumeTreeMap[ cpa->disk() ];
     
-    /*
-     * This limit should be extendible, but udisks doesn't support it.
-     * 
-     * FIXME: create a different error type.
-     */
+    /* This limit should be extendible, but udisks doesn't support it */
     if (tree.partitions().count() == 128) {
-        error.setType(PartitioningError::ExceedingPrimariesError);
+        error.setType(PartitioningError::ExceedingGPTPartitionsError);
         error.arg( cpa->disk() );
         return false;
     }

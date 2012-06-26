@@ -27,7 +27,7 @@
 #include <solid/partitioner/volumetree.h>
 #include <solid/partitioner/actionstack.h>
 #include <solid/partitioner/actionexecuter.h>
-#include "volumetreemap.h"
+#include <solid/partitioner/volumetreemap.h>
 
 namespace Solid
 {
@@ -36,9 +36,8 @@ namespace Solid
         /**
          * @class VolumeManager
          * 
-         * This class is the core of the partitioner submodule. It manages drives and partitions using trees and
+         * This singleton is the core of the partitioner submodule. It manages drives and partitions using trees and
          * allows the application to register and apply actions on them.
-         * It's a singleton.
          * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
          */
@@ -61,7 +60,7 @@ namespace Solid
             
             /**
              * Undoes the last action registered.
-             * If no action was registered, nothing happens.
+             * If no action is registered, nothing happens.
              */
             void undo();
             
@@ -72,18 +71,18 @@ namespace Solid
             void redo();
             
             /**
-             * @returns true if there's one action to undo, false otherwise.
+             * @returns true if there's at least one action to undo, false otherwise.
              */
             bool isUndoPossible() const;
             
             /**
-             * @returns true if there's one action to redo, false otherwise.
+             * @returns true if there's at least one action to redo, false otherwise.
              */
             bool isRedoPossible() const;
             
             /**
              * Applies a list of actions to the hardware.
-             * @see class ActionExecuter.
+             * @returns true for success, false otherwise.
              */
             bool apply();
             
@@ -96,7 +95,7 @@ namespace Solid
             VolumeTree diskTree(const QString &) const;
             
             /**
-             * @returns all the disk layouts.
+             * @returns all the disk layouts in a map indexed by disk UDIs.
              */
             QMap<QString, VolumeTree> allDiskTrees() const;
             
@@ -126,7 +125,7 @@ namespace Solid
         signals:
             
             /**
-             * This signal is emitted whenever a disk layout changes, not in the hardware but in our internal representation.
+             * This signal is emitted whenever a disk layout changes, not in the hardware, but in our internal representation.
              * 
              * @param name the disk name.
              */

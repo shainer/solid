@@ -51,7 +51,7 @@ void PartitionCreationTest::test()
                                                                       true);
     CreatePartitionAction* actionWrongGeometry = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
                                                                            23613300960,
-                                                                           50000,
+                                                                           150000000,
                                                                            false);
     CreatePartitionAction* actionGood1 = new CreatePartitionAction("/org/kde/solid/fakehw/storage_serial_HD56890I",
                                                                    21465885056,
@@ -66,7 +66,6 @@ void PartitionCreationTest::test()
     
     /* This action specifies an offset and size which doesn't fall inside a free space block */
     manager->registerAction(actionWrongGeometry);
-    qDebug() << manager->error().description();
     QCOMPARE(manager->error().type(), Utils::PartitioningError::PartitionGeometryError);
     
     /* This action takes some space in a normal free blocks */

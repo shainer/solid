@@ -207,7 +207,7 @@ bool ActionExecuter::execute()
                 device->deleteLater();
                 
                 QPair<VolumeTree, DeviceModified* > pair = d->map.searchTreeWithDevice( rpa->partition() );
-                DeviceModified* disk = pair.first.root();
+                Disk* disk = pair.first.disk();
                 device = new UDisksDevice( disk->name() );
                 
                 QDBusObjectPath p = device->createPartition(rpa->newOffset(), rpa->newSize(), oldType, oldLabel, oldFlags);
