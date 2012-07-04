@@ -49,7 +49,8 @@ public:
     QStringList flags;
 };
 
-ModifyPartitionAction::ModifyPartitionAction(const QString& partition, const QString& label,
+ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
+                                             const QString& label,
                                              const QStringList& flags)
     : PartitionAction(partition)
     , d( new Private(label, flags) )
@@ -74,14 +75,14 @@ Action::ActionType ModifyPartitionAction::actionType() const
 
 QString ModifyPartitionAction::description() const
 {
-    QString desc1 = "Setting the following flags for %0: %1.";
+    QString desc1 = " Setting the following flags for %0: %1.";
     QString desc3 = "Setting label of %0 to %1.";
     QString desc;
     
     if (d->isLabelChanged) {
         desc += desc3.arg(partition(), d->label);
     }
-    else if (!d->flags.isEmpty()) {
+    if (!d->flags.isEmpty()) {
         desc += desc1.arg(partition(), d->flags.join(" "));
     }
 
