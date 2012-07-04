@@ -40,13 +40,11 @@ public:
     {}
     
     void setDeviceName()
-    {
-        QString offsetStr = formatByteSize((double)(offset));
-        QString sizeStr = formatByteSize((double)(size));
-        
+    {        
         QString uniqueName = "Free space of offset %0 and size %1";
+        
         q->setName( uniqueName.arg(QString::number(offset), QString::number(size)) );
-        q->setDescription( uniqueName.arg(offsetStr, sizeStr) );   
+        q->setDescription( "Free space" );
     }
     
     FreeSpace* q;
