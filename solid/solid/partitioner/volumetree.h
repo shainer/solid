@@ -236,7 +236,7 @@ namespace Solid
         /*
          * FIXME: move these declarations.
          */
-        class VolumeTreeItem::Private
+        class SOLID_EXPORT VolumeTreeItem::Private
         {
         public:
             Private(DeviceModified *, QList< VolumeTreeItem *>, VolumeTreeItem *);
@@ -247,7 +247,7 @@ namespace Solid
             VolumeTreeItem* parent;
         };
         
-        class VolumeTreePrivate : public QSharedData
+        class SOLID_EXPORT VolumeTreePrivate : public QSharedData
         {
         public:
             VolumeTreePrivate(VolumeTreeItem *);

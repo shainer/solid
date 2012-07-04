@@ -534,8 +534,10 @@ QList< DeviceModified* > VolumeTree::allDevices() const
         VolumeTreeItem* currentNode = stack.takeFirst();
         devices.append(currentNode->volume());
         
-        foreach (VolumeTreeItem* child, currentNode->children()) {
-            stack.push_front(child);
+        /* This is necessary to prepare a list sorted by initial offset */
+        QListIterator< VolumeTreeItem* > it( currentNode->children() );
+        for (it.toBack(); it.hasPrevious(); ) {
+            stack.push_front( it.previous() );
         }
     }
     
