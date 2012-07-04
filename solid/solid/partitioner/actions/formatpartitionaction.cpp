@@ -62,12 +62,24 @@ Action::ActionType FormatPartitionAction::actionType() const
 
 QString FormatPartitionAction::description() const
 {
-    QString desc( "Changing filesystem of partition %0 to %1 with label %2, owner uid %3, owner gid %4" );
-    desc = desc.arg(partition(),
-                    d->filesystem.name(),
-                    d->filesystem.label(),
-                    QString::number(d->filesystem.ownerUid()),
-                    QString::number(d->filesystem.ownerGid()));
+    QString fsName = d->filesystem.name();
+    QString fsLabel = d->filesystem.label();
+    QString ownerUid = QString::number( d->filesystem.ownerUid() );
+    QString ownerGid = QString::number( d->filesystem.ownerGid() );
+    
+    QString desc( "Changing filesystem of partition %0 to %1" );
+    desc = desc.arg(partition(), fsName);
+    
+    if (!fsLabel.isEmpty()) {
+        desc.append( QString("; label %0").arg(fsLabel) );
+    }
+    
+    if (ownerUid != "-1") {
+        desc.append( QString("; ownerUid %0").arg(ownerUid)  );
+    }
+    if (ownerGid != "-1") {
+        desc.append( QString("; ownerGid %0").arg(ownerGid) );
+    }
     
     return QObject::tr(desc.toUtf8().data());
 }
