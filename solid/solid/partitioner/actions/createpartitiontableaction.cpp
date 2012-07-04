@@ -82,9 +82,8 @@ Action::ActionType CreatePartitionTableAction::actionType() const
 QString CreatePartitionTableAction::description() const
 {
     QString desc = "Creating partition table of type %0 on %1";
-    desc.arg( d->schemeName );
-
-    desc = desc.arg(d->disk);
+    desc = desc.arg( d->schemeName, d->disk );
+    
     return desc;
 }
 
