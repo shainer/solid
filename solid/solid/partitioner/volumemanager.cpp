@@ -160,6 +160,8 @@ void VolumeManager::undo()
         foreach (Action* action, undos) {
             d->applyAction(action);
         }
+        
+        emit diskChanged( undos.last()->ownerDisk()->name() );
     }
 }
 
@@ -169,6 +171,8 @@ void VolumeManager::redo()
         d->volumeTreeMap.backToOriginal();
         Action* newAction = d->actionstack.redo();
         d->applyAction(newAction);
+        
+        emit diskChanged( newAction->ownerDisk()->name() );
     }
 }
 
