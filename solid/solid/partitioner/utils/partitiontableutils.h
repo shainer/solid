@@ -24,6 +24,7 @@
 #include <QtCore/QStringList>
 
 #include <solid/partitioner/utils/partitioner_enums.h>
+#include <solid/solid_export.h>
 
 namespace Solid
 {
@@ -35,7 +36,7 @@ namespace Solid
              * @class PartitionTableUtils
              * @brief This class includes some utility methods about partition tables
              */
-            class PartitionTableUtils
+            class SOLID_EXPORT PartitionTableUtils
             {
             public:
                 virtual ~PartitionTableUtils();
