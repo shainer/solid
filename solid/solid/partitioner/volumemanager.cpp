@@ -765,9 +765,14 @@ bool VolumeManager::Private::setPartitionTableScheme(const QString& diskName, co
     
     /*
      * Instead, add a big block of free space as the only disk's child in the tree.
+     * If all partition table signatures have been eliminated, don't do it
+     * as we aren't able to create anything on the disk.
      */
-    FreeSpace* bigFreeSpace = new FreeSpace(disk->offset(), disk->size(), disk->name());
-    diskNode->addChild(bigFreeSpace);
+    if (!scheme.isEmpty()) {
+        FreeSpace* bigFreeSpace = new FreeSpace(disk->offset(), disk->size(), disk->name());
+        diskNode->addChild(bigFreeSpace);
+    }
+
     return true;
 }
 
