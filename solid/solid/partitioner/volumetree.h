@@ -205,6 +205,12 @@ namespace Solid
             VolumeTreeItem* searchNode(const QString &) const;
             
             /**
+             * @param device a device in this tree.
+             * @returns the parent device object, or NULL if it is the tree root.
+             */
+            DeviceModified* parentDevice(DeviceModified *) const;
+            
+            /**
              * @returns a sorted list of primary and extended partitions.
              */
             QList< Partition* > partitions() const;

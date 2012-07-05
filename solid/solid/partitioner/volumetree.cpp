@@ -560,6 +560,12 @@ DeviceModified* VolumeTree::searchDevice(const QString& name) const
     return node->volume();
 }
 
+DeviceModified* VolumeTree::parentDevice(DeviceModified* device) const
+{
+    VolumeTreeItem* node = searchNode( device->name() );
+    return node->parent()->volume();
+}
+
 void VolumeTree::print() const
 {
     d->print(d->root);
