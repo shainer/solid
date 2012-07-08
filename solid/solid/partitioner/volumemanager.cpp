@@ -542,8 +542,8 @@ bool VolumeManager::Private::resizeAndMoveSafely(Partition* toResize,
                                                  qlonglong newSize,
                                                  VolumeTree& disk)
 {
-    DeviceModified* rightDevice = disk.d->rightDevice(toResize);
-    DeviceModified* leftDevice = disk.d->leftDevice(toResize);
+    DeviceModified* rightDevice = disk.rightDevice(toResize);
+    DeviceModified* leftDevice = disk.leftDevice(toResize);
     DeviceModified* parent = disk.searchNode(toResize->name())->parent()->volume();
     
     qlonglong oldOffset = (qlonglong)(toResize->offset());

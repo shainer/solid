@@ -211,6 +211,22 @@ namespace Solid
             DeviceModified* parentDevice(DeviceModified *) const;
             
             /**
+             * Retrieves the device preceding a given one in the disk.
+             * 
+             * @param dev a device in the tree.
+             * @returns the device preceding the given one in the sorted list.
+             */
+            DeviceModified* leftDevice(DeviceModified *);
+            
+            /**
+             * Retrieves the device following a given one in the disk.
+             * 
+             * @param dev a device in the tree.
+             * @returns the device following the given one in the sorted list.
+             */
+            DeviceModified* rightDevice(DeviceModified *);
+            
+            /**
              * @returns a sorted list of primary and extended partitions.
              */
             QList< Partition* > partitions() const;
@@ -287,6 +303,16 @@ namespace Solid
             VolumeTreeItem* searchNode(const QString &) const;
             
             /*
+             * Retrieves the left sibling of a node.
+             */
+            VolumeTreeItem* leftNode(DeviceModified *);
+            
+            /*
+             * Retrieves of the right sibling of a node.
+             */
+            VolumeTreeItem* rightNode(DeviceModified *);
+            
+            /*
              * When creating a new partition with given offset and size, finds the free space block that
              * can accomodate it (if present, otherwise returns NULL). Returns the correspondent tree item.
              */
@@ -307,21 +333,6 @@ namespace Solid
              * This block is then merged with adjacent blocks, if they are present.
              */
             void mergeAndDelete(const QString &);
-            
-            /*
-             * Returns the node immediately to the left of the passed one.
-             * Remember nodes are sorted by initial offset.
-             */
-            VolumeTreeItem* leftNode(DeviceModified *);
-            
-            /*
-             * Returns the node immediately to the right of the passed one.
-             * Remember nodes are sorted by initial offset.
-             */
-            VolumeTreeItem* rightNode(DeviceModified *);
-            
-            DeviceModified* leftDevice(DeviceModified *);
-            DeviceModified* rightDevice(DeviceModified *);
             
             void print(VolumeTreeItem *) const;
             void destroy(VolumeTreeItem *);

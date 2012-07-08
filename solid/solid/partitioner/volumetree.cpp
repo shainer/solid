@@ -260,28 +260,6 @@ VolumeTreeItem* VolumeTreePrivate::rightNode(DeviceModified* dev)
     return NULL;
 }
 
-DeviceModified* VolumeTreePrivate::leftDevice(DeviceModified* dev)
-{
-    VolumeTreeItem* left = leftNode(dev);
-    
-    if (!left) {
-        return NULL;
-    }
-    
-    return left->volume();
-}
-
-DeviceModified* VolumeTreePrivate::rightDevice(DeviceModified* dev)
-{
-    VolumeTreeItem* right = rightNode(dev);
-    
-    if (!right) {
-        return NULL;
-    }
-    
-    return right->volume();
-}
-
 VolumeTreeItem* VolumeTreePrivate::searchContainer(qulonglong offset, qulonglong size)
 {
     QList< VolumeTreeItem* > stack;
@@ -479,6 +457,28 @@ DeviceModified* VolumeTree::extendedPartition() const
     }
     
     return ex->volume();
+}
+
+DeviceModified* VolumeTree::leftDevice(DeviceModified* dev)
+{
+    VolumeTreeItem* left = d->leftNode(dev);
+    
+    if (!left) {
+        return NULL;
+    }
+    
+    return left->volume();
+}
+
+DeviceModified* VolumeTree::rightDevice(DeviceModified* dev)
+{
+    VolumeTreeItem* right = d->rightNode(dev);
+    
+    if (!right) {
+        return NULL;
+    }
+    
+    return right->volume();
 }
 
 QList< Partition* > VolumeTree::partitions() const
