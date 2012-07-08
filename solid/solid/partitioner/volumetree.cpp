@@ -425,6 +425,7 @@ VolumeTree::VolumeTree(DeviceModified* rootDevice)
 {}
 
 VolumeTree::VolumeTree()
+    : d( new VolumeTreePrivate )
 {}
 
 VolumeTree::VolumeTree(const VolumeTree& other)
@@ -441,6 +442,10 @@ bool VolumeTree::valid() const
 
 Disk* VolumeTree::disk() const
 {
+    if (!d->valid) {
+        return NULL;
+    }
+    
     return dynamic_cast< Disk* >(d->root->volume());
 }
 
@@ -451,6 +456,10 @@ VolumeTreeItem* VolumeTree::rootNode() const
 
 VolumeTreeItem* VolumeTree::extendedNode() const
 {
+    if (!d->valid) {
+        return NULL;
+    }
+    
     foreach (VolumeTreeItem* child, d->root->children()) {
         Partition* part = dynamic_cast< Partition* >(child->volume());
         
@@ -474,6 +483,10 @@ DeviceModified* VolumeTree::extendedPartition() const
 
 QList< Partition* > VolumeTree::partitions() const
 {
+    if (!d->valid) {
+        return QList< Partition* >();
+    }
+    
     QList< Partition* > devices;
     
     foreach (VolumeTreeItem* item, d->root->children()) {
@@ -490,8 +503,7 @@ QList< Partition* > VolumeTree::partitions() const
 QList< Partition* > VolumeTree::logicalPartitions() const
 {
     QList< Partition *> logicals;
-    VolumeTreeItem* ex = extendedNode();
-    
+    VolumeTreeItem* ex = extendedNode();   
 
     if (ex) {
         foreach (VolumeTreeItem* item, ex->children()) {
@@ -526,6 +538,10 @@ QList< FreeSpace* > VolumeTree::freeSpaceBlocks(const QString& parentName) const
 
 QList< DeviceModified* > VolumeTree::allDevices() const
 {
+    if (!d->valid) {
+        return QList< DeviceModified *>();
+    }
+    
     QList< DeviceModified* > devices;
     QList< VolumeTreeItem* > stack;
     stack.push_front(d->root);
@@ -546,6 +562,10 @@ QList< DeviceModified* > VolumeTree::allDevices() const
 
 VolumeTreeItem* VolumeTree::searchNode(const QString& name) const
 {
+    if (!d->valid) {
+        return NULL;
+    }
+    
     return d->searchNode(name);
 }
 
@@ -562,6 +582,10 @@ DeviceModified* VolumeTree::searchDevice(const QString& name) const
 
 DeviceModified* VolumeTree::parentDevice(DeviceModified* device) const
 {
+    if (!d->valid) {
+        return NULL;
+    }
+    
     VolumeTreeItem* node = searchNode( device->name() );
     return node->parent()->volume();
 }
