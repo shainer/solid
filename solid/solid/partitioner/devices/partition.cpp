@@ -36,6 +36,7 @@ class Partition::Private
 public:
     Private(StorageVolume* v, StorageAccess* a)
         : iface(v)
+        , access(a)
         , ignored(v->isIgnored())
         , usage(v->usage())
         , filesystem( Utils::Filesystem(v->fsType()) )
@@ -47,7 +48,6 @@ public:
         , partitionTypeString(v->partitionType())
         , scheme(v->partitionTableScheme())
         , flags(v->flags())
-        , access(a)
     {
         if (partitionTypeString == EXTENDED_TYPE_STRING || partitionTypeString == EXTENDED_TYPE_STRING_LBA) {
             partitionType = ExtendedPartition;
@@ -56,6 +56,7 @@ public:
     
     Private(Actions::CreatePartitionAction *action)
         : iface(0)
+        , access(0)
         , ignored(false)
         , usage(StorageVolume::FileSystem)
         , label(action->label())
@@ -80,6 +81,7 @@ public:
     {}
     
     StorageVolume *iface;
+    StorageAccess* access;
     
     bool ignored;
     StorageVolume::UsageType usage;
@@ -92,8 +94,6 @@ public:
     QString partitionTypeString;
     QString scheme;
     QStringList flags;
-    
-    StorageAccess* access;
 };
     
 Partition::Partition(Device& dev)
