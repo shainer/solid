@@ -154,14 +154,18 @@ bool VolumeManager::registerAction(Actions::Action* action)
 void VolumeManager::undo()
 {
     if (!d->actionstack.empty()) {
+        /*
+         * Retrieve now the owner disk of the undone action, as both the list returned by undo() and the registered
+         * action list may be empty later.
+         */
+        DeviceModified* ownerDisk = d->actionstack.list().last()->ownerDisk();
         d->volumeTreeMap.backToOriginal();
-        QList< Action* > undos = d->actionstack.undo();
-        
-        foreach (Action* action, undos) {
+
+        foreach (Action* action, d->actionstack.undo()) {
             d->applyAction(action);
         }
         
-        emit diskChanged( undos.last()->ownerDisk()->name() );
+        emit diskChanged( ownerDisk->name() );
     }
 }
 
