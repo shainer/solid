@@ -359,6 +359,7 @@ bool VolumeManager::Private::applyAction(Action* action)
             newPartition->setPartitionTableScheme(scheme);
             newPartition->setFilesystem( cpa->filesystem() );
             newPartition->setPartitionType( cpa->partitionType() );
+            newPartition->setLabel( cpa->label() );
             
             if (newPartition->partitionType() == LogicalPartition) {
                 newPartition->setParentName(tree.extendedPartition()->name());
