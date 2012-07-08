@@ -20,6 +20,7 @@
 #include "createpartitionaction.h"
 #include <partitioner/volumemanager.h>
 #include <partitioner/utils/utils.h>
+#include <backends/udisks/udisksdevice.h>
 
 namespace Solid
 {
@@ -102,8 +103,8 @@ Action::ActionType CreatePartitionAction::actionType() const
 
 QString CreatePartitionAction::description() const
 {
-    QString desc( "Creating a new partition with size %0 and \"%1\" filesystem on %2" );
-    desc = desc.arg(QString::number(d->size), d->filesystem.name(), d->disk);
+    QString desc( "Creating a new partition with size %0, label \"%1\" and \"%2\" filesystem on %3" );
+    desc = desc.arg(formatByteSize((double)(d->size)), d->label, d->filesystem.name(), d->disk);
     
     return QObject::tr(desc.toUtf8().data());
 }
