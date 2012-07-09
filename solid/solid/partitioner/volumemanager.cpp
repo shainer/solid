@@ -153,6 +153,8 @@ bool VolumeManager::registerAction(Actions::Action* action)
 
 void VolumeManager::undo()
 {
+    d->error.setType(PartitioningError::None);
+    
     if (!d->actionstack.empty()) {
         /*
          * Retrieve now the owner disk of the undone action, as both the list returned by undo() and the registered
@@ -171,6 +173,8 @@ void VolumeManager::undo()
 
 void VolumeManager::redo()
 {
+    d->error.setType(PartitioningError::None);
+    
     if (!d->actionstack.undoEmpty()) {
         d->volumeTreeMap.backToOriginal();
         Action* newAction = d->actionstack.redo();
@@ -225,6 +229,7 @@ QMap< QString, VolumeTree > VolumeManager::allDiskTrees() const
 
 bool VolumeManager::apply()
 {
+    d->error.setType(PartitioningError::None);
     ActionExecuter executer( d->actionstack.list(), d->volumeTreeMap );
     
     /*
