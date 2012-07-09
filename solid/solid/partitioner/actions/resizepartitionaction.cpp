@@ -19,6 +19,7 @@
 */
 
 #include "resizepartitionaction.h"
+#include <backends/udisks/udisksdevice.h>
 
 namespace Solid
 {
@@ -60,7 +61,10 @@ Action::ActionType ResizePartitionAction::actionType() const
 QString ResizePartitionAction::description() const
 {
     QString desc( "Changing %0 to offset %1 and size %2" );
-    desc = desc.arg(partition(), QString::number(d->newOffset), QString::number(d->newSize));
+    QString offsetStr = formatByteSize((double)(d->newOffset));
+    QString sizeStr = formatByteSize((double)(d->newSize));
+    
+    desc = desc.arg(partition(), offsetStr, sizeStr);
     
     return QObject::tr(desc.toUtf8().data());
 }
