@@ -243,9 +243,13 @@ namespace Solid
             QList< FreeSpace* > freeSpaceBlocks(const QString& parentName) const;
             
             /**
+             * Retrieves all the devices stored in this disk.
+             * 
+             * @param addBelowMin true if the list will also include free space blocks below the minimum size allowed for
+             *                    a new partition (default action), false otherwise.
              * @returns a list of all devices stored in this tree.
              */
-            QList<DeviceModified *> allDevices() const;
+            QList<DeviceModified *> allDevices(bool addBelowMin = true) const;
             
             void print() const;
             

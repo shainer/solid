@@ -536,19 +536,29 @@ QList< FreeSpace* > VolumeTree::freeSpaceBlocks(const QString& parentName) const
     return blocks;
 }
 
-QList< DeviceModified* > VolumeTree::allDevices() const
+QList< DeviceModified* > VolumeTree::allDevices(bool addBelowMin) const
 {
     if (!d->valid) {
         return QList< DeviceModified *>();
     }
     
+    Disk* diskDev = disk();
     QList< DeviceModified* > devices;
     QList< VolumeTreeItem* > stack;
     stack.push_front(d->root);
     
     while (!stack.isEmpty()) {
         VolumeTreeItem* currentNode = stack.takeFirst();
-        devices.append(currentNode->volume());
+        DeviceModified* currentDevice = currentNode->volume();
+        
+        /* When requested, skip free space blocks too small for accomodating a partition */
+        if (!addBelowMin &&
+            currentDevice->deviceType() == DeviceModified::FreeSpaceDevice
+            && currentDevice->size() < diskDev->minimumPartitionSize()) {
+            continue;
+        }
+        
+        devices.append(currentDevice);
         
         /* This is necessary to prepare a list sorted by initial offset */
         QListIterator< VolumeTreeItem* > it( currentNode->children() );
