@@ -46,6 +46,10 @@ FilesystemPrivate::FilesystemPrivate(const QString& n, const QStringList& flags)
             unsupported.append(flag);
         }
     }
+    
+    if (name == "unformatted") {
+        name.clear();
+    }
 }
     
 FilesystemPrivate::FilesystemPrivate(const QString& n, const QString& l, int ouid, int ogid)
@@ -53,7 +57,11 @@ FilesystemPrivate::FilesystemPrivate(const QString& n, const QString& l, int oui
     , label(l)
     , ownerUid(ouid)
     , ownerGid(ogid)
-{}
+{
+    if (name == "unformatted") {
+        name.clear();
+    }
+}
     
 FilesystemPrivate::FilesystemPrivate(const FilesystemPrivate& other)
     : QSharedData(other)
