@@ -68,10 +68,10 @@ public:
     bool resizeAndMoveSafely(Partition *, qlonglong, qlonglong, VolumeTree &);
     
     /* Resize a partition. */
-    void resizePartition(Partition *, DeviceModified *, qulonglong, VolumeTree &);
+    void resizePartition(Partition *, qulonglong, VolumeTree &);
     
     /* Moves a partition. */
-    void movePartition(Partition *, qulonglong, DeviceModified *, DeviceModified *, DeviceModified *, VolumeTree &);
+    void movePartition(Partition *, qulonglong, DeviceModified *, VolumeTree &);
     
     /* Perform necessary checks when creating a new partition on either MBR or GPT tables. */
     bool mbrPartitionChecks(Actions::CreatePartitionAction *);
@@ -432,7 +432,7 @@ bool VolumeManager::Private::applyAction(Action* action)
             }
             
             /* The minimum partition size constraint has to be respected here too */
-            if (newSize < disk->minimumPartitionSize()) {
+            if (rpa->newSize() < disk->minimumPartitionSize()) {
                 error.setType(PartitioningError::PartitionTooSmallError);
                 return false;
             }
@@ -584,8 +584,8 @@ bool VolumeManager::Private::resizeAndMoveSafely(Partition* toResize,
         * NOTE: defining an order of the operations isn't really necessary if we're sure everything is legal.
         * However, avoiding surpassing boundaries even temporarity prevents us from having hidden bugs and sign problems.
         */
-        movePartition(toResize, newOffset, parent, leftDevice, rightDevice, disk);
-        resizePartition(toResize, rightDevice, newSize, disk);
+        movePartition(toResize, newOffset, parent, disk);
+        resizePartition(toResize, newSize, disk);
     }
     /* If the partition is moved forward beyond the legal boundary... */
     else if (newOffset != oldOffset && (newOffset + oldSize >= rightBoundary)) {
@@ -597,19 +597,18 @@ bool VolumeManager::Private::resizeAndMoveSafely(Partition* toResize,
             return false;
         }
         
-        resizePartition(toResize, rightDevice, newSize, disk);
-        movePartition(toResize, newOffset, parent, leftDevice, rightDevice, disk);
+        resizePartition(toResize, newSize, disk);
+        movePartition(toResize, newOffset, parent, disk);
     }
     else { /* no specific order needed */
-        resizePartition(toResize, rightDevice, newSize, disk);
-        movePartition(toResize, newOffset, parent, leftDevice, rightDevice, disk);
+        resizePartition(toResize, newSize, disk);
+        movePartition(toResize, newOffset, parent, disk);
     }
     
     return true;
 }
 
 void VolumeManager::Private::resizePartition(Partition* partition,
-                                             DeviceModified* rightDevice,
                                              qulonglong newSize,
                                              VolumeTree& disk)
 {  
@@ -617,12 +616,15 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         return;
     }
     
+    DeviceModified* rightDevice = disk.rightDevice(partition);
     qulonglong spaceBetween = (partition->partitionType() == LogicalPartition) ? SPACE_BETWEEN_LOGICALS : 0;
     
     /* Creates a new object for the free space left on the right */
     if (!rightDevice || rightDevice->deviceType() != DeviceModified::FreeSpaceDevice) {
         qlonglong spaceOffset = partition->offset() + newSize;
         qlonglong spaceSize = (rightDevice->offset() - (partition->offset() + newSize) - spaceBetween);
+        
+//         qDebug() << "RESIZE: new space on the right of offset" << spaceOffset << "and" << spaceSize;
         
         if (spaceSize > 0) {
             FreeSpace* freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
@@ -632,6 +634,8 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         FreeSpace* spaceRight = dynamic_cast< FreeSpace* >(rightDevice);
         qlonglong rightOffset = partition->offset() + newSize;
         qlonglong rightSize = spaceRight->size() - (newSize - partition->size());
+        
+//         qDebug() << "RESIZE: space on the right has new offset" << rightOffset << "and new size" << rightSize;
                         
         if (rightSize == 0) { /* we filled up the space available */
             disk.d->removeDevice(spaceRight->name());
@@ -646,14 +650,14 @@ void VolumeManager::Private::resizePartition(Partition* partition,
 void VolumeManager::Private::movePartition(Partition* partition,
                                            qulonglong newOffset,
                                            DeviceModified* parent,
-                                           DeviceModified* leftDevice,
-                                           DeviceModified* rightDevice,
                                            VolumeTree& tree)
 {
     if (newOffset == partition->offset()) {
         return;
     }
     
+    DeviceModified* leftDevice = tree.leftDevice(partition);
+    DeviceModified* rightDevice = tree.rightDevice(partition);
     qulonglong oldOffset = partition->offset();
     FreeSpace *freeSpaceRight = 0;
     FreeSpace *freeSpaceLeft = 0;
@@ -664,12 +668,16 @@ void VolumeManager::Private::movePartition(Partition* partition,
         qulonglong spaceOffset = (leftDevice) ? (leftDevice->rightBoundary()) : (parent->offset() + spaceBetween);
         qulonglong spaceSize = newOffset - spaceOffset - spaceBetween;
         
+//         qDebug() << "MOVE: new space on the left of offset" << spaceOffset << "and" << spaceSize;
+        
         if (spaceSize > 0) {
             freeSpaceLeft = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
         }
     } else { /* there's some free space immediately before: changes its size accordingly */
         qulonglong leftSize = leftDevice->size() - (oldOffset - newOffset);
 
+//         qDebug() << "MOVE: space on the left has now size" << leftSize;
+        
         if (leftSize == 0) { /* we filled up all the space */
             tree.d->removeDevice(leftDevice->name());
         } else {
@@ -686,6 +694,8 @@ void VolumeManager::Private::movePartition(Partition* partition,
         qulonglong spaceOffset = newOffset + partition->size();
         qulonglong spaceSize = (rightDevice->offset() - (newOffset + partition->size()) - spaceBetween);
                         
+//         qDebug() << "MOVE: new space on the right of offset" << spaceOffset << "and" << spaceSize;
+        
         if (spaceSize > 0) {
             freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
             tree.d->addDevice(partition->parentName(), freeSpaceRight);
@@ -693,6 +703,8 @@ void VolumeManager::Private::movePartition(Partition* partition,
     } else {
         qulonglong rightOffset = newOffset + partition->size();
         qulonglong rightSize = rightDevice->size() - (newOffset - oldOffset);
+                
+//         qDebug() << "RESIZE: space on the right has now offset" << rightOffset << "and" << rightSize;
         
         if (rightSize == 0) {
             tree.d->removeDevice(rightDevice->name());
