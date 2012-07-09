@@ -148,9 +148,16 @@ namespace Solid
             /**
              * This signal is used to report progress when executing a list of actions.
              * 
-             * @param progress the current progress (between 0 and 100).
+             * @param index the index of the action that was last executed successfully.
              */
-            void progressChanged(double);
+            void progressChanged(int);
+            
+            /**
+             * This signal reports an error in the execution of an action (after this, the entire execution stops).
+             * 
+             * @param error the error object.
+             */
+            void executionError(Utils::PartitioningError);
             
         private:
             VolumeManager();

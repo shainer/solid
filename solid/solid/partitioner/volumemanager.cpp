@@ -250,6 +250,7 @@ bool VolumeManager::apply()
     
     if (!success) {
         d->error = executer.error();
+        emit executionError(d->error);
         return false;
     }
     
@@ -258,9 +259,7 @@ bool VolumeManager::apply()
 
 void VolumeManager::doNextActionCompleted(int completed)
 {
-    int actionNumber = d->actionstack.size();
-    double progress = (double)completed / (double)actionNumber;
-    emit progressChanged(progress);
+    emit progressChanged(completed);
 }
 
 PartitioningError VolumeManager::error() const
