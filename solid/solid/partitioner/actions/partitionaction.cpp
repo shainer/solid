@@ -37,6 +37,7 @@ public:
     {}
     
     QString partition;
+    QString newPartitionName;
 };
 
 PartitionAction::PartitionAction(const QString& partition)
@@ -53,9 +54,18 @@ QString PartitionAction::partition() const
     return d->partition;
 }
 
-void PartitionAction::setPartitionName(const QString& name)
+QString PartitionAction::newPartitionName() const
 {
-    d->partition = name;
+    if (d->newPartitionName.isEmpty()) { /* if no name has been assigned, just use the normal one */
+        return d->partition;
+    }
+    
+    return d->newPartitionName;
+}
+
+void PartitionAction::setNewPartitionName(const QString& name)
+{
+    d->newPartitionName = name;
 }
 
 }

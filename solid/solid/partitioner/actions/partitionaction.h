@@ -61,11 +61,20 @@ namespace Solid
                 virtual QString partition() const;
                 
                 /**
+                 * If this action referred to a partition that didn't exist yet in the system, partition()
+                 * returns a dummy identifier name. After the partition is created the system assigns it a name,
+                 * which we know after the call to setNewPartitionName().
+                 * 
+                 * @returns the system name assigned to the new partition.
+                 */
+                virtual QString newPartitionName() const;
+                
+                /**
                  * Sets a different partition name for this action.
                  * 
                  * @param name the new partition name.
                  */
-                virtual void setPartitionName(const QString &);
+                virtual void setNewPartitionName(const QString &);
                 
             private:
                 class Private;

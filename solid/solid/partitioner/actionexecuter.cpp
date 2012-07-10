@@ -110,7 +110,6 @@ bool ActionExecuter::execute()
         return false;
     }
     
-    d->map.backToOriginal(); /* this is necessary to have correct information for some actions */
     int actionCount = 0;
     
     for (QList< Action* >::iterator it = d->actions.begin(); it < d->actions.end(); it++) {
@@ -122,10 +121,19 @@ bool ActionExecuter::execute()
         {            
             case Action::FormatPartition: {
                 FormatPartitionAction* fpa = dynamic_cast< FormatPartitionAction* >(action);
+                device = new UDisksDevice( fpa->newPartitionName() );
                 
-                device = new UDisksDevice( fpa->partition() );
+                /*
+                 * This (and identical checks in other actions) are useful to avoid error if the partition will be
+                 * eventually deleted in a subsequent action. We cannot remove this action from the list:
+                 * 1) in registerAction(), it messes up with the undo()
+                 * 2) in apply(), we change the action list size so the application cannot report progress correctly.
+                 */
+                if (!d->map.searchDevice( fpa->partition() )) {
+                    break;
+                }
+                
                 Utils::Filesystem fs = fpa->filesystem();
-                
                 success = device->format( fs.name(), fs.flags() );
                 break;
             }
@@ -163,27 +171,7 @@ bool ActionExecuter::execute()
             
             case Action::RemovePartition: {
                 RemovePartitionAction* rpa = dynamic_cast< RemovePartitionAction* >(action);
-                QPair< VolumeTree, Partition* > pair = d->map.searchTreeWithPartition( rpa->partition() );
-                
-                /*
-                 * If we are deleting an extended, automatically removes the logicals (UDisks doesn't do it, but
-                 * instead fails)
-                 */
-                if (pair.second->partitionType() == ExtendedPartition) {
-                    foreach (DeviceModified* l, pair.first.logicalPartitions()) {
-                        UDisksDevice* logical = new UDisksDevice( l->name() );
-                        success = logical->deletePartition();
-                        
-                        if (!success) {
-                            logical->deleteLater();
-                            break;
-                        }
-                        
-                        logical->deleteLater();
-                    }
-                }
-                
-                device = new UDisksDevice( rpa->partition() );
+                device = new UDisksDevice( rpa->newPartitionName() );
                 success = device->deletePartition();
                 
                 break;
@@ -191,10 +179,13 @@ bool ActionExecuter::execute()
             
             case Action::ModifyPartition: {
                 ModifyPartitionAction* mpa = dynamic_cast< ModifyPartitionAction* >(action);
+                device = new UDisksDevice( mpa->newPartitionName() );
+
+                if (!d->map.searchDevice( mpa->partition() )) {
+                    break;
+                }
                 
-                device = new UDisksDevice( mpa->partition() );
                 Partition* partition = d->map.searchPartition( mpa->partition() );
-                
                 QString type = partition->partitionTypeString();
                 QString oldLabel = partition->label();
                 QString newLabel = mpa->isLabelChanged() ? mpa->label() : oldLabel;
@@ -205,7 +196,11 @@ bool ActionExecuter::execute()
             
             case Action::ResizePartition: {
                 ResizePartitionAction* rpa = dynamic_cast< ResizePartitionAction* >(action);
-                device = new UDisksDevice( rpa->partition() );
+                device = new UDisksDevice( rpa->newPartitionName() );
+                
+                if (!d->map.searchDevice( rpa->partition() )) {
+                    break;
+                }
                 
                 Partition* partition = d->map.searchPartition( rpa->partition() );
                 
@@ -275,7 +270,7 @@ void ActionExecuter::Private::translateFutureNames(QList< Action* >::iterator cu
             PartitionAction* pAction = dynamic_cast< PartitionAction* >(current);
             
             if (pAction->partition() == currentPartitionName) {
-                pAction->setPartitionName(newPartitionName);
+                pAction->setNewPartitionName(newPartitionName);
             }
         }
     }
