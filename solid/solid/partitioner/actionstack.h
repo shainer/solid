@@ -67,6 +67,13 @@ namespace Solid
             Action* redo();
             
             /**
+             * Removes an action from the list.
+             * 
+             * @param action the action to remove.
+             */
+            void removeAction(Action *);
+            
+            /**
              * Removes all the actions (undone or active) which concern the given disk. 
              * 
              * @param diskName the name of the disk.
