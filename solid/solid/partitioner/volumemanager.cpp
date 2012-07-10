@@ -241,20 +241,26 @@ bool VolumeManager::apply()
         return false;
     }
     
+    d->volumeTreeMap.disconnectSignals();
     QObject::connect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
     bool success = executer.execute();
     
     QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
-    d->actionstack.clear();
     d->volumeTreeMap.build(); /* repeats hw detection */
+    d->volumeTreeMap.connectSignals();
     
     if (!success) {
         d->error = executer.error();
-        emit executionError(d->error);
+        emit executionError( d->error.description() );
         return false;
     }
     
     return true;
+}
+
+void VolumeManager::clearActions()
+{
+    d->actionstack.clear();
 }
 
 void VolumeManager::doNextActionCompleted(int completed)

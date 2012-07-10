@@ -69,8 +69,7 @@ public:
 VolumeTreeMap::VolumeTreeMap()
     : d( new Private )
 {
-    QObject::connect(d->backend, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
-    QObject::connect(d->backend, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
+    connectSignals();
 }
 
 VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
@@ -108,6 +107,18 @@ void VolumeTreeMap::build()
 void VolumeTreeMap::backToOriginal()
 {
     d->devices = d->beginningCopies;
+}
+
+void VolumeTreeMap::connectSignals()
+{
+    QObject::connect(d->backend, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
+    QObject::connect(d->backend, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
+}
+
+void VolumeTreeMap::disconnectSignals()
+{
+    QObject::disconnect(d->backend, SIGNAL(deviceAdded(QString)), this, SLOT(doDeviceAdded(QString)));
+    QObject::disconnect(d->backend, SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
 }
 
 QMap< QString, VolumeTree > VolumeTreeMap::deviceTrees() const

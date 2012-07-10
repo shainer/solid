@@ -64,6 +64,17 @@ namespace Solid
             void backToOriginal();
             
             /**
+             * Receive signals from the hardware about added/removed devices.
+             */
+            void connectSignals();
+            
+            /**
+             * Receive signals from the hardware about added/removed devices.
+             * This is used when executing actions to avoid being flooded with useless signals.
+             */
+            void disconnectSignals();
+            
+            /**
              * Retrieves the map of trees.
              * 
              * @returns a map of couples in the form (disk name -> disk layout tree).
