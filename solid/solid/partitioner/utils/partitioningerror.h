@@ -63,7 +63,7 @@ namespace Solid
                     NoPartitionTableError,
                     BadPartitionTypeError,
                     MountedPartitionError,
-                    MountedLogicalError,
+                    RemovingExtendedError,
                     IgnoredPartitionError,
                     DuplicateActionError,
                     BusyExecuterError,

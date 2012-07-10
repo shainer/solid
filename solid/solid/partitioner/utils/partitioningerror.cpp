@@ -154,8 +154,8 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
-        case MountedLogicalError: {
-            d->description = "Cannot operate on an extended while at least one logical is mounted.";
+        case RemovingExtendedError: {
+            d->description = "Cannot remove the extended partition as it has at least one logical.";
             d->markersLeft = 0;
             break;
         }

@@ -398,17 +398,10 @@ bool VolumeManager::Private::applyAction(Action* action)
             VolumeTree tree = pair.first;
             Partition* partition = pair.second;
             
-            /*
-             * Removing an extended partition removes all the logicals too. So we have to deny the action if
-             * at least one of the logical partitions is currently mounted.
-             */
-            if (partition->partitionType() == ExtendedPartition) {
-                foreach (Partition* logical, tree.logicalPartitions()) {
-                    if (logical->isMounted()) {
-                        error.setType(PartitioningError::MountedLogicalError);
-                        return false;
-                    }
-                }
+            /* Don't remove an extended if there is at least one logical depending on it */
+            if (partition->partitionType() == ExtendedPartition && !tree.logicalPartitions().isEmpty()) {
+                error.setType(PartitioningError::RemovingExtendedError);
+                return false;
             }
             
             /* Deletes the partition merging adjacent free blocks if present. */
