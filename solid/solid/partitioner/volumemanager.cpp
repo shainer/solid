@@ -242,7 +242,7 @@ bool VolumeManager::apply()
     }
     
     d->volumeTreeMap.disconnectSignals();
-    QObject::connect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
+    QObject::connect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)), Qt::DirectConnection);
     bool success = executer.execute();
     
     QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));

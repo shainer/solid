@@ -257,7 +257,7 @@ bool ActionExecuter::execute()
             d->error.arg( device->latestError() );
             return false;
         }
-
+        
         emit nextActionCompleted(++actionCount);
     }
     
