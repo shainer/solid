@@ -64,9 +64,16 @@ namespace Solid
                  * This is used just temporarily to copy a device.
                  */
                 explicit Partition();
+                
+                /**
+                 * Destructor.
+                 */
                 virtual ~Partition();
                 
-                DeviceModified::DeviceModifiedType deviceType() const;
+                /**
+                 * @returns a DeviceModifieType enum value. For this kind of object, it's always PartitionDevice.
+                 */
+                virtual DeviceModified::DeviceModifiedType deviceType() const;
                 
                 /**
                  * @returns a dynamically allocated copy of this partition.
@@ -77,32 +84,32 @@ namespace Solid
                  * @returns true if this partition should be ignored by the application.
                  * @see StorageVolume::isIgnored()
                  */
-                bool ignored() const;
+                virtual bool ignored() const;
                 
                 /**
                  * @returns an enum describing the usage of this partition.
                  */
-                StorageVolume::UsageType usage() const;
+                virtual StorageVolume::UsageType usage() const;
                 
                 /**
                  * @returns an object representing the filesystem of this partition, if any.
                  */
-                Utils::Filesystem filesystem() const;
+                virtual Utils::Filesystem filesystem() const;
                 
                 /**
                  * @returns the partition label.
                  */
-                QString label() const;
+                virtual QString label() const;
                 
                 /**
                  * @returns the UUID (unique partition ID).
                  */
-                QString uuid() const;
+                virtual QString uuid() const;
                 
                 /**
                  * @returns the size in bytes.
                  */
-                qulonglong size() const;
+                virtual qulonglong size() const;
                 
                 /**
                  * @returns the initial offset in bytes.
@@ -112,92 +119,92 @@ namespace Solid
                 /**
                  * @returns offset() + size().
                  */
-                qulonglong rightBoundary() const;
+                virtual qulonglong rightBoundary() const;
                 
                 /**
                  * @returns a value representing the partition type: Primary, Logical or Extended.
                  */
-                Utils::PartitionType partitionType() const;
+                virtual Utils::PartitionType partitionType() const;
                 
                 /**
                  * @returns the string describing this partition's type.
                  * An example are the GUID string used in GPT tables.
                  */
-                QString partitionTypeString() const;
+                virtual QString partitionTypeString() const;
                 
                 /**
                  * @returns the ptable scheme this partition is part of. 
                  */
-                QString partitionTableScheme() const;
+                virtual QString partitionTableScheme() const;
                 
                 /**
                  * @returns the list of flags set for this partition.
                  */
-                QStringList flags() const;
+                virtual QStringList flags() const;
                 
                 /**
                  * @returns true if the partition is mounted.
                  */
-                bool isMounted() const;
+                virtual bool isMounted() const;
                 
                 /**
                  * @returns the path the partition is mounted on, or an empty string if not mounted.
                  */
-                QString mountFile() const;
+                virtual QString mountFile() const;
                 
                 /**
                  * @returns the StorageAccess object, which can be used to mount or unmount.
                  */
-                StorageAccess* access() const;
+                virtual StorageAccess* access() const;
                 
                 /**
                  * Sets whether this partition should be displayed by the system.
                  * 
                  * @param ignored whether this partition is to be ignored.
                  */
-                void setIgnored(bool);
+                virtual void setIgnored(bool);
                 
                 /**
                  * Sets a new usage for this partition.
                  * 
                  * @param usage an enumeration value for the usage.
                  */
-                void setUsage(StorageVolume::UsageType);
+                virtual void setUsage(StorageVolume::UsageType);
                 
                 /**
                  * Sets a new filesystem.
                  * 
                  * @param fs the object representing the filesystem.
                  */
-                void setFilesystem(const Utils::Filesystem &);
+                virtual void setFilesystem(const Utils::Filesystem &);
                 
                 /**
                  * Sets a new label.
                  * 
                  * @param label the label.
                  */
-                void setLabel(const QString &);
+                virtual void setLabel(const QString &);
                 
                 /**
                  * Sets a new size.
                  * 
                  * @param size the new size in bytes.
                  */
-                void setSize(qulonglong);
+                virtual void setSize(qulonglong);
                 
                 /**
                  * Sets a new initial offset.
                  * 
                  * @param offset the new initial offset in bytes.
                  */
-                void setOffset(qulonglong);
+                virtual void setOffset(qulonglong);
                 
                 /**
                  * Sets a new type for this partition.
                  * 
                  * @param type the new type.
                  */
-                void setPartitionType(Utils::PartitionType);
+                virtual void setPartitionType(Utils::PartitionType);
                 
                 /**
                  * Sets a new type string for this partition.
@@ -206,21 +213,21 @@ namespace Solid
                  * @note this is currently used just for copying, as you cannot always change it (when you can,
                  * you can just use format).
                  */
-                void setPartitionTypeString(const QString &);
+                virtual void setPartitionTypeString(const QString &);
                 
                 /**
                  * Sets the ptable scheme this partition is part of.
                  * 
                  * @param scheme the ptable scheme.
                  */
-                void setPartitionTableScheme(const QString &);
+                virtual void setPartitionTableScheme(const QString &);
                 
                 /**
                  * Sets a list of flags to be valid for this partition.
                  * 
                  * @param flags a string list of flags.
                  */
-                void setFlags(const QStringList &);
+                virtual void setFlags(const QStringList &);
 
             private:
                 class Private;

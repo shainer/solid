@@ -51,8 +51,15 @@ namespace Solid
                  * This is used just temporarily to copy a device.
                  */
                 explicit FreeSpace();
+                
+                /**
+                 * Destructor.
+                 */
                 virtual ~FreeSpace();
                 
+                /**
+                 * @returns a DeviceModifieType enum value. For this kind of object, it's always FreeSpaceDevice.
+                 */
                 virtual DeviceModifiedType deviceType() const;
                 
                 /**

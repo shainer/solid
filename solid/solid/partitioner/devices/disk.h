@@ -59,6 +59,9 @@ namespace Solid
                  */
                 virtual ~Disk();
                 
+                /**
+                 * @returns a DeviceModifieType enum value. For this kind of object, it's always DiskDevice.
+                 */
                 virtual DeviceModifiedType deviceType() const;
                 
                 /**
@@ -69,29 +72,29 @@ namespace Solid
                 /**
                  * @returns the size of the disk in bytes.
                  */
-                qulonglong size() const;
+                virtual qulonglong size() const;
                 
                 /**
                  * @returns the initial offset in bytes, that means the first byte available for creating partitions
                  * after the information of the partition table.
                  */
-                qulonglong offset() const;
+                virtual qulonglong offset() const;
                 
                 /**
                  * @returns offset() + size()
                  */
-                qulonglong rightBoundary() const;
+                virtual qulonglong rightBoundary() const;
                 
                 /**
                  * @returns the partition table scheme, or an empty string if there isn't one.
                  */
-                QString partitionTableScheme() const;
+                virtual QString partitionTableScheme() const;
                 
                 /**
                  * @returns the minimum size a partition can have on this disk. Geometry constraints force partitions to be
                  * at least of size equals to the minimum between 1MB and 1% of the disk size.
                  */
-                qulonglong minimumPartitionSize() const;
+                virtual qulonglong minimumPartitionSize() const;
                 
                 /**
                  * Sets a size.
@@ -99,7 +102,7 @@ namespace Solid
                  * @note the partitioning module cannot change the size of a disk. This method doesn't do anything.
                  * @param size the new size in bytes
                  */
-                void setSize(qulonglong);
+                virtual void setSize(qulonglong);
                 
                 /**
                  * Sets a new initial offset.
@@ -107,14 +110,14 @@ namespace Solid
                  * @note the partitioning module cannot change the offset of a disk. This method doesn't do anything.
                  * @param the new offset in bytes.
                  */
-                void setOffset(qulonglong);
+                virtual void setOffset(qulonglong);
                 
                 /**
                  * Sets a new partition table scheme for the disk.
                  * 
                  * @param scheme the new scheme name, empty for none.
                  */
-                void setPartitionTableScheme(const QString &);
+                virtual void setPartitionTableScheme(const QString &);
 
             private:
                 class Private;
