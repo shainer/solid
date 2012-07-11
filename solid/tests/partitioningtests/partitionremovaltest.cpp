@@ -74,9 +74,9 @@ void PartitionRemovalTest::test()
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
     QCOMPARE(diskTree.searchDevice("Free space of offset 1048576 and size 21474836480") == NULL, false);
     
-    /* Try to remove an extended when a logical is still mounted */
+    /* Try to remove an extended */
     manager->registerAction(extended);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::MountedLogicalError);
+    QCOMPARE(manager->error().type(), Utils::PartitioningError::RemovingExtendedError);
 }
 
 #include "partitionremovaltest.moc" 
