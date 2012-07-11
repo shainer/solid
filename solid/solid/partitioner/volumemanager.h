@@ -44,6 +44,7 @@ namespace Solid
         class SOLID_EXPORT VolumeManager : public QObject
         {
             Q_OBJECT
+            Q_DISABLE_COPY(VolumeManager)
         
         public:
             virtual ~VolumeManager();

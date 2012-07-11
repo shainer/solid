@@ -38,6 +38,8 @@ namespace Solid
              */
             class SOLID_EXPORT PartitionTableUtils
             {
+                Q_DISABLE_COPY(PartitionTableUtils)
+                
             public:
                 virtual ~PartitionTableUtils();
                 static PartitionTableUtils* instance();
