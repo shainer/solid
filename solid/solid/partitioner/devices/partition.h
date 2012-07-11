@@ -58,10 +58,20 @@ namespace Solid
                  * @param action the action registered for creating the new partition.
                  */
                 explicit Partition(Actions::CreatePartitionAction *);
-                explicit Partition(Partition *);
+                
+                /**
+                 * Builds a new partition object with all properties set to their default values.
+                 * This is used just temporarily to copy a device.
+                 */
+                explicit Partition();
                 virtual ~Partition();
                 
                 DeviceModified::DeviceModifiedType deviceType() const;
+                
+                /**
+                 * @returns a dynamically allocated copy of this partition.
+                 */
+                virtual DeviceModified* copy() const;
                 
                 /**
                  * @returns true if this partition should be ignored by the application.
@@ -188,6 +198,15 @@ namespace Solid
                  * @param type the new type.
                  */
                 void setPartitionType(Utils::PartitionType);
+                
+                /**
+                 * Sets a new type string for this partition.
+                 * 
+                 * @param type the new type string.
+                 * @note this is currently used just for copying, as you cannot always change it (when you can,
+                 * you can just use format).
+                 */
+                void setPartitionTypeString(const QString &);
                 
                 /**
                  * Sets the ptable scheme this partition is part of.

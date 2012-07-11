@@ -74,6 +74,11 @@ namespace Solid
                 virtual DeviceModifiedType deviceType() const = 0;
                 
                 /**
+                 * @returns a dynamically allocated copy of this device.
+                 */
+                virtual DeviceModified* copy() const = 0;
+                
+                /**
                  * @returns the initial offset of the device in bytes.
                  */
                 virtual qulonglong offset() const = 0;
@@ -124,6 +129,11 @@ namespace Solid
                  */
                 void setName(const QString &);
                 
+                /**
+                 * Sets a new description for this device.
+                 * 
+                 * @param description the new description
+                 */
                 void setDescription(const QString &);
                 
                 /**

@@ -35,8 +35,7 @@ class Partition::Private
 {
 public:
     Private(StorageVolume* v, StorageAccess* a)
-        : iface(v)
-        , access(a)
+        : access(a)
         , ignored(v->isIgnored())
         , usage(v->usage())
         , filesystem( Utils::Filesystem(v->fsType()) )
@@ -49,14 +48,11 @@ public:
         , scheme(v->partitionTableScheme())
         , flags(v->flags())
     {
-        if (partitionTypeString == EXTENDED_TYPE_STRING || partitionTypeString == EXTENDED_TYPE_STRING_LBA) {
-            partitionType = ExtendedPartition;
-        }
+        setTypeFromString();
     }
     
-    Private(Actions::CreatePartitionAction *action)
-        : iface(0)
-        , access(0)
+    Private(Actions::CreatePartitionAction* action)
+        : access(0)
         , ignored(false)
         , usage(StorageVolume::FileSystem)
         , label(action->label())
@@ -66,21 +62,16 @@ public:
         , flags(action->flags())
     {}
     
-    Private(Devices::Partition* other)
-        : ignored(other->ignored())
-        , usage(other->usage())
-        , filesystem(other->filesystem())
-        , label(other->label())
-        , uuid(other->uuid())
-        , size(other->size())
-        , offset(other->offset())
-        , partitionType(other->partitionType())
-        , partitionTypeString(other->partitionTypeString())
-        , scheme(other->partitionTableScheme())
-        , flags(other->flags())
+    Private()
     {}
     
-    StorageVolume *iface;
+    void setTypeFromString()
+    {
+        if (partitionTypeString == EXTENDED_TYPE_STRING || partitionTypeString == EXTENDED_TYPE_STRING_LBA) {
+            partitionType = ExtendedPartition;
+        }
+    }
+    
     StorageAccess* access;
     
     bool ignored;
@@ -117,16 +108,35 @@ Partition::Partition(Actions::CreatePartitionAction* action)
     DeviceModified::setParentName(action->disk());
 }
 
-Partition::Partition(Devices::Partition* other)
-    : d( new Private(other) )
-{
-    DeviceModified::setName(other->name());
-    DeviceModified::setParentName(other->parentName());
-}
+Partition::Partition()
+    : d( new Private )
+{}
 
 Partition::~Partition()
 {
     delete d;
+}
+
+DeviceModified* Partition::copy() const
+{
+    Partition* partitionCopy = new Partition;
+    
+    partitionCopy->setFilesystem( filesystem() );
+    partitionCopy->setFlags( flags() );
+    partitionCopy->setIgnored( ignored() );
+    partitionCopy->setLabel( label() );
+    partitionCopy->setOffset( offset() );
+    partitionCopy->setPartitionTableScheme( partitionTableScheme() );
+    partitionCopy->setPartitionTypeString( partitionTypeString() );
+    partitionCopy->setPartitionType( partitionType() );
+    partitionCopy->setSize( size() );
+    partitionCopy->setUsage( usage() );
+    partitionCopy->setDescription( description() );
+    partitionCopy->setName( name() );
+    partitionCopy->setParentName( parentName() );
+    partitionCopy->d->access = access();
+    
+    return partitionCopy;
 }
 
 DeviceModified::DeviceModifiedType Partition::deviceType() const
@@ -225,6 +235,12 @@ void Partition::setIgnored(bool ign)
 void Partition::setPartitionType(PartitionType type)
 {
     d->partitionType = type;
+}
+
+void Partition::setPartitionTypeString(const QString& type)
+{
+    d->partitionTypeString = type;
+    d->setTypeFromString();
 }
 
 void Partition::setPartitionTableScheme(const QString& scheme)

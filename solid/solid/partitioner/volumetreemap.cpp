@@ -106,7 +106,11 @@ void VolumeTreeMap::build()
  */
 void VolumeTreeMap::backToOriginal()
 {
-    d->devices = d->beginningCopies;
+    d->devices.clear();
+    
+    foreach (const QString& disk, d->beginningCopies.keys()) {
+        d->devices.insert(disk, d->beginningCopies[disk].copy());
+    }
 }
 
 void VolumeTreeMap::connectSignals()

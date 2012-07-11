@@ -47,10 +47,24 @@ namespace Solid
                  * @param drive the StorageDrive.
                  */
                 explicit Disk(StorageDrive *);
-                explicit Disk(Disk *);
+                
+                /**
+                 * Builds a new disk object with all properties set to their default values.
+                 * This is used just temporarily to copy a device.
+                 */
+                explicit Disk();
+                
+                /**
+                 * Destructor.
+                 */
                 virtual ~Disk();
                 
-                DeviceModifiedType deviceType() const;
+                virtual DeviceModifiedType deviceType() const;
+                
+                /**
+                 * @returns a dynamically allocated copy of this disk.
+                 */
+                virtual DeviceModified* copy() const;
                 
                 /**
                  * @returns the size of the disk in bytes.

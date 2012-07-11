@@ -39,6 +39,9 @@ VolumeTreeItem::Private::Private(DeviceModified* v, QList< VolumeTreeItem *> c, 
     , parent(p)
 {}
 
+VolumeTreeItem::Private::Private()
+{}
+
 VolumeTreeItem::Private::~Private()
 {}
 
@@ -46,6 +49,19 @@ VolumeTreeItem::Private::~Private()
 VolumeTreeItem::VolumeTreeItem(DeviceModified* volume, QList< VolumeTreeItem *> children, VolumeTreeItem* parent)
     : d( new Private(volume, children, parent) )
 {}
+
+VolumeTreeItem::VolumeTreeItem(const VolumeTreeItem& other)
+    : d( new Private )
+{
+    DeviceModified* otherDev = other.volume();
+    d->volume = otherDev->copy();
+    
+    foreach (VolumeTreeItem* child, other.children()) {
+        VolumeTreeItem* copyChild = new VolumeTreeItem(*child);
+        copyChild->d->parent = this;
+        d->children.append(copyChild);
+    }
+}
 
 VolumeTreeItem::~VolumeTreeItem()
 {
@@ -430,6 +446,13 @@ Disk* VolumeTree::disk() const
 VolumeTreeItem* VolumeTree::rootNode() const
 {
     return d->root;
+}
+
+VolumeTree VolumeTree::copy() const
+{
+    VolumeTreeItem* copyRootItem = new VolumeTreeItem(*(d->root));
+    VolumeTree copy(copyRootItem);
+    return copy;
 }
 
 VolumeTreeItem* VolumeTree::extendedNode() const

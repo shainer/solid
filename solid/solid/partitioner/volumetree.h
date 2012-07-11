@@ -70,6 +70,13 @@ namespace Solid
             ~VolumeTreeItem();
             
             /**
+             * Copies the current tree node, the device stored inside and all the children nodes.
+             * 
+             * @param other the node to copy from.
+             */
+            VolumeTreeItem(const VolumeTreeItem &);
+            
+            /**
              * @returns the device associated with this item.
              */
             DeviceModified* volume() const;
@@ -176,6 +183,11 @@ namespace Solid
             Disk* disk() const;
             
             /**
+             * @returns a hard copy of this tree.
+             */
+            VolumeTree copy() const;
+            
+            /**
              * @returns the item representing the extended partition, or NULL if there isn't one.
              * @note each disk can have up to one extended partition.
              */
@@ -266,6 +278,7 @@ namespace Solid
         {
         public:
             Private(DeviceModified *, QList< VolumeTreeItem *>, VolumeTreeItem *);
+            Private();
             ~Private();
             
             DeviceModified* volume;

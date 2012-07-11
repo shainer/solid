@@ -36,6 +36,9 @@ public:
         , size(s)
     {}
     
+    Private()
+    {}
+    
     ~Private()
     {}
     
@@ -61,6 +64,12 @@ FreeSpace::FreeSpace(qulonglong offset, qulonglong size, const QString& parentUd
     DeviceModified::setParentName(parentUdi);
 }
 
+FreeSpace::FreeSpace()
+    : d( new Private )
+{
+    d->q = this;
+}
+
 FreeSpace::~FreeSpace()
 {
     delete d;
@@ -69,6 +78,19 @@ FreeSpace::~FreeSpace()
 DeviceModified::DeviceModifiedType FreeSpace::deviceType() const
 {
     return FreeSpaceDevice;
+}
+
+DeviceModified* FreeSpace::copy() const
+{
+    FreeSpace* spaceCopy = new FreeSpace;
+    
+    spaceCopy->setOffset( offset() );
+    spaceCopy->setSize( size() );
+    spaceCopy->setDescription( description() );
+    spaceCopy->setName( name() );
+    spaceCopy->setParentName( parentName() );
+    
+    return spaceCopy;
 }
 
 qulonglong FreeSpace::size() const

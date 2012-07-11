@@ -55,8 +55,12 @@ public:
     ~Private()
     {}
     
-    /* Applies an action on the disks. */
-    bool applyAction(Action *);
+    /*
+     * Applies an action on the disks.
+     * All the new registered actions are put in the stack. The parameter is used by undo() since the actions in that
+     * case are already present in the stack.
+     */
+    bool applyAction(Action *, bool putInStack = true);
     
     /* Performs some standard checks on the partition interested by the action, if any. */
     bool partitionChecks(Action *);
@@ -155,7 +159,7 @@ void VolumeManager::undo()
 {
     d->error.setType(PartitioningError::None);
     
-    if (!d->actionstack.empty()) {
+    if (isUndoPossible()) {
         /*
          * Retrieve now the owner disk of the undone action, as both the list returned by undo() and the registered
          * action list may be empty later.
@@ -164,7 +168,7 @@ void VolumeManager::undo()
         d->volumeTreeMap.backToOriginal();
 
         foreach (Action* action, d->actionstack.undo()) {
-            d->applyAction(action);
+            d->applyAction(action, false); /* don't put on stack as they are already there */
         }
         
         emit diskChanged( ownerDisk->name() );
@@ -175,10 +179,9 @@ void VolumeManager::redo()
 {
     d->error.setType(PartitioningError::None);
     
-    if (!d->actionstack.undoEmpty()) {
-        d->volumeTreeMap.backToOriginal();
+    if (isRedoPossible()) {
         Action* newAction = d->actionstack.redo();
-        d->applyAction(newAction);
+        d->applyAction(newAction, false);
         
         emit diskChanged( newAction->ownerDisk()->name() );
     }
@@ -278,7 +281,7 @@ QList< Action* > VolumeManager::registeredActions() const
     return d->actionstack.list();
 }
 
-bool VolumeManager::Private::applyAction(Action* action)
+bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
 {    
     if (!partitionChecks(action)) {
         return false;
@@ -510,7 +513,11 @@ bool VolumeManager::Private::applyAction(Action* action)
     }
 
     action->setOwnerDisk(ownerDisk);
-    actionstack.push(action);
+    
+    if (putInStack) {
+        actionstack.push(action);
+    }
+    
     return true;
 }
 

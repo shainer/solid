@@ -32,19 +32,13 @@ class Disk::Private
 {
 public:
     Private(StorageDrive *i)
-        : iface(i)
-        , size(i->size())
-        , scheme(i->partitionTableScheme())
-    {
-
-    }
-    
-    Private(qulonglong s, const QString& t)
-        : size(s)
-        , scheme(t)
+        : size( i->size() )
+        , scheme( i->partitionTableScheme() )
     {}
     
-    StorageDrive* iface;
+    Private()
+    {}
+    
     qulonglong size;
     QString scheme;
 };
@@ -54,16 +48,26 @@ Disk::Disk(StorageDrive* drive)
     , d( new Private( drive ) )
 {}
 
-Disk::Disk(Disk* other)
-    : d( new Private(other->size(), other->partitionTableScheme()) )
-{
-    DeviceModified::setName(other->name());
-    DeviceModified::setParentName(other->parentName());
-}
+Disk::Disk()
+    : d( new Private )
+{}
 
 Disk::~Disk()
 {
     delete d;
+}
+
+DeviceModified* Disk::copy() const
+{
+    Disk* copyDisk = new Disk;
+    copyDisk->setOffset( offset() );
+    copyDisk->setPartitionTableScheme( partitionTableScheme() );
+    copyDisk->setSize( size() );
+    copyDisk->setDescription( description() );
+    copyDisk->setName( name() );
+    copyDisk->setParentName( parentName() );
+    
+    return copyDisk;
 }
 
 DeviceModified::DeviceModifiedType Disk::deviceType() const

@@ -18,6 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 #include <solid/partitioner/actionstack.h>
+#include <QtCore/QDebug>
 
 namespace Solid
 {
@@ -62,24 +63,21 @@ void ActionStack::push(Action* op)
 QList< Action* > ActionStack::undo()
 {
     Action* first = NULL;
-    
     if (!d->actions.isEmpty()) {
         first = d->actions.takeLast();
         d->undoneActions.push_back(first);
     }
     
-    QList< Action* > undone = d->actions;
-    d->actions.clear();
-    
-    return undone;
+    return d->actions;
 }
 
 Action* ActionStack::redo()
 {
     Action* firstUndone = NULL;
-    
+        
     if (!d->undoneActions.isEmpty()) {
         firstUndone = d->undoneActions.takeLast();
+        d->actions.push_back(firstUndone);
     }
     
     return firstUndone;

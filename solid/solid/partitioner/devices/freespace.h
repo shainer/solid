@@ -45,9 +45,20 @@ namespace Solid
                  * @param parentUdi the udi of the disk this block is placed into.
                  */
                 explicit FreeSpace(qulonglong, qulonglong, const QString&);
+                
+                /**
+                 * Builds a new free space object with all properties set to their default values.
+                 * This is used just temporarily to copy a device.
+                 */
+                explicit FreeSpace();
                 virtual ~FreeSpace();
                 
                 virtual DeviceModifiedType deviceType() const;
+                
+                /**
+                 * @returns a dynamically allocated copy of this free space block.
+                 */
+                virtual DeviceModified* copy() const;
                 
                 /**
                  * @returns the size in bytes.
