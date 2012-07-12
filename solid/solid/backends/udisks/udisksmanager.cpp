@@ -36,63 +36,6 @@ using namespace Solid::Backends::Shared;
 using namespace Solid::Partitioner;
 using namespace Solid::Partitioner::Devices;
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, FileSystems &knownFS)
-{
-    argument.beginStructure();
-
-    argument >> knownFS.id >> knownFS.name >> knownFS.supports_unix_owners >> knownFS.can_mount >> knownFS.can_create >> knownFS.max_label_len
-             >> knownFS.supports_label_rename >> knownFS.supports_online_label_rename
-             >> knownFS.supports_fsck >> knownFS.supports_online_fsck
-             >> knownFS.supports_resize_enlarge >> knownFS.supports_online_resize_enlarge
-             >> knownFS.supports_resize_shrink >> knownFS.supports_resize_shrink;
-
-    argument.endStructure();
-
-    return argument;
-}
-
-QDBusArgument &operator<<(QDBusArgument &argument, const FileSystems &knownFS)
-{
-    argument.beginStructure();
-
-    argument << knownFS.id << knownFS.name << knownFS.supports_unix_owners << knownFS.can_mount << knownFS.can_create << knownFS.max_label_len
-             << knownFS.supports_label_rename << knownFS.supports_online_label_rename
-             << knownFS.supports_fsck << knownFS.supports_online_fsck
-             << knownFS.supports_resize_enlarge << knownFS.supports_online_resize_enlarge
-             << knownFS.supports_resize_shrink << knownFS.supports_resize_shrink;
-
-    argument.endStructure();
-
-    return argument;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &argument, FileSystemsList &knownFSList)
-{
-    argument.beginArray();
-    knownFSList.clear();
-
-    while(!argument.atEnd()) {
-        FileSystems element;
-        argument >> element;
-        knownFSList.append(element);
-    }
-
-    argument.endArray();
-    return argument;
-}
-
-QDBusArgument &operator<<(QDBusArgument &argument, const FileSystemsList &knownFSList)
-{
-    argument.beginArray(qMetaTypeId<FileSystems>());
-    for(int i = 0; i < knownFSList.count(); ++i) {
-        argument << knownFSList[i];
-    }
-
-    argument.endArray();
-
-    return argument;
-}
-
 UDisksManager::UDisksManager(QObject *parent)
     : Solid::Ifaces::DeviceManager(parent),
       m_manager(UD_DBUS_SERVICE,
@@ -237,28 +180,6 @@ QStringList UDisksManager::allDevicesInternal()
 QSet< Solid::DeviceInterface::Type > UDisksManager::supportedInterfaces() const
 {
     return m_supportedInterfaces;
-}
-
-QStringList UDisksManager::supportedFilesystems() const
-{
-    qRegisterMetaType<FileSystems>("Filesystems");
-    qDBusRegisterMetaType<FileSystems>();
-    qDBusRegisterMetaType<FileSystemsList>();
-    
-    QDBusMessage message = QDBusMessage::createMethodCall("org.freedesktop.UDisks.Introspectable",
-                                                            "/org/freedesktop/UDisks",
-                                                            "org.freedesktop.UDisks",
-                                                            "Introspect");
-    QDBusReply<QString> reply = QDBusConnection::systemBus().call(message);
-    qDebug() << reply.value();
-    
-    FileSystemsList fslist = m_manager.property("KnownFilesystems").value<FileSystemsList>();
-    
-    foreach (FileSystems fs, fslist) {
-        qDebug() << fs.name << fs.id;
-    }
-    
-    return QStringList();
 }
 
 QString UDisksManager::udiPrefix() const

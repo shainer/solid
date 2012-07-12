@@ -156,6 +156,7 @@ set(solid_LIB_SRCS
    partitioner/utils/partitioningerror.cpp
    partitioner/utils/partitiontableutils.cpp
    partitioner/utils/utils.cpp
+   partitioner/utils/filesystemutils.cpp
 )
 
 if(NOT APPLE)
@@ -267,6 +268,7 @@ if(NOT WIN32 AND NOT APPLE)
       message(STATUS "Building Solid UDisks backend." )
       set(solid_LIB_SRCS ${solid_LIB_SRCS}
       backends/udisks/udisksmanager.cpp
+      backends/udisks/udisksfilesystem.cpp
       backends/udisks/udisksdevice.cpp
       backends/udisks/udisksblock.cpp
       backends/udisks/udisksstoragevolume.cpp
@@ -443,6 +445,7 @@ install( FILES partitioner/utils/filesystem.h partitioner/utils/filesystem_p.h
                partitioner/utils/partitiontableutils.h
                partitioner/utils/partitioner_enums.h
                partitioner/utils/utils.h
+               partitioner/utils/filesystemutils.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/utils COMPONENT Devel)
 
 ########### parser build ###############
