@@ -471,10 +471,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
             QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition( mpa->partition() );
             VolumeTree tree = pair.first;
             Partition* p = pair.second;
-            
-            if (mpa->isLabelChanged()) {
-                p->setLabel( mpa->label() );
-            }
 
             QStringList supportedFlags = PartitionTableUtils::instance()->supportedFlags( p->partitionTableScheme() );
 
@@ -486,8 +482,17 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                     return false;
                 }
             }
-            p->setFlags(mpa->flags());
             
+            if (!mpa->flags().isEmpty() && p->partitionType() == ExtendedPartition) {
+                error.setType(PartitioningError::PartitionFlagsError);
+                error.arg( mpa->flags().first() );
+                return false;
+            }
+            
+            if (mpa->isLabelChanged()) {
+                p->setLabel( mpa->label() );
+            }
+            p->setFlags(mpa->flags());
             ownerDisk = tree.disk();
             break;
         }

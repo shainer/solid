@@ -137,7 +137,7 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
         }
 
         case PartitionFlagsError: {
-            d->description = "The following flags aren't supported for this partitioning scheme: %0";
+            d->description = "The following flag isn't supported in this partitioning scheme: %0 (or you're trying to set it to an extended partition).";
             d->markersLeft = 1;
             break;
         }
