@@ -56,6 +56,8 @@ namespace Solid
                     ResizeOutOfBoundsError,
                     ExceedingPrimariesError,
                     ExceedingGPTPartitionsError,
+                    FilesystemError,
+                    FilesystemLabelError,
                     FilesystemFlagsError,
                     PartitionFlagsError,
                     PartitionTooSmallError,

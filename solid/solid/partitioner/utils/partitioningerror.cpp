@@ -111,6 +111,18 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             d->markersLeft = 1;
             break;
         }
+        
+        case FilesystemError: {
+            d->description = "The filesystem %0 isn't supported by UDisks, or cannot be created on a partition.";
+            d->markersLeft = 1;
+            break;
+        }
+        
+        case FilesystemLabelError: {
+            d->description = "The filesystem %0 doesn't support a label, or the maximum label length was exceeded.";
+            d->markersLeft = 1;
+            break;
+        }
 
         case FilesystemFlagsError: {
             d->description = "The following flags don't exist for this filesystem type: %0";

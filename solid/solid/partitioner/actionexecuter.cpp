@@ -21,6 +21,7 @@
 #include <solid/partitioner/volumemanager.h>
 #include <solid/partitioner/utils/partitiontableutils.h>
 #include <solid/partitioner/utils/utils.h>
+#include <solid/partitioner/utils/filesystemutils.h>
 
 #include <solid/partitioner/actions/formatpartitionaction.h>
 #include <solid/partitioner/actions/createpartitiontableaction.h>
@@ -134,7 +135,7 @@ bool ActionExecuter::execute()
                 }
                 
                 Utils::Filesystem fs = fpa->filesystem();
-                success = device->format( fs.name(), fs.flags() );
+                success = device->format( Utils::FilesystemUtils::instance()->filesystemIdFromName( fs.name() ), fs.flags() );
                 break;
             }
             

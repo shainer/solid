@@ -30,6 +30,7 @@
 #include <solid/partitioner/actions/removepartitiontableaction.h>
 #include <solid/partitioner/utils/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
+#include <solid/partitioner/utils/filesystemutils.h>
 #include <solid/device.h>
 #include <backends/udisks/udisksmanager.h>
 #include <solid/block.h>
@@ -64,6 +65,12 @@ public:
     
     /* Performs some standard checks on the partition interested by the action, if any. */
     bool partitionChecks(Action *);
+    
+    /*
+     * Performs some checks on the filesystem to be added to a partition. Returns true if all tests have passed.
+     * Otherwise, it automatically sets the right error type.
+     */
+    bool filesystemChecks(const Filesystem &);
     
     /*
      * Performs a series of check to see if the requested resizing/moving is legal, plus calls the following
@@ -297,7 +304,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
         case Action::FormatPartition: {
             Actions::FormatPartitionAction* fpa = dynamic_cast< Actions::FormatPartitionAction* >(action);
             
-            QPair<VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition(fpa->partition());
+            QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition(fpa->partition());
             VolumeTree tree = pair.first;
             Partition* volume = pair.second;
             Utils::Filesystem fs = fpa->filesystem();
@@ -309,11 +316,8 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                 error.arg( volume->name() );
                 return false;
             }
-
-            /* At least one flag of the specified filesystem is out-of-context */
-            if (!fs.unsupportedFlags().isEmpty()) {
-                error.setType(PartitioningError::FilesystemFlagsError);
-                error.arg(fpa->filesystem().unsupportedFlags().join(", "));
+            
+            if (!filesystemChecks(fs)) {
                 return false;
             }
             
@@ -361,6 +365,10 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                     error.arg(flag);
                     return false;
                 }
+            }
+            
+            if (!filesystemChecks( cpa->filesystem() )) {
+                return false;
             }
             
             /* Looks for the block of free space that will contain this partition, if present. */
@@ -541,6 +549,43 @@ bool VolumeManager::Private::partitionChecks(Action* a)
     }
     
     return true; /* no need to check anything for those actions not concerning partitions */
+}
+
+bool VolumeManager::Private::filesystemChecks(const Filesystem& fs)
+{        
+    FilesystemUtils* fsUtils = FilesystemUtils::instance();
+    QStringList supportedFilesystems = fsUtils->supportedFilesystems();
+    
+    /* The specific filesystem isn't supported, or cannot be created on a partition. */
+    if (!supportedFilesystems.contains( fs.name() ) || !fsUtils->filesystemProperty(fs.name(), "can_create").toBool()) {
+        error.setType(PartitioningError::FilesystemError);
+        error.arg( fs.name() );
+        return false;
+    }
+    
+    /* A label was set when not supported, or its length exceeds the maximum allowed */
+    if ((!fs.label().isEmpty() && !fsUtils->supportsLabel( fs.name() )) ||
+        (fs.label().size() > fsUtils->filesystemProperty(fs.name(), "max_label_len").toInt())) {
+        error.setType(PartitioningError::FilesystemLabelError);
+        error.arg( fs.name() );
+        return false;
+    }
+    
+    /* Ownership was set, but this filesystem doesn't support it. */
+    if ((fs.ownerGid() != -1 || fs.ownerUid() != -1) && !fsUtils->filesystemProperty(fs.name(), "supports_unix_owners").toBool()) {
+        error.setType(PartitioningError::FilesystemFlagsError);
+        error.arg( "owners" );
+        return false;
+    }
+
+    /* At least one flag of the specified filesystem doesn't actually exist */
+    if (!fs.unsupportedFlags().isEmpty()) {
+        error.setType(PartitioningError::FilesystemFlagsError);
+        error.arg( fs.unsupportedFlags().join(", ") );
+        return false;
+    }
+    
+    return true;
 }
 
 /*

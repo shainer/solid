@@ -17,9 +17,10 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-#include <filesystemutils.h>
+#include <solid/partitioner/utils/filesystemutils.h>
 #include <solid/backends/udisks/udisksfilesystem.h>
 #include <kglobal.h>
+#include <QtCore/QDebug>
 
 namespace Solid
 {

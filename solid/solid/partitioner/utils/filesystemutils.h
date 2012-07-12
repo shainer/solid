@@ -43,7 +43,7 @@ namespace Solid
                 static FilesystemUtils* instance();
                 
                 /**
-                 * @returns a list of supported filesystems' names.
+                 * @returns a list of supported filesystem's names.
                  */
                 QStringList supportedFilesystems() const;
                 
