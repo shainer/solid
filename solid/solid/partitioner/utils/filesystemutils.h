@@ -56,6 +56,14 @@ namespace Solid
                 QString filesystemIdFromName(const QString &) const;
                 
                 /**
+                 * Retrieves a filesystem name by its identifier.
+                 * 
+                 * @param fsId a filesystem identifier.
+                 * @returns the filesystem more descriptive name.
+                 */
+                QString filesystemNameFromId(const QString &) const;
+                
+                /**
                  * @param fsName a filesystem name.
                  * @returns whether the filesystem supports labels.
                  */

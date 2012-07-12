@@ -19,6 +19,7 @@
 */
 #include <solid/partitioner/devices/partition.h>
 #include <solid/partitioner/utils/utils.h>
+#include <solid/partitioner/utils/filesystemutils.h>
 #include <backends/udisks/udisksdevice.h>
 #include <solid/storageaccess.h>
 
@@ -38,7 +39,6 @@ public:
         : access(a)
         , ignored(v->isIgnored())
         , usage(v->usage())
-        , filesystem( Utils::Filesystem(v->fsType()) )
         , label(v->label())
         , uuid(v->uuid())
         , size(v->size())
@@ -48,6 +48,9 @@ public:
         , scheme(v->partitionTableScheme())
         , flags(v->flags())
     {
+        QString fsName = FilesystemUtils::instance()->filesystemNameFromId( v->fsType() );
+        filesystem = Utils::Filesystem(fsName);
+        
         setTypeFromString();
     }
     

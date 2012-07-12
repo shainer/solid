@@ -98,6 +98,19 @@ QString FilesystemUtils::filesystemIdFromName(const QString& fsName) const
     return QString();
 }
 
+QString FilesystemUtils::filesystemNameFromId(const QString& fsId) const
+{
+    for (QHash< QString, KnownFilesystem >::iterator it = d->filesystems.begin(); it != d->filesystems.end(); it++) {
+        KnownFilesystem filesystem = it.value();
+        
+        if (filesystem.id == fsId) {
+            return it.key();
+        }
+    }
+    
+    return QString();
+}
+
 bool FilesystemUtils::supportsLabel(const QString& filesystem) const
 {
     return (filesystemProperty(filesystem, "max_label_len").toUInt() != 0);
