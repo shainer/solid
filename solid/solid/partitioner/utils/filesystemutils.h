@@ -43,7 +43,7 @@ namespace Solid
                 static FilesystemUtils* instance();
                 
                 /**
-                 * @returns a list of supported filesystem's names.
+                 * @returns a list of supported filesystems' names.
                  */
                 QStringList supportedFilesystems() const;
                 
@@ -75,7 +75,7 @@ namespace Solid
                  * @returns the value of the property as a QVariant, or an invalid object if the property doesn't exist.
                  */
                 QVariant filesystemProperty(const QString &, const QString &) const;
-                
+
                 /**
                  * Retrieves the minimum size a partition with this filesystem must have.
                  * 
@@ -83,7 +83,7 @@ namespace Solid
                  * @returns the minimum size in bytes.
                  */
                 qulonglong minimumFilesystemSize(const QString &);
-                
+
             private:
                 FilesystemUtils();
                 

@@ -295,7 +295,6 @@ if(NOT WIN32 AND NOT APPLE)
 
    # FIXME: this should work on more Unix systems
    if (CMAKE_SYSTEM_NAME MATCHES Linux)
-
        if ( WITH_SOLID_UDISKS2 )
            message(STATUS "Building Solid UDisks2 backend." )
            add_definitions(-DWITH_SOLID_UDISKS2)
@@ -316,6 +315,7 @@ if(NOT WIN32 AND NOT APPLE)
            message(STATUS "Building Solid UDisks backend." )
            set(solid_LIB_SRCS ${solid_LIB_SRCS}
            backends/udisks/udisksmanager.cpp
+           backends/udisks/udisksfilesystem.cpp
            backends/udisks/udisksdevice.cpp
            backends/udisks/udisksfilesystem.cpp
            backends/udisks/udisksblock.cpp

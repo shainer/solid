@@ -79,7 +79,7 @@ FilesystemUtils::FilesystemUtils()
     d->filesystemMinimumSizes.insert("Linux Ext4", 8);
     d->filesystemMinimumSizes.insert("ReiserFS", 32);
     d->filesystemMinimumSizes.insert("FAT", 32);
-    
+
     s_filesystemutils->q = this;
 }
 

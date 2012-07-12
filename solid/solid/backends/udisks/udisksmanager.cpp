@@ -31,6 +31,8 @@
 
 using namespace Solid::Backends::UDisks;
 using namespace Solid::Backends::Shared;
+using namespace Solid::Partitioner;
+using namespace Solid::Partitioner::Devices;
 
 UDisksManager::UDisksManager(QObject *parent)
     : Solid::Ifaces::DeviceManager(parent),
