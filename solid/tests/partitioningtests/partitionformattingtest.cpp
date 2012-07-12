@@ -52,28 +52,42 @@ void PartitionFormattingTest::initTestCase()
 void PartitionFormattingTest::test()
 {
     VolumeManager* manager = VolumeManager::instance();
-    FormatPartitionAction* action1 = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "swap");
-    FormatPartitionAction* action2 = new FormatPartitionAction("/org/kde/solid/fakehw/extended_volume", "ntfs");
+    FormatPartitionAction* good1 = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "Swap Space");
+    FormatPartitionAction* extended = new FormatPartitionAction("/org/kde/solid/fakehw/extended_volume", "NTFS");
     
-    /*
-     * First test: valid formatting
-     */
-    manager->registerAction(action1);
+    FormatPartitionAction* unsupported = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "unexistent");
+    FormatPartitionAction* wrongLabel = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume",
+                                                                  Utils::Filesystem("Swap Space", "veeery long label"));
+    FormatPartitionAction* ownership = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume",
+                                                                 Utils::Filesystem("FAT", "", 3, 4));
+    
+    /* First test: valid formatting */
+    manager->registerAction(good1);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
     
     /*
      * NOTE: this device always exists and the cast doesn't fail, otherwise the previous instructions would have failed
-     * at some point (either throught QCOMPARE, or with a segfault in registerAction()
+     * at some point (either throught QCOMPARE, or with a segfault in registerAction())
      */
     DeviceModified* foreign = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I").searchDevice("/org/kde/solid/fakehw/home_volume");
     Partition* p = dynamic_cast< Partition* >(foreign);
-    QCOMPARE(p->filesystem().name(), QString("swap")); /* check if the new filesystem has been set to this partition */
+    QCOMPARE(p->filesystem().name(), QString("Swap Space")); /* check if the new filesystem has been set to this partition */
     
-    /*
-     * This action isn't legal, as you can't format an extended partition.
-     */
-    manager->registerAction(action2);
+    /* This action isn't legal, as you can't format an extended partition. */
+    manager->registerAction(extended);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::CannotFormatPartition);
+    
+    /* Trying to format with an unexistent filesystem. */
+    manager->registerAction(unsupported);
+    QCOMPARE(manager->error().type(), Utils::PartitioningError::FilesystemError);
+    
+    /* Trying to set a label, but it's too long. */
+    manager->registerAction(wrongLabel);
+    QCOMPARE(manager->error().type(), Utils::PartitioningError::FilesystemLabelError);
+    
+    /* Trying to set ownership on a filesystem that doesn't support it. */
+    manager->registerAction(ownership);
+    QCOMPARE(manager->error().type(), Utils::PartitioningError::FilesystemFlagsError);
 }
 
 #include "partitionformattingtest.moc"
