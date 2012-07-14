@@ -601,7 +601,8 @@ bool VolumeManager::Private::filesystemChecks(const Filesystem& fs)
     QStringList supportedFilesystems = fsUtils->supportedFilesystems();
     
     /* The specific filesystem isn't supported, or cannot be created on a partition. */
-    if (!supportedFilesystems.contains( fs.name() ) || !fsUtils->filesystemProperty(fs.name(), "can_create").toBool()) {
+    if (fs.name() != "unformatted" && !fs.name().isEmpty() &&
+        (!supportedFilesystems.contains( fs.name() ) || !fsUtils->filesystemProperty(fs.name(), "can_create").toBool())) {
         error.setType(PartitioningError::FilesystemError);
         error.arg( fs.name() );
         return false;
