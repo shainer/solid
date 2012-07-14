@@ -51,19 +51,29 @@ public:
         QString fsName = FilesystemUtils::instance()->filesystemNameFromId( v->fsType() );
         filesystem = Utils::Filesystem(fsName);
         
+        /* For an existing partition we know the type string but not the actual type (primary, extended, ...) */
         setTypeFromString();
     }
     
-    Private(Actions::CreatePartitionAction* action)
+    Private(Actions::CreatePartitionAction* action, const QString& s)
         : access(0)
         , ignored(false)
         , usage(StorageVolume::FileSystem)
+        , filesystem( action->filesystem() )
         , label(action->label())
         , size(action->size())
         , offset(action->offset())
         , partitionType(action->partitionType())
+        , scheme(s)
         , flags(action->flags())
-    {}
+    {
+        /*
+         * For a partition created by the application, we know the filesystem and if it's extended, primary, etc.,
+         * but with this method we determine the type string according to the partition table scheme. This function
+         * is called also when either the partitionType or the filesystem property changes.
+         */
+        setStringFromType();
+    }
     
     Private()
     {}
@@ -73,6 +83,12 @@ public:
         if (partitionTypeString == EXTENDED_TYPE_STRING || partitionTypeString == EXTENDED_TYPE_STRING_LBA) {
             partitionType = ExtendedPartition;
         }
+    }
+    
+    void setStringFromType()
+    {
+        QString type = (partitionType == ExtendedPartition) ? "extended" : Utils::FilesystemUtils::instance()->filesystemIdFromName(filesystem.name());
+        partitionTypeString = Utils::PartitionTableUtils::instance()->typeString(scheme, type);
     }
     
     StorageAccess* access;
@@ -102,9 +118,9 @@ Partition::Partition(Device& dev)
     d = new Private(volume, access);
 }
 
-Partition::Partition(Actions::CreatePartitionAction* action)
+Partition::Partition(Actions::CreatePartitionAction* action, const QString& scheme)
     : DeviceModified()
-    , d( new Private(action) )
+    , d( new Private(action, scheme) )
 {    
     DeviceModified::setName( action->partitionName() );
     DeviceModified::setDescription( action->partitionName() );
@@ -238,6 +254,7 @@ void Partition::setIgnored(bool ign)
 void Partition::setPartitionType(PartitionType type)
 {
     d->partitionType = type;
+    d->setStringFromType();
 }
 
 void Partition::setPartitionTypeString(const QString& type)
@@ -259,6 +276,7 @@ void Partition::setUsage(StorageVolume::UsageType usage)
 void Partition::setFilesystem(const Utils::Filesystem& fs)
 {
     d->filesystem = fs;
+    d->setStringFromType();
 }
 
 void Partition::setLabel(const QString& label)

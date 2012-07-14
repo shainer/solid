@@ -56,8 +56,9 @@ namespace Solid
                  * Creates a new partition from an application request.
                  * 
                  * @param action the action registered for creating the new partition.
+                 * @param scheme the partition table scheme on which the partition is created
                  */
-                explicit Partition(Actions::CreatePartitionAction *);
+                explicit Partition(Actions::CreatePartitionAction *, const QString &);
                 
                 /**
                  * Builds a new partition object with all properties set to their default values.
