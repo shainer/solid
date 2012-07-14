@@ -150,7 +150,7 @@ QStringList PartitionTableUtils::supportedFlags(const QString& scheme)
     return d->supportedFlags.value(scheme);
 }
 
-QString PartitionTableUtils::typeString(const QString & scheme, QString type)
+QString PartitionTableUtils::typeString(const QString& scheme, QString type)
 {
     if (type.isEmpty()) {
         type = "unformatted";

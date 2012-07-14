@@ -55,8 +55,8 @@ namespace Solid
                 /**
                  * Converts a partition type to the appropriate string.
                  * 
-                 * @param type the type.
                  * @param scheme the scheme name.
+                 * @param type the type.
                  * 
                  * @returns the correspondent type string.
                  */
