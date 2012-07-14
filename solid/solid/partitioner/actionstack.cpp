@@ -88,10 +88,10 @@ void ActionStack::removeAction(Action* action)
     for (QList< Action* >::iterator it = d->actions.begin(); it != d->actions.end(); it++) {
         if ((*it)->description() == action->description()) {
             d->actions.erase(it);
+            delete action;
+            break;
         }
     }
-    
-    delete action;
 }
 
 void ActionStack::removeActionsOfDisk(const QString& diskName)

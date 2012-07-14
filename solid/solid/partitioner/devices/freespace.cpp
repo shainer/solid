@@ -89,6 +89,7 @@ DeviceModified* FreeSpace::copy() const
     spaceCopy->setDescription( description() );
     spaceCopy->setName( name() );
     spaceCopy->setParentName( parentName() );
+    spaceCopy->d->setDeviceName();
     
     return spaceCopy;
 }

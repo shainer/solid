@@ -27,11 +27,21 @@ namespace Partitioner
 namespace Actions
 {
 
+class Action::Private
+{
+public:
+    DeviceModified* owner;
+    Action* oppositeAction;
+};
+    
 Action::Action()
+    : d( new Private )
 {}
 
 Action::~Action()
-{}
+{
+    delete d;
+}
 
 bool Action::operator==(Action *other) const
 {
@@ -40,12 +50,22 @@ bool Action::operator==(Action *other) const
 
 DeviceModified* Action::ownerDisk() const
 {
-    return owner;
+    return d->owner;
 }
 
-void Action::setOwnerDisk(DeviceModified* o)
+void Action::setOwnerDisk(DeviceModified* owner)
 {
-    owner = o;
+    d->owner = owner;
+}
+
+Action* Action::oppositeAction() const
+{
+    return d->oppositeAction;
+}
+
+void Action::setOppositeAction(Action* a)
+{
+    d->oppositeAction = a;
 }
 
 } 

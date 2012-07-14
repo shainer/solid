@@ -51,6 +51,7 @@ class SOLID_EXPORT VolumeManager::Private
 public:
     Private()
         : newPartitionId(1)
+        , deleteConflictingActions(true)
     {}
     
     ~Private()
@@ -58,10 +59,11 @@ public:
     
     /*
      * Applies an action on the disks.
-     * All the new registered actions are put in the stack. The parameter is used by undo() since the actions in that
-     * case are already present in the stack.
+     * 
+     * All the new registered actions are pushed in the stack. The parameter is set to true by undo() and redo()
+     * to avoid this, since the interested action is already present on the stack.
      */
-    bool applyAction(Action *, bool putInStack = true);
+    bool applyAction(Action *, bool undoOrRedo = false);
     
     /* Performs some standard checks on the partition interested by the action, if any. */
     bool partitionChecks(Action *);
@@ -95,6 +97,7 @@ public:
     ActionStack actionstack; /* stack of registered actions */
     PartitioningError error; /* latest error */
     int newPartitionId; /* incremental ID for new partition's unique names */
+    bool deleteConflictingActions; /* whether conflicting actions should be removed */
 };
 
 class VolumeManagerHelper
@@ -142,6 +145,11 @@ VolumeManager* VolumeManager::instance()
     return s_volumemanager->q;
 }
 
+void VolumeManager::setDeletionOfConflictingActions(bool deleteConflicts)
+{
+    d->deleteConflictingActions = deleteConflicts;
+}
+
 bool VolumeManager::registerAction(Actions::Action* action)
 {
     d->error.setType(PartitioningError::None); /* erase any previous error */
@@ -157,6 +165,21 @@ bool VolumeManager::registerAction(Actions::Action* action)
     
     if (success) {
         emit diskChanged(action->ownerDisk()->name());
+    }
+  
+    if (d->deleteConflictingActions) {
+        QList< Action* > previousActions = d->actionstack.list();
+        
+        for (QList< Action* >::iterator it = previousActions.begin(); it != previousActions.end() - 1; it++) {
+            Action* opposite = (*it)->oppositeAction();
+            
+            if (opposite && opposite->description() == action->description()) {
+                d->actionstack.removeAction(action);
+                d->actionstack.removeAction( (*it) );
+                delete opposite;
+                break;
+            }
+        }
     }
     
     return success;
@@ -175,7 +198,7 @@ void VolumeManager::undo()
         d->volumeTreeMap.backToOriginal();
 
         foreach (Action* action, d->actionstack.undo()) {
-            d->applyAction(action, false); /* don't put on stack as they are already there */
+            d->applyAction(action, true); /* don't put on stack as they are already there */
         }
         
         emit diskChanged( ownerDisk->name() );
@@ -188,7 +211,7 @@ void VolumeManager::redo()
     
     if (isRedoPossible()) {
         Action* newAction = d->actionstack.redo();
-        d->applyAction(newAction, false);
+        d->applyAction(newAction, true);
         
         emit diskChanged( newAction->ownerDisk()->name() );
     }
@@ -288,7 +311,7 @@ QList< Action* > VolumeManager::registeredActions() const
     return d->actionstack.list();
 }
 
-bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
+bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
 {    
     if (!partitionChecks(action)) {
         return false;
@@ -299,6 +322,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
      * See the doDeviceAdded slot for more information on the usefulness of this property.
      */
     Disk* ownerDisk = 0;
+    Action* oppositeAction = 0;
     
     switch (action->actionType()) {
         case Action::FormatPartition: {
@@ -321,6 +345,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                 return false;
             }
             
+            Utils::Filesystem oldFs = volume->filesystem();
             volume->setFilesystem(fs);
             ownerDisk = tree.disk();
             break;
@@ -399,6 +424,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
             
             tree.d->addDevice(newPartition->parentName(), newPartition);
             ownerDisk = disk;
+            oppositeAction = new RemovePartitionAction( newPartition->name() );
             break;
         }
         
@@ -415,8 +441,16 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                 return false;
             }
             
+            oppositeAction = new CreatePartitionAction(tree.disk()->name(),
+                                                       partition->offset(),
+                                                       partition->size(),
+                                                       partition->partitionType() == ExtendedPartition,
+                                                       partition->filesystem(),
+                                                       partition->label(),
+                                                       partition->flags());
+            
             /* Deletes the partition merging adjacent free blocks if present. */
-            tree.d->mergeAndDelete(rpa->partition());
+            tree.d->mergeAndDelete( rpa->partition() );
             ownerDisk = tree.disk();
             break;
         }
@@ -462,6 +496,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                 return false;
             }
             
+            oppositeAction = new ResizePartitionAction(rpa->partition(), oldOffset, oldSize);
             ownerDisk = disk;
             break;
         }
@@ -489,10 +524,13 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
                 return false;
             }
             
+            oppositeAction = new ModifyPartitionAction(p->name(), p->label(), p->flags());
+            
             if (mpa->isLabelChanged()) {
                 p->setLabel( mpa->label() );
             }
             p->setFlags(mpa->flags());
+            
             ownerDisk = tree.disk();
             break;
         }
@@ -524,10 +562,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool putInStack)
         default:
             break;
     }
-
-    action->setOwnerDisk(ownerDisk);
     
-    if (putInStack) {
+    action->setOwnerDisk(ownerDisk);
+    action->setOppositeAction(oppositeAction);
+    
+    if (!undoOrRedo) {
         actionstack.push(action);
     }
     
