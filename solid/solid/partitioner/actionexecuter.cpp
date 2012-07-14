@@ -135,7 +135,8 @@ bool ActionExecuter::execute()
                 }
                 
                 Utils::Filesystem fs = fpa->filesystem();
-                success = device->format( Utils::FilesystemUtils::instance()->filesystemIdFromName( fs.name() ), fs.flags() );
+                QString fsName = Utils::FilesystemUtils::instance()->filesystemIdFromName( fs.name() );
+                success = device->format( fsName, fs.flags());
                 break;
             }
             
@@ -147,13 +148,15 @@ bool ActionExecuter::execute()
                 QString dummyPartitionName = cpa->partitionName();
                 
                 /* Finds the correct type strings for the partition given the scheme used. */
-                Filesystem fs = cpa->filesystem();
-                QString type = (cpa->partitionType() == ExtendedPartition) ? "extended" : fs.name();
+                QString fsName = Utils::FilesystemUtils::instance()->filesystemIdFromName( cpa->filesystem().name() );
+                QStringList fsFlags = cpa->filesystem().flags();
+                
+                QString type = (cpa->partitionType() == ExtendedPartition) ? "extended" : fsName;
                 QString typeUDisks = Utils::PartitionTableUtils::instance()->typeString(disk->partitionTableScheme(), type);
                 
                 QDBusObjectPath newPartition = device->createPartition(cpa->offset(), cpa->size(), typeUDisks, cpa->label(),
                                                                        cpa->flags(), QStringList(),
-                                                                       fs.name(), fs.flags());
+                                                                       fsName, fsFlags);
                 
                 /*
                  * Actions registered on this partition after this one used the temporary unique name we gave to the partition,
