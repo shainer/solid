@@ -168,16 +168,14 @@ bool VolumeManager::registerAction(Actions::Action* action)
     }
   
     if (d->deleteConflictingActions) {
-        QList< Action* > previousActions = d->actionstack.list();
-        
-        for (QList< Action* >::iterator it = previousActions.begin(); it != previousActions.end() - 1; it++) {
-            Action* opposite = (*it)->oppositeAction();
-            
+        if (d->actionstack.size() >= 2) {
+            Action* previousAction = d->actionstack.list().at( d->actionstack.size() - 2 );
+            Action* opposite = previousAction->oppositeAction();
+                    
             if (opposite && opposite->description() == action->description()) {
                 d->actionstack.removeAction(action);
-                d->actionstack.removeAction( (*it) );
+                d->actionstack.removeAction(previousAction);
                 delete opposite;
-                break;
             }
         }
     }
@@ -405,11 +403,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             }
             
             cpa->setPartitionName( "New partition " + QString::number(newPartitionId++) );
-            Partition* newPartition = new Partition(cpa);
-            newPartition->setPartitionTableScheme(scheme);
-            newPartition->setFilesystem( cpa->filesystem() );
-            newPartition->setPartitionType( cpa->partitionType() );
-            newPartition->setLabel( cpa->label() );
+            Partition* newPartition = new Partition(cpa, scheme);
             
             if (newPartition->partitionType() == LogicalPartition) {
                 newPartition->setParentName(tree.extendedPartition()->name());
