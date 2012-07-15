@@ -79,12 +79,12 @@ DeviceModified::DeviceModifiedType Disk::deviceType() const
 }
 
 qulonglong Disk::size() const
-{
+{   
     qulonglong s = d->size;
     s -= offset();
 
     if (d->scheme == "gpt") {
-        s -= 512 * 34; /* secondary GPT table which replicates the first at the end for safety purposes */
+        s -= d->sectorSize * 34; /* secondary GPT table which replicates the first at the end for safety purposes */
     }
 
     return s;
@@ -99,8 +99,8 @@ qulonglong Disk::offset() const
     }
     else if (d->scheme == "gpt") {
         off = d->sectorSize * 40;
-   }
-
+    }
+    
     return off;
 }
 

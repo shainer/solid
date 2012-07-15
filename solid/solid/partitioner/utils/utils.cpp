@@ -60,7 +60,10 @@ qulonglong sectorSize(const QString& disk)
     }
     
     file.open(QIODevice::ReadOnly);
-    return file.readAll().toULongLong();
+    QByteArray number = file.readAll();
+    number.chop(1);
+    
+    return number.toULongLong();
 }
 
 }
