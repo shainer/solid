@@ -52,6 +52,10 @@ void PartitionResizingTest::test()
 {
     VolumeManager* manager = VolumeManager::instance();
     VolumeTree tree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
+    DeviceModified* home = tree.searchDevice("/org/kde/solid/fakehw/home_volume");
+    DeviceModified* root = tree.searchDevice("/org/kde/solid/fakehw/root_volume");
+    DeviceModified* swap = tree.searchDevice("/org/kde/solid/fakehw/swap_volume");
+    
     Actions::ResizePartitionAction* offsetBBad = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
                                                                            1000000,
                                                                            21464836480);
@@ -103,30 +107,44 @@ void PartitionResizingTest::test()
     
     manager->registerAction(offsetBsizeF);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    checkFreeSpace(23613400960, 9900000, 3);
     
     manager->registerAction(offsetBsizeFBad);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
     
     manager->registerAction(offsetB);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    checkFreeSpace(23613400960, 9900000, 3);
+    QCOMPARE(tree.leftDevice(home)->deviceType(), DeviceModified::PartitionDevice);
+    QCOMPARE(tree.rightDevice(home)->deviceType(), DeviceModified::FreeSpaceDevice);
     
     manager->registerAction(sizeB);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
-
+    checkFreeSpace(246951732608, 10000000, 3);
+    
     manager->registerAction(mounted);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::MountedPartitionError);
     
     manager->registerAction(offsetF);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    checkFreeSpace(1048576, 10000000, 3);
+    QCOMPARE(tree.leftDevice(root)->deviceType(), DeviceModified::FreeSpaceDevice);
     
     manager->registerAction(offsetFBad);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
-    
+        
     manager->registerAction(offsetBsizeB);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
-    
+    checkFreeSpace(1048576, 9000000, 4);
+    checkFreeSpace(21473885056, 2000000, 4);
+    QCOMPARE(tree.leftDevice(root)->deviceType(), DeviceModified::FreeSpaceDevice);
+    QCOMPARE(tree.rightDevice(root)->deviceType(), DeviceModified::FreeSpaceDevice);
+        
     manager->registerAction(offsetFsizeB);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    checkFreeSpace(21475917312, 967744, 5);
+    QCOMPARE(tree.leftDevice(swap)->deviceType(), DeviceModified::FreeSpaceDevice);
+    QCOMPARE(tree.rightDevice(swap)->deviceType(), DeviceModified::PartitionDevice);
     
     manager->registerAction(offsetFsizeBBad);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
@@ -136,6 +154,26 @@ void PartitionResizingTest::test()
     
     manager->registerAction(offsetFsizeF);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    checkFreeSpace(23613400960, 5000000, 5);
+    QCOMPARE(tree.leftDevice(home)->deviceType(), DeviceModified::FreeSpaceDevice);
+    QCOMPARE(tree.rightDevice(home)->deviceType(), DeviceModified::PartitionDevice);
+}
+
+/*
+ * Check if we have a block with the given offset and size, and also checks if the number of free space blocks is the
+ * expected one. This is called after having successfully registered a new resize action.
+ */
+void PartitionResizingTest::checkFreeSpace(qulonglong offset, qulonglong size, int freeSpaceCount)
+{
+    VolumeTree tree = VolumeManager::instance()->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
+    
+    QString spaceName = "Free space of offset %0 and size %1";
+    spaceName = spaceName.arg( QString::number(offset), QString::number(size) );
+    QCOMPARE(tree.searchDevice(spaceName) == NULL, false);
+    
+    QList< FreeSpace* > freeSpaces = tree.freeSpaceBlocks("/org/kde/solid/fakehw/extended_volume");
+    freeSpaces += tree.freeSpaceBlocks("/org/kde/solid/fakehw/storage_serial_HD56890I");
+    QCOMPARE(freeSpaces.size(), freeSpaceCount);
 }
 
 

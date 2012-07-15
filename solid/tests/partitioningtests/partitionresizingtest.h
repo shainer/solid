@@ -32,6 +32,8 @@ private slots:
     void test();
     
 private:
+    void checkFreeSpace(qulonglong, qulonglong, int);
+    
     Solid::Backends::Fake::FakeManager* fakeManager;
 };
 
