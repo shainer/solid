@@ -23,6 +23,7 @@
 #include <solid/partitioner/volumemanager.h>
 
 #include <QtCore/QStringList>
+#include <QtCore/QFile>
 
 namespace Solid
 {
@@ -46,6 +47,20 @@ bool isPartitionAction(Action* action)
                    << Action::ResizePartition;
                    
     return partitionTypes.contains(action->actionType());
+}
+
+qulonglong sectorSize(const QString& disk)
+{
+    QString diskName = disk.split("/").last();
+    QString fileName = "/sys/block/" + diskName + "/queue/hw_sector_size";
+    QFile file(fileName);
+    
+    if (!file.exists()) {
+        return 512; /* returns the most common value */
+    }
+    
+    file.open(QIODevice::ReadOnly);
+    return file.readAll().toULongLong();
 }
 
 }

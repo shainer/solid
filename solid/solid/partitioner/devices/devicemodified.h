@@ -97,7 +97,7 @@ namespace Solid
                  * @returns true if the device interface the object was built from represented a valid device,
                  * false otherwise. For object not created with an interface, it returns true.
                  */
-                bool existent() const;
+                virtual bool existent() const;
                 
                 /**
                  * @returns the name associated to the device.
@@ -127,21 +127,21 @@ namespace Solid
                  * 
                  * @param udi the new UDI.
                  */
-                void setName(const QString &);
+                virtual void setName(const QString &);
                 
                 /**
                  * Sets a new description for this device.
                  * 
                  * @param description the new description
                  */
-                void setDescription(const QString &);
+                virtual void setDescription(const QString &);
                 
                 /**
                  * Sets a new parent name for the device.
                  * 
                  * @param udi the new parent UDI.
                  */
-                void setParentName(const QString &);
+                virtual void setParentName(const QString &);
                 
                 /**
                  * Sets a new size.
@@ -162,7 +162,7 @@ namespace Solid
                  * 
                  * @returns true if both devices share the same UDI, false otherwise.
                  */
-                bool operator==(const DeviceModified &) const;
+                virtual bool operator==(const DeviceModified &) const;
                 
             private:
                 class Private;

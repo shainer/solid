@@ -52,6 +52,14 @@ namespace Solid
              * @note CreatePartition operates on a disk, so in that case false is returned.
              */
             bool isPartitionAction(Actions::Action *);
+            
+            /**
+             * Retrieves the physical sector's size of a disk.
+             * 
+             * @param disk the disk's name.
+             * @returns its physical sector's size.
+             */
+            qulonglong sectorSize(const QString &);
         }
     }
 }

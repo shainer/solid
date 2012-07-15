@@ -33,13 +33,16 @@ class Disk::Private
 public:
     Private(StorageDrive *i)
         : size( i->size() )
+        , sectorSize(512) /* default value, will be changed when we know the disk's name */
         , scheme( i->partitionTableScheme() )
     {}
     
     Private()
+        : sectorSize(512)
     {}
     
     qulonglong size;
+    qulonglong sectorSize;
     QString scheme;
 };
 
@@ -95,8 +98,7 @@ qulonglong Disk::offset() const
         off = 1024 * 1024; /* the first MB is reserved */
     }
     else if (d->scheme == "gpt") {
-        /* FIXME: this value assumes the LBA size is the standard 512 bytes. However, this is not always the case. */
-        off = 512 * 40;
+        off = d->sectorSize * 40;
    }
 
     return off;
@@ -110,6 +112,12 @@ QString Disk::partitionTableScheme() const
 qulonglong Disk::rightBoundary() const
 {
     return d->size;
+}
+
+void Disk::setName(const QString& name)
+{
+    DeviceModified::setName(name);
+    d->sectorSize = Utils::sectorSize(name);
 }
 
 void Disk::setOffset(qulonglong offset)
