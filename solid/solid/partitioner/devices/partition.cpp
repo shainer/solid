@@ -35,8 +35,8 @@ using namespace Utils;
 class Partition::Private
 {
 public:
-    Private(StorageVolume* v, StorageAccess* a)
-        : access(a)
+    Private(StorageVolume* v)
+        : access(0)
         , ignored(v->isIgnored())
         , usage(v->usage())
         , label(v->label())
@@ -47,6 +47,7 @@ public:
         , partitionTypeString(v->partitionType())
         , scheme(v->partitionTableScheme())
         , flags(v->flags())
+        , mounted(false)
     {
         QString fsName = FilesystemUtils::instance()->filesystemNameFromId( v->fsType() );
         filesystem = Utils::Filesystem(fsName);
@@ -104,18 +105,17 @@ public:
     QString partitionTypeString;
     QString scheme;
     QStringList flags;
+    
+    bool mounted;
+    QString mountFile;
 };
     
 Partition::Partition(Device& dev)
+    : d( new Private( dev.as<StorageVolume>() ) )
 {
-    StorageVolume* volume = dev.as<StorageVolume>();
-    StorageAccess* access = 0;
-    
     if (dev.is<StorageAccess>()) {
-        access = dev.as<StorageAccess>();
+        setAccess( dev.as<StorageAccess>() );
     }
-    
-    d = new Private(volume, access);
 }
 
 Partition::Partition(Actions::CreatePartitionAction* action, const QString& scheme)
@@ -153,7 +153,7 @@ DeviceModified* Partition::copy() const
     partitionCopy->setDescription( description() );
     partitionCopy->setName( name() );
     partitionCopy->setParentName( parentName() );
-    partitionCopy->d->access = access();
+    partitionCopy->setAccess( access() );
     
     return partitionCopy;
 }
@@ -225,20 +225,12 @@ qulonglong Partition::rightBoundary() const
 
 bool Partition::isMounted() const
 {
-    if (!d->access) {
-        return false;
-    }
-    
-    return d->access->isAccessible();
+    return d->mounted;
 }
 
 QString Partition::mountFile() const
 {
-    if (!d->access) {
-        return QString();
-    }
-    
-    return d->access->filePath();
+    return d->mountFile;
 }
 
 StorageAccess* Partition::access() const
@@ -299,6 +291,27 @@ void Partition::setFlags(const QStringList& flags)
     d->flags = flags;
 }
 
+void Partition::setAccess(StorageAccess* access)
+{
+    d->access = access;
+    d->mounted = access->isAccessible();
+    d->mountFile = access->filePath();
+    
+    QObject::connect(access,
+                        SIGNAL(accessibilityChanged(bool, const QString &)),
+                        this,
+                        SLOT(doAccessibilityChanged(bool, const QString &)));
+}
+
+void Partition::doAccessibilityChanged(bool accessible, const QString& udi)
+{
+    Q_UNUSED(udi)
+    d->mounted = accessible;
+    d->mountFile = d->access->filePath();
+}
+
 }
 }
 }
+
+#include "partition.moc"

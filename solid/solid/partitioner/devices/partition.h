@@ -41,9 +41,11 @@ namespace Solid
              * 
              * This class represents a partition for the partitioning module.
              */
-            class SOLID_EXPORT Partition : public DeviceModified
+            class SOLID_EXPORT Partition : public QObject, public DeviceModified
             {                
-            public:
+                Q_OBJECT
+                
+            public:                
                 
                 /**
                  * Creates a new partition from an existent one.
@@ -229,10 +231,21 @@ namespace Solid
                  * @param flags a string list of flags.
                  */
                 virtual void setFlags(const QStringList &);
+                
+                /**
+                 * Sets the access interface used to get information related to mounting volumes.
+                 * This is actually only used internally to simplify copies.
+                 * 
+                 * @param access the Solid::StorageAccess interface.
+                 */
+                virtual void setAccess(StorageAccess *);
 
             private:
                 class Private;
                 Private* d;
+                
+            private slots:
+                void doAccessibilityChanged(bool accessible, const QString &udi);
             };
             
         }

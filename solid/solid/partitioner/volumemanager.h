@@ -150,6 +150,15 @@ namespace Solid
             void diskChanged(QString);
             
             /**
+             * This signal is emitted whenever the accessibility of one volume changes. Applications are thus advised to
+             * read again information about the device to update their data.
+             * 
+             * @param accessible whether the volume is now accessible.
+             * @param udi the volume UDI.
+             */
+            void accessibilityChanged(bool, const QString &);
+            
+            /**
              * This signal is emitted when a new device (disk or partition) is added to the system.
              * 
              * @param tree the updated disk layout's tree.

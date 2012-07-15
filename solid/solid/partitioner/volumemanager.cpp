@@ -128,6 +128,21 @@ VolumeManager::VolumeManager()
     /* Register this object for receiving notifications about changes in the system */
     QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree)), this, SLOT(doDeviceAdded(VolumeTree)));
     QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString,QString)), this, SLOT(doDeviceRemoved(QString,QString)));
+    
+    QList< Partition* > partitions;
+    foreach (const VolumeTree& diskTree, d->volumeTreeMap.deviceTrees()) {
+        partitions += diskTree.partitions();
+        partitions += diskTree.logicalPartitions();
+    }
+    
+    foreach (Partition* partition, partitions) {
+        if (partition->access()) {
+            QObject::connect(partition->access(),
+                            SIGNAL(accessibilityChanged(bool, const QString &)),
+                            this,
+                            SIGNAL(accessibilityChanged(bool, const QString &)));
+        }
+    }
 }
 
 VolumeManager::~VolumeManager()
