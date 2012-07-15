@@ -67,7 +67,12 @@ public:
 
 CreatePartitionTableAction::CreatePartitionTableAction(const QString &disk, Utils::PartitionTableScheme type)
     : d( new Private(disk, type) )
-{}
+{
+    QString desc = "Creating partition table of type %0 on %1";
+    desc = desc.arg( d->schemeName, d->disk );
+    
+    setDescription(desc);
+}
 
 CreatePartitionTableAction::~CreatePartitionTableAction()
 {
@@ -77,14 +82,6 @@ CreatePartitionTableAction::~CreatePartitionTableAction()
 Action::ActionType CreatePartitionTableAction::actionType() const
 {
     return CreatePartitionTable;
-}
-
-QString CreatePartitionTableAction::description() const
-{
-    QString desc = "Creating partition table of type %0 on %1";
-    desc = desc.arg( d->schemeName, d->disk );
-    
-    return desc;
 }
 
 QString CreatePartitionTableAction::disk() const

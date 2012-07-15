@@ -157,7 +157,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
     /* A duplicate isn't accepted */
     if (d->actionstack.contains(action)) {
         d->error.setType(PartitioningError::DuplicateActionError);
-        d->error.arg(action->description());
+        d->error.arg( action->description() );
         return false;
     }
     
@@ -320,7 +320,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
      * See the doDeviceAdded slot for more information on the usefulness of this property.
      */
     Disk* ownerDisk = 0;
-    Action* oppositeAction = 0;
+    Actions::Action* oppositeAction = 0;
     
     switch (action->actionType()) {
         case Action::FormatPartition: {

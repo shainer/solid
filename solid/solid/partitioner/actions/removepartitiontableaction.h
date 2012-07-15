@@ -45,8 +45,10 @@ namespace Solid
                 explicit RemovePartitionTableAction(const QString &);
                 virtual ~RemovePartitionTableAction();
                 
+                /**
+                 * @returns ActionType::RemovePartitionTable
+                 */
                 virtual ActionType actionType() const;
-                virtual QString description() const;
                 
                 /**
                  * @returns the disk name.

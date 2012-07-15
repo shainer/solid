@@ -71,9 +71,17 @@ namespace Solid
                 virtual Action::ActionType actionType() const = 0;
                 
                 /**
-                 * @returns a localized string depicting the action.
+                 * @returns a localized string describing the action. This description isn't unique.
                  */
-                virtual QString description() const = 0;
+                virtual QString description() const;
+                
+                /**
+                 * Creates an unique name for this action. This is almost identical to the description above,
+                 * but uses a numerical ID to guarantee uniqueness between actions.
+                 * 
+                 * @returns the unique name of this action.
+                 */
+                virtual QString uniqueName() const;
                 
                 /**
                  * Comparison operator.
@@ -108,6 +116,9 @@ namespace Solid
                  * @see setOppositeAction().
                  */
                 virtual Action* oppositeAction() const;
+                
+            protected:
+                virtual void setDescription(const QString &);
                 
             private:
                 class Private;

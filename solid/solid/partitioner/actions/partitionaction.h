@@ -51,11 +51,6 @@ namespace Solid
                 virtual Action::ActionType actionType() const = 0;
                 
                 /**
-                 * @returns a localized string depicting the action.
-                 */
-                virtual QString description() const = 0;
-                
-                /**
                  * @returns the partition involved in the action.
                  */
                 virtual QString partition() const;

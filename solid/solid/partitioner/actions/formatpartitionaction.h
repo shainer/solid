@@ -56,11 +56,12 @@ namespace Solid
                  * @param fsName the name of the new filesystem.
                  */
                 explicit FormatPartitionAction(const QString &, const QString &);
-                
                 virtual ~FormatPartitionAction();
                 
+                /**
+                 * @returns ActionType::FormatPartition
+                 */
                 virtual Action::ActionType actionType() const;
-                virtual QString description() const;
                 
                 /**
                  * @returns an object representing the new filesystem.

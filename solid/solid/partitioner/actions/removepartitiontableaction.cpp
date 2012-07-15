@@ -41,7 +41,12 @@ public:
 
 RemovePartitionTableAction::RemovePartitionTableAction(const QString& disk)
     : d( new Private(disk) )
-{}
+{
+    QString desc = "Removing partition table on %0";
+    desc = desc.arg( d->disk );
+    
+    setDescription(desc);
+}
 
 RemovePartitionTableAction::~RemovePartitionTableAction()
 {
@@ -51,13 +56,6 @@ RemovePartitionTableAction::~RemovePartitionTableAction()
 Action::ActionType RemovePartitionTableAction::actionType() const
 {
     return RemovePartitionTable;
-}
-
-QString RemovePartitionTableAction::description() const
-{
-    QString desc = "Removing partition table on %0";
-    desc = desc.arg( d->disk );
-    return QObject::tr( desc.toUtf8().data() );
 }
 
 QString RemovePartitionTableAction::disk() const

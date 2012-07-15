@@ -84,9 +84,9 @@ Action* ActionStack::redo()
 }
 
 void ActionStack::removeAction(Action* action)
-{
+{    
     for (QList< Action* >::iterator it = d->actions.begin(); it != d->actions.end(); it++) {
-        if ((*it)->description() == action->description()) {
+        if ((*it)->uniqueName() == action->uniqueName()) {
             d->actions.erase(it);
             delete action;
             break;

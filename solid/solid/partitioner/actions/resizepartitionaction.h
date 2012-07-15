@@ -51,8 +51,10 @@ namespace Solid
                 explicit ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize);
                 virtual ~ResizePartitionAction();
                 
+                /**
+                 * @returns ActionType::ResizePartition
+                 */
                 virtual ActionType actionType() const;
-                virtual QString description() const;
                 
                 /**
                  * @returns the new size, in bytes.

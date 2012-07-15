@@ -29,7 +29,12 @@ namespace Actions
 
 RemovePartitionAction::RemovePartitionAction(const QString& partition)
     : PartitionAction(partition)
-{}
+{
+    QString desc( "Removing partition %0." );
+    desc = desc.arg( partition );
+    
+    setDescription(desc);
+}
 
 RemovePartitionAction::~RemovePartitionAction()
 {}
@@ -37,14 +42,6 @@ RemovePartitionAction::~RemovePartitionAction()
 Action::ActionType RemovePartitionAction::actionType() const
 {
     return Action::RemovePartition;
-}
-
-QString RemovePartitionAction::description() const
-{
-    QString desc( "Removing partition %0." );
-    desc = desc.arg( partition() );
-    
-    return QObject::tr(desc.toUtf8().data());
 }
     
 }

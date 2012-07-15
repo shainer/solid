@@ -27,11 +27,16 @@ namespace Partitioner
 namespace Actions
 {
 
+static int actionId = 1;
+    
 class Action::Private
 {
 public:
     DeviceModified* owner;
     Action* oppositeAction;
+    
+    QString description;
+    QString uniqueName;
 };
     
 Action::Action()
@@ -45,7 +50,23 @@ Action::~Action()
 
 bool Action::operator==(Action *other) const
 {
-    return description() == other->description();
+    return uniqueName() == other->uniqueName();
+}
+
+QString Action::description() const
+{
+    return d->description;
+}
+
+void Action::setDescription(const QString& desc)
+{
+    d->description = desc;
+    d->uniqueName = d->description + " " + QString::number(actionId++);
+}
+
+QString Action::uniqueName() const
+{
+    return d->uniqueName;
 }
 
 DeviceModified* Action::ownerDisk() const

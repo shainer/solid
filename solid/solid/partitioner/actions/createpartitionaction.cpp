@@ -80,7 +80,10 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              const QStringList& flags
                                             )
     : d( new Private(disk, offset, size, extended, fs, label, flags) )
-{}
+{
+    QString desc( "Creating a new partition with size %0, label \"%1\" and \"%2\" filesystem on %3" );
+    setDescription( desc.arg(formatByteSize((double)(size)), label, fs.name(), disk) );
+}
 
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
@@ -89,7 +92,10 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              const QString& label,
                                              const QStringList& flags)
     : d( new Private(disk, offset, size, false, fs, label, flags) )
-{}
+{
+    QString desc( "Creating a new partition with size %0, label \"%1\" and \"%2\" filesystem on %3" );
+    setDescription( desc.arg(formatByteSize((double)(size)), label, fs.name(), disk) );
+}
 
 CreatePartitionAction::~CreatePartitionAction()
 {
@@ -100,15 +106,6 @@ Action::ActionType CreatePartitionAction::actionType() const
 {
     return Action::CreatePartition;
 }
-
-QString CreatePartitionAction::description() const
-{
-    QString desc( "Creating a new partition with size %0, label \"%1\" and \"%2\" filesystem on %3" );
-    desc = desc.arg(formatByteSize((double)(d->size)), d->label, d->filesystem.name(), d->disk);
-    
-    return QObject::tr(desc.toUtf8().data());
-}
-
 
 QString CreatePartitionAction::disk() const
 {

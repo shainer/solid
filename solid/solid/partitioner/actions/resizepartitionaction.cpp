@@ -46,7 +46,13 @@ public:
 ResizePartitionAction::ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize)
     : PartitionAction(partition)
     , d( new Private(newOffset, newSize) )
-{}
+{
+    QString desc( "Changing %0 to offset %1 and size %2" );
+    QString offsetStr = formatByteSize((double)(d->newOffset));
+    QString sizeStr = formatByteSize((double)(d->newSize));
+    
+    setDescription( desc.arg(partition, offsetStr, sizeStr) );
+}
 
 ResizePartitionAction::~ResizePartitionAction()
 {
@@ -56,17 +62,6 @@ ResizePartitionAction::~ResizePartitionAction()
 Action::ActionType ResizePartitionAction::actionType() const
 {
     return ResizePartition;
-}
-
-QString ResizePartitionAction::description() const
-{
-    QString desc( "Changing %0 to offset %1 and size %2" );
-    QString offsetStr = formatByteSize((double)(d->newOffset));
-    QString sizeStr = formatByteSize((double)(d->newSize));
-    
-    desc = desc.arg(partition(), offsetStr, sizeStr);
-    
-    return QObject::tr(desc.toUtf8().data());
 }
 
 qulonglong ResizePartitionAction::newOffset() const

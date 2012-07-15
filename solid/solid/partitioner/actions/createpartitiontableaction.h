@@ -48,8 +48,10 @@ namespace Solid
                 explicit CreatePartitionTableAction(const QString &, Utils::PartitionTableScheme);
                 virtual ~CreatePartitionTableAction();
 
+                /**
+                 * @returns ActionType::CreatePartitionTable
+                 */
                 virtual ActionType actionType() const;
-                virtual QString description() const;
 
                 /**
                  * @returns the name of disk to change.

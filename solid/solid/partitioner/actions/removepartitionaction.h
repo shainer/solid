@@ -46,8 +46,10 @@ namespace Solid
                 explicit RemovePartitionAction(const QString &);
                 virtual ~RemovePartitionAction();
                 
+                /**
+                 * @returns ActionType::RemovePartition
+                 */
                 virtual ActionType actionType() const;
-                virtual QString description() const;
             };
         }
     }

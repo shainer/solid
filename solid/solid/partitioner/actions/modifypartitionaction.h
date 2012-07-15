@@ -61,8 +61,10 @@ namespace Solid
                                                const QStringList& flags);
                 virtual ~ModifyPartitionAction();
                 
+                /**
+                 * @returns ActionType::ModifyPartition
+                 */
                 virtual ActionType actionType() const;
-                virtual QString description() const;
                 
                 /**
                  * @returns the new label.
