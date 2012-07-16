@@ -294,6 +294,7 @@ bool VolumeManager::apply()
     QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
     d->volumeTreeMap.build(); /* repeats hw detection */
     d->volumeTreeMap.connectSignals();
+    d->actionstack.clear();
     
     if (!success) {
         d->error = executer.error();
@@ -302,11 +303,6 @@ bool VolumeManager::apply()
     }
     
     return true;
-}
-
-void VolumeManager::clearActions()
-{
-    d->actionstack.clear();
 }
 
 void VolumeManager::doNextActionCompleted(int completed)

@@ -99,12 +99,6 @@ namespace Solid
             bool apply();
             
             /**
-             * Deletes all registered actions. This MUST be called after apply().
-             * We cannot call it automatically to avoid dangling pointers in the applications.
-             */
-            void clearActions();
-            
-            /**
              * Retrieves the layout of a disk.
              * 
              * @param udi the disk UDI.
