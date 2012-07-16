@@ -293,14 +293,16 @@ void Partition::setFlags(const QStringList& flags)
 
 void Partition::setAccess(StorageAccess* access)
 {
-    d->access = access;
-    d->mounted = access->isAccessible();
-    d->mountFile = access->filePath();
-    
-    QObject::connect(access,
-                        SIGNAL(accessibilityChanged(bool, const QString &)),
-                        this,
-                        SLOT(doAccessibilityChanged(bool, const QString &)));
+    if (access) {
+        d->access = access;
+        d->mounted = access->isAccessible();
+        d->mountFile = access->filePath();
+        
+        QObject::connect(access,
+                            SIGNAL(accessibilityChanged(bool, const QString &)),
+                            this,
+                            SLOT(doAccessibilityChanged(bool, const QString &)));
+    }
 }
 
 void Partition::doAccessibilityChanged(bool accessible, const QString& udi)
