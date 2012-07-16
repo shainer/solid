@@ -107,11 +107,6 @@ namespace Solid
                  */
                 QStringList unsupportedFlags() const;
                 
-                /**
-                 * Assignment operator
-                 */
-                Filesystem& operator=(const Filesystem &);
-                
             private:
                 QSharedDataPointer<FilesystemPrivate> d;
             };

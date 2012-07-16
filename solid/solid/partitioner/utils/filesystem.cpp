@@ -134,17 +134,6 @@ QStringList Filesystem::unsupportedFlags() const
     return d->unsupported;
 }
 
-Filesystem& Filesystem::operator=(const Filesystem& other)
-{
-    d->name = other.name();
-    d->label = other.label();
-    d->ownerUid = other.ownerUid();
-    d->ownerGid = other.ownerGid();
-    d->unsupported = other.unsupportedFlags();
-    
-    return *this;
-}
-
 }
 }
 }
