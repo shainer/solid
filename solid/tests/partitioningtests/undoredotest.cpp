@@ -49,7 +49,7 @@ void UndoRedoTest::test()
     VolumeManager* manager = VolumeManager::instance();
     VolumeTree diskTree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
     RemovePartitionAction* action1 = new RemovePartitionAction("/org/kde/solid/fakehw/root_volume");
-    FormatPartitionAction* action2 = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "ntfs");
+    FormatPartitionAction* action2 = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "NTFS");
     
     QCOMPARE(manager->isRedoPossible(), false);
     
@@ -65,26 +65,26 @@ void UndoRedoTest::test()
     manager->undo();
     QCOMPARE(manager->isRedoPossible(), true);
     QCOMPARE(manager->isUndoPossible(), true);
-    checkHomeFilesystem("xfs");
+    checkHomeFilesystem("XFS");
     checkRootExistence(false);
     
     manager->undo();
     QCOMPARE(manager->isUndoPossible(), false);
-    checkHomeFilesystem("xfs");
+    checkHomeFilesystem("XFS");
     checkRootExistence(true);
     
     manager->redo();
     manager->redo();
     QCOMPARE(manager->isRedoPossible(), false);
-    checkHomeFilesystem("ntfs");
+    checkHomeFilesystem("NTFS");
     checkRootExistence(false);
     
     manager->undo();
-    checkHomeFilesystem("xfs");
+    checkHomeFilesystem("XFS");
     checkRootExistence(false);
     
     manager->redo();
-    checkHomeFilesystem("ntfs");
+    checkHomeFilesystem("NTFS");
     checkRootExistence(false);    
 }
 
