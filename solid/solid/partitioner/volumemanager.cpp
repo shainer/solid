@@ -169,6 +169,7 @@ void VolumeManager::setDeletionOfConflictingActions(bool deleteConflicts)
 
 bool VolumeManager::registerAction(Actions::Action* action)
 {
+    Q_ASSERT(action);
     d->error.setType(PartitioningError::None); /* erase any previous error */
     
     /* A duplicate isn't accepted */

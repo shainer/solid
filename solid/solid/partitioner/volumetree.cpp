@@ -244,6 +244,7 @@ void VolumeTreePrivate::clear()
 VolumeTreeItem* VolumeTreePrivate::leftNode(DeviceModified* dev)
 {
     VolumeTreeItem* node = searchNode( dev->name() );
+    Q_ASSERT(node);
     
     if (!node->parent()) {
         return NULL;
@@ -262,6 +263,7 @@ VolumeTreeItem* VolumeTreePrivate::leftNode(DeviceModified* dev)
 VolumeTreeItem* VolumeTreePrivate::rightNode(DeviceModified* dev)
 {
     VolumeTreeItem* node = searchNode( dev->name() );
+    Q_ASSERT(node);
     
     if (!node->parent()) {
         return NULL;
@@ -336,6 +338,7 @@ bool VolumeTreePrivate::splitCreationContainer(qulonglong offset, qulonglong siz
 void VolumeTreePrivate::mergeAndDelete(const QString& partitionName)
 {
     VolumeTreeItem* partitionNode = searchNode(partitionName);
+    Q_ASSERT(partitionNode);
     
     VolumeTreeItem* left = leftNode(partitionNode->volume());
     VolumeTreeItem* right = rightNode(partitionNode->volume());
@@ -437,9 +440,8 @@ bool VolumeTree::valid() const
 
 Disk* VolumeTree::disk() const
 {
-    if (!d->valid) {
-        return NULL;
-    }
+    Q_ASSERT(d->valid);
+    Q_ASSERT(d->root);
     
     return dynamic_cast< Disk* >(d->root->volume());
 }
@@ -451,6 +453,9 @@ VolumeTreeItem* VolumeTree::rootNode() const
 
 VolumeTree VolumeTree::copy() const
 {
+    Q_ASSERT(d->valid);
+    Q_ASSERT(d->root);
+    
     VolumeTreeItem* copyRootItem = new VolumeTreeItem(*(d->root));
     VolumeTree copy(copyRootItem);
     return copy;
@@ -458,9 +463,7 @@ VolumeTree VolumeTree::copy() const
 
 VolumeTreeItem* VolumeTree::extendedNode() const
 {
-    if (!d->valid) {
-        return NULL;
-    }
+    Q_ASSERT(d->valid);
     
     foreach (VolumeTreeItem* child, d->root->children()) {
         Partition* part = dynamic_cast< Partition* >(child->volume());
@@ -507,9 +510,7 @@ DeviceModified* VolumeTree::rightDevice(DeviceModified* dev)
 
 QList< Partition* > VolumeTree::partitions() const
 {
-    if (!d->valid) {
-        return QList< Partition* >();
-    }
+    Q_ASSERT(d->valid);
     
     QList< Partition* > devices;
     
@@ -526,6 +527,7 @@ QList< Partition* > VolumeTree::partitions() const
 
 QList< Partition* > VolumeTree::logicalPartitions() const
 {
+    Q_ASSERT(d->valid);
     QList< Partition *> logicals;
     VolumeTreeItem* ex = extendedNode();   
 
@@ -544,6 +546,7 @@ QList< Partition* > VolumeTree::logicalPartitions() const
 
 QList< FreeSpace* > VolumeTree::freeSpaceBlocks(const QString& parentName) const
 {
+    Q_ASSERT(d->valid);
     QList< FreeSpace* > blocks;
     VolumeTreeItem* parent = searchNode(parentName);
     
@@ -562,9 +565,7 @@ QList< FreeSpace* > VolumeTree::freeSpaceBlocks(const QString& parentName) const
 
 QList< DeviceModified* > VolumeTree::allDevices(bool addBelowMin) const
 {
-    if (!d->valid) {
-        return QList< DeviceModified *>();
-    }
+    Q_ASSERT(d->valid);
     
     Disk* diskDev = disk();
     QList< DeviceModified* > devices;
@@ -596,10 +597,7 @@ QList< DeviceModified* > VolumeTree::allDevices(bool addBelowMin) const
 
 VolumeTreeItem* VolumeTree::searchNode(const QString& name) const
 {
-    if (!d->valid) {
-        return NULL;
-    }
-    
+    Q_ASSERT(d->valid);
     return d->searchNode(name);
 }
 
@@ -616,11 +614,9 @@ DeviceModified* VolumeTree::searchDevice(const QString& name) const
 
 DeviceModified* VolumeTree::parentDevice(DeviceModified* device) const
 {
-    if (!d->valid) {
-        return NULL;
-    }
-    
+    Q_ASSERT(d->valid);
     VolumeTreeItem* node = searchNode( device->name() );
+    Q_ASSERT(node);
     
     if (node->parent()) {
         return node->parent()->volume();

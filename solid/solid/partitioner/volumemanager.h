@@ -56,6 +56,7 @@ namespace Solid
              * 
              * @param action the action to register.
              * @returns true if the action was valid, false otherwise.
+             * @pre the action cannot be null.
              */
             bool registerAction(Actions::Action *);
             

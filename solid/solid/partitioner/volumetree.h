@@ -132,10 +132,14 @@ namespace Solid
          * 
          * This is an implicitly shared class.
          * 
+         * @warning violating preconditions on any of the class functions will result in assert failures. One precondition
+         * which is applied to every function is that the tree object must be valid (i.e. valid() == true). Other conditions
+         * are stated in the rest of this documentation, using the tag "@pre".
+         * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
          */
         class SOLID_EXPORT VolumeTree
-        {        
+        {
         public:
             /**
              * Costructs a new tree.
@@ -169,6 +173,7 @@ namespace Solid
             
             /**
              * @returns whether the current object represents a valid tree.
+             * @warning calling the following methods on an invalid tree will result in assert failures.
              */
             bool valid() const;
             
@@ -179,6 +184,7 @@ namespace Solid
             
             /**
              * @returns the root disk.
+             * @pre rootNode() != NULL.
              */
             Disk* disk() const;
             
@@ -219,6 +225,7 @@ namespace Solid
             /**
              * @param device a device in this tree.
              * @returns the parent device object, or NULL if it is the tree root.
+             * @pre the given device must exist.
              */
             DeviceModified* parentDevice(DeviceModified *) const;
             
@@ -227,6 +234,7 @@ namespace Solid
              * 
              * @param dev a device in the tree.
              * @returns the device preceding the given one in the sorted list.
+             * @pre the given device must exist.
              */
             DeviceModified* leftDevice(DeviceModified *);
             
@@ -235,6 +243,7 @@ namespace Solid
              * 
              * @param dev a device in the tree.
              * @returns the device following the given one in the sorted list.
+             * @pre the given device must exist.
              */
             DeviceModified* rightDevice(DeviceModified *);
             
