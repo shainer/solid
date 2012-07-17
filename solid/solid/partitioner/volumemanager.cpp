@@ -443,6 +443,12 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             }
             
             tree.d->addDevice(newPartition->parentName(), newPartition);
+            
+            if (newPartition->partitionType() == ExtendedPartition) {
+                FreeSpace* logicalSpace = new FreeSpace(newPartition->offset() + SPACE_BETWEEN_LOGICALS, newPartition->size() - SPACE_BETWEEN_LOGICALS, newPartition->name());
+                tree.d->addDevice(newPartition->name(), logicalSpace);
+            }
+            
             ownerDisk = disk;
             oppositeAction = new RemovePartitionAction( newPartition->name() );
             break;
