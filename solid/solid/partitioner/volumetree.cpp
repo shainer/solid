@@ -55,6 +55,7 @@ VolumeTreeItem::VolumeTreeItem(const VolumeTreeItem& other)
 {
     DeviceModified* otherDev = other.volume();
     d->volume = otherDev->copy();
+    d->parent = other.parent();
     
     foreach (VolumeTreeItem* child, other.children()) {
         VolumeTreeItem* copyChild = new VolumeTreeItem(*child);
