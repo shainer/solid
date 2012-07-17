@@ -114,7 +114,8 @@ void PartitionResizingTest::test()
     
     manager->registerAction(offsetB);
     QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
-    checkFreeSpace(23613400960, 9900000, 3);
+    
+    checkFreeSpace(246951832608, 9900000, 3);
     QCOMPARE(tree.leftDevice(home)->deviceType(), DeviceModified::PartitionDevice);
     QCOMPARE(tree.rightDevice(home)->deviceType(), DeviceModified::FreeSpaceDevice);
     
