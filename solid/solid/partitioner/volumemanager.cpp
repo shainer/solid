@@ -126,9 +126,12 @@ VolumeManager::VolumeManager()
     d->volumeTreeMap.build(); /* builds all the layout detecting the current status of the hardware */
     
     /* Register this object for receiving notifications about changes in the system */
-    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree)), this, SLOT(doDeviceAdded(VolumeTree)));
-    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString,QString)), this, SLOT(doDeviceRemoved(QString,QString)));
+    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree, DeviceModified *)), SLOT(doDeviceAdded(VolumeTree, DeviceModified *)));
+    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString,QString)), SLOT(doDeviceRemoved(QString,QString)));
     
+    /*
+     * Acquire a list of all the partitions to notify whether one of them is mounted or umounted.
+     */
     QList< Partition* > partitions;
     foreach (const VolumeTree& diskTree, d->volumeTreeMap.deviceTrees()) {
         partitions += diskTree.partitions();
@@ -139,7 +142,6 @@ VolumeManager::VolumeManager()
         if (partition->access()) {
             QObject::connect(partition->access(),
                             SIGNAL(accessibilityChanged(bool, const QString &)),
-                            this,
                             SIGNAL(accessibilityChanged(bool, const QString &)));
         }
     }
@@ -246,10 +248,23 @@ bool VolumeManager::isRedoPossible() const
  * This is because the disk's layout and/or properties have changed so those actions could be out-of-context.
  * Of course when a disk is added no action has to be removed at all.
  */
-void VolumeManager::doDeviceAdded(VolumeTree tree)
+void VolumeManager::doDeviceAdded(VolumeTree tree, DeviceModified *dev)
 {
     QString diskName = tree.disk()->name();
     d->actionstack.removeActionsOfDisk(diskName);
+    
+    /*
+     * For a partition, enable notifies of changes in its accessibility status.
+     */
+    if (dev->deviceType() == DeviceModified::PartitionDevice) {
+        Partition* p = dynamic_cast< Partition* >(dev);
+        
+        if (p->access()) {
+            QObject::connect(p->access(),
+                            SIGNAL(accessibilityChanged(bool, const QString &)),
+                            SIGNAL(accessibilityChanged(bool, const QString &)));
+        }
+    }
     
     emit deviceAdded(tree);
 }

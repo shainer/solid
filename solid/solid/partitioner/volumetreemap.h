@@ -151,8 +151,9 @@ namespace Solid
              * This signal is emitted when a new disk or partition is added to the system.
              * 
              * @param tree the updated disk layout's tree.
+             * @param dev the new device object.
              */
-            void deviceAdded(VolumeTree);
+            void deviceAdded(VolumeTree, DeviceModified *);
             
             /**
              * This signal is emitted when a disk or partition is removed from the system.

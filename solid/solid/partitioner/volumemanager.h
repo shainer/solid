@@ -130,7 +130,7 @@ namespace Solid
             /**
              * @see class VolumeTreeMap.
              */
-            void doDeviceAdded(VolumeTree);
+            void doDeviceAdded(VolumeTree, DeviceModified *);
             void doDeviceRemoved(QString, QString);
             void doNextActionCompleted(int);
             

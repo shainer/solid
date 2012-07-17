@@ -219,13 +219,13 @@ void VolumeTreeMap::doDeviceAdded(QString udi)
     
     if (newDevice.is<StorageDrive>()) {
         d->buildDisk(newDevice);
-        emit deviceAdded( d->devices[udi] );
+        emit deviceAdded( d->devices[udi], d->devices[udi].disk() );
     }
     else if (newDevice.is<StorageVolume>()) {
         QString diskName = newDevice.parentUdi();
         d->detectChildrenOfDisk(diskName);
         
-        emit deviceAdded( d->devices[diskName] );
+        emit deviceAdded( d->devices[diskName], d->devices[diskName].searchDevice(udi) );
     }
 }
 
