@@ -620,7 +620,12 @@ DeviceModified* VolumeTree::parentDevice(DeviceModified* device) const
     }
     
     VolumeTreeItem* node = searchNode( device->name() );
-    return node->parent()->volume();
+    
+    if (node->parent()) {
+        return node->parent()->volume();
+    }
+    
+    return NULL;
 }
 
 void VolumeTree::print() const
