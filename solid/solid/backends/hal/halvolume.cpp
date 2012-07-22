@@ -115,14 +115,14 @@ qulonglong Volume::size() const
     return m_device->prop("volume.size").toULongLong();
 }
 
+/*
+ * The following four properties aren't actually available in HAL, so just returns the default values.
+ */
 qulonglong Volume::offset() const
 {
-    return m_device->prop("volume.offset").toULongLong();
+    return 0;
 }
 
-/*
- * FIXME: can these properties be read from HAL?
- */
 QStringList Volume::flags() const
 {
     return QStringList();

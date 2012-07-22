@@ -120,12 +120,10 @@ qulonglong Storage::size() const
   return m_device->prop("storage.size").toULongLong();
 }
 
-/*
- * FIXME: I don't know the actual name of this property in HAL, so I made up one.
- */
+/* This property isn't available in HAL, so just returns the default value */
 QString Storage::partitionTableScheme() const
 {
-    return m_device->prop("storage.scheme").toString();
+    return QString();
 }
 
 #include "backends/hal/halstorage.moc"
