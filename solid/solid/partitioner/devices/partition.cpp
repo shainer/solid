@@ -67,6 +67,8 @@ public:
         , partitionType(action->partitionType())
         , scheme(s)
         , flags(action->flags())
+        , mounted(false)
+        , mountFile( QString() )
     {
         /*
          * For a partition created by the application, we know the filesystem and if it's extended, primary, etc.,
