@@ -65,35 +65,9 @@ PartitionTableUtils::PartitionTableUtils()
     
     QStringList mbrFlags = QStringList() << "boot";
     QStringList gptFlags = QStringList() << "required";
-    QStringList apmFlags = QStringList() << "allocated"
-                                            << "allow_read"
-                                            << "allow_write"
-                                            << "boot"
-                                            << "boot_code_is_pic"
-                                            << "in_use";
 
     d->supportedFlags.insert("mbr", mbrFlags);
     d->supportedFlags.insert("gpt", gptFlags);
-    d->supportedFlags.insert("apm", apmFlags);
-    
-    /*
-     * FIXME: for MBR, check CHS vs. LBA.
-     * Use the property KnownFilesystem, when implemented.
-     */
-    QHash< QString, QString > apm;
-    apm.insert("btrfs", "Apple_Unix_SVR2");
-    apm.insert("ext2", "Apple_Unix_SVR2");
-    apm.insert("ext3", "Apple_Unix_SVR2");
-    apm.insert("ext4", "Apple_Unix_SVR2");
-    apm.insert("minix", "Apple_Unix_SVR2");
-    apm.insert("nilfs2", "Apple_Unix_SVR2");
-    apm.insert("ntfs", "Apple_Unix_SVR2");
-    apm.insert("reiserfs", "Apple_Unix_SVR2");
-    apm.insert("swap", "Apple_Unix_SVR2");
-    apm.insert("unformatted", "Apple_Scratch");
-    apm.insert("xfs", "Apple_Unix_SVR2");
-    apm.insert("vfat", "Apple_Unix_SVR2");
-    apm.insert("bfs", "Be_BFS");
     
     QHash< QString, QString > gpt;
     gpt.insert("btrfs", "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7");
@@ -120,11 +94,10 @@ PartitionTableUtils::PartitionTableUtils()
     mbr.insert("ntfs", "0x07");
     mbr.insert("reiserfs", "0x83");
     mbr.insert("swap", "0x82");
-    mbr.insert("unformatted", "0x00");
+    mbr.insert("unformatted", "0x83");
     mbr.insert("vfat", "0x0b");
     mbr.insert("xfs", "0x83");
     
-    d->types.insert("apm", apm);
     d->types.insert("gpt", gpt);
     d->types.insert("mbr", mbr);
     
@@ -145,12 +118,17 @@ PartitionTableUtils* PartitionTableUtils::instance()
     return s_ptableutils->q;
 }
 
-QStringList PartitionTableUtils::supportedFlags(const QString& scheme)
+QStringList PartitionTableUtils::supportedSchemes() const
+{
+    return QStringList() << "gpt" << "mbr";
+}
+
+QStringList PartitionTableUtils::supportedFlags(const QString& scheme) const
 {
     return d->supportedFlags.value(scheme);
 }
 
-QString PartitionTableUtils::typeString(const QString& scheme, QString type)
+QString PartitionTableUtils::typeString(const QString& scheme, QString type) const
 {
     if (type.isEmpty()) {
         type = "unformatted";

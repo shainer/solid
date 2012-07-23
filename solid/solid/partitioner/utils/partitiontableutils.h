@@ -43,6 +43,12 @@ namespace Solid
             public:
                 virtual ~PartitionTableUtils();
                 static PartitionTableUtils* instance();
+                
+                /**
+                 * @returns the list of supported partition table schemes.
+                 * @note these are the names you should use as parameters in the other functions of this class.
+                 */
+                QStringList supportedSchemes() const;
 
                 /**
                  * Retrieves the supported partition flags for each scheme.
@@ -50,7 +56,7 @@ namespace Solid
                  * @param scheme the name of the table scheme.
                  * @returns a list of accepted flags.
                  */
-                QStringList supportedFlags(const QString &);
+                QStringList supportedFlags(const QString &) const;
                 
                 /**
                  * Converts a partition type to the appropriate string.
@@ -60,7 +66,7 @@ namespace Solid
                  * 
                  * @returns the correspondent type string.
                  */
-                QString typeString(const QString &, QString);
+                QString typeString(const QString &, QString) const;
                 
             private:
                 PartitionTableUtils();
