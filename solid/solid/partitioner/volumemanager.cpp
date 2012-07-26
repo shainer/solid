@@ -301,6 +301,7 @@ bool VolumeManager::apply()
      */
     if (!executer.isValid()) {
         d->error.setType(PartitioningError::BusyExecuterError);
+        emit executionError( d->error.description() );
         return false;
     }
     
