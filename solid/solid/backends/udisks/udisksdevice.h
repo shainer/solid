@@ -73,6 +73,7 @@ public:
     bool modifyPartition(const QString& type,
                          const QString& label,
                          const QStringList& flags = QStringList());
+    bool setFilesystemLabel(const QString& label);
     bool createTable(const QString& scheme, const QStringList& options = QStringList());
     
     QDBusObjectPath createPartition(qulonglong offset,

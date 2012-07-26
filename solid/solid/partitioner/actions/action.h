@@ -54,6 +54,7 @@ namespace Solid
                     CreatePartition,
                     RemovePartition,
                     FormatPartition,
+                    ModifyFilesystem,
                     ResizePartition,
                     ModifyPartition,
                     CreatePartitionTable,

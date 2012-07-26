@@ -134,6 +134,11 @@ QStringList Filesystem::unsupportedFlags() const
     return d->unsupported;
 }
 
+void Filesystem::setLabel(const QString& label)
+{
+    d->label = label;
+}
+
 }
 }
 }

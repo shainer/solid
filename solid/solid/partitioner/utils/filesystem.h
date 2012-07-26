@@ -107,6 +107,14 @@ namespace Solid
                  */
                 QStringList unsupportedFlags() const;
                 
+                /**
+                 * Sets a new label for this filesystem. Note that it is possible to set a new label without recreating the
+                 * whole filesystem.
+                 * 
+                 * @param label the new filesystem label.
+                 */
+                void setLabel(const QString &);
+                
             private:
                 QSharedDataPointer<FilesystemPrivate> d;
             };

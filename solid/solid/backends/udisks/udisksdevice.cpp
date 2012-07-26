@@ -825,6 +825,19 @@ bool UDisksDevice::modifyPartition(const QString& type, const QString& label, co
     return false;
 }
 
+bool UDisksDevice::setFilesystemLabel(const QString& label)
+{
+    QDBusPendingReply<void> reply = m_device->asyncCall("FilesystemSetLabel", label);
+    reply.waitForFinished();
+    
+    if (reply.isValid()) {
+        return true;
+    }
+    
+    errorDescription = reply.error().message();
+    return false;
+}
+
 bool UDisksDevice::createTable(const QString& scheme, const QStringList& options)
 {
     QDBusPendingReply<void> reply = m_device->asyncCall("PartitionTableCreate", scheme, options);

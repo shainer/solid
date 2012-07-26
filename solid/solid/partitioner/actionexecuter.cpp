@@ -29,6 +29,7 @@
 #include <solid/partitioner/actions/removepartitionaction.h>
 #include <solid/partitioner/actions/modifypartitionaction.h>
 #include <solid/partitioner/actions/resizepartitionaction.h>
+#include <solid/partitioner/actions/modifyfilesystemaction.h>
 
 #include <ifaces/devicemanager.h>
 #include <backends/udisks/udisksmanager.h>
@@ -137,6 +138,18 @@ bool ActionExecuter::execute()
                 Utils::Filesystem fs = fpa->filesystem();
                 QString fsName = Utils::FilesystemUtils::instance()->filesystemIdFromName( fs.name() );
                 success = device->format( fsName, fs.flags());
+                break;
+            }
+            
+            case Action::ModifyFilesystem: {
+                ModifyFilesystemAction* mfa = dynamic_cast< ModifyFilesystemAction* >(action);
+                device = new UDisksDevice( mfa->newPartitionName() );
+                
+                if (!d->map.searchDevice( mfa->partition() )) {
+                    break;
+                }
+                
+                success = device->setFilesystemLabel( mfa->fsLabel() );
                 break;
             }
             

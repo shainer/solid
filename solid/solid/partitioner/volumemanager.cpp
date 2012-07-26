@@ -28,6 +28,7 @@
 #include <solid/partitioner/actions/createpartitiontableaction.h>
 #include <solid/partitioner/actions/modifypartitionaction.h>
 #include <solid/partitioner/actions/removepartitiontableaction.h>
+#include <solid/partitioner/actions/modifyfilesystemaction.h>
 #include <solid/partitioner/utils/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
@@ -373,6 +374,39 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             Utils::Filesystem oldFs = volume->filesystem();
             volume->setFilesystem(fs);
             ownerDisk = tree.disk();
+            break;
+        }
+        
+        case Action::ModifyFilesystem: {
+            Actions::ModifyFilesystemAction* mfa = dynamic_cast< ModifyFilesystemAction* >(action); 
+            QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition( mfa->partition() );
+            Partition* partition = pair.second;
+            Utils::Filesystem filesystem = partition->filesystem();
+            
+            if (!FilesystemUtils::instance()->supportsLabel( filesystem.name() ) ||
+                mfa->fsLabel().size() > FilesystemUtils::instance()->filesystemProperty( filesystem.name(), "max_label_len" ).toInt() ) {
+                error.setType(PartitioningError::FilesystemLabelError);
+                error.arg( filesystem.name() );
+            }
+            
+            QString oldLabel = partition->label();
+            filesystem.setLabel( mfa->fsLabel() );
+            partition->setFilesystem(filesystem);
+            
+            /*
+             * This requires some explanation. In DOS tables, labeled partitions aren't supported. So technically the label
+             * property of the Partition class is only meaningful when GPT is used. However, UDisks adds some ambiguity by
+             * considering the filesystem label as the partition label in MBR (if you call partition->label() in MBR, that's
+             * what you get, instead of a default value). So we go on with this behaviour here to avoid messing up things.
+             * 
+             * This is also (I hope) easier for applications so they can just display the partition label and be happy.
+             */
+            if (partition->partitionTableScheme() == "mbr") {
+                partition->setLabel( mfa->fsLabel() );
+            }
+            
+            ownerDisk = pair.first.disk();
+            oppositeAction = new ModifyFilesystemAction(mfa->partition(), oldLabel);
             break;
         }
         
