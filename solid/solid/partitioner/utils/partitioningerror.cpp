@@ -130,6 +130,18 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case MBRLabelError: {
+            d->description = "The MBR scheme doesn't support labeled partitions.";
+            d->markersLeft = 0;
+            break;
+        }
+        
+        case LabelTooBigError: {
+            d->description = "The GPT scheme allows label only up to 36 characters.";
+            d->markersLeft = 0;
+            break;
+        }
+        
         case PartitionTooSmallError: {
             d->description = "The partition you wish to create or resize is below the minimum size allowed.";
             d->markersLeft = 0;

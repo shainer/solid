@@ -60,6 +60,8 @@ namespace Solid
                     FilesystemLabelError,
                     FilesystemFlagsError,
                     PartitionFlagsError,
+                    MBRLabelError,
+                    LabelTooBigError,
                     PartitionTooSmallError,
                     CannotFormatPartition,
                     NoPartitionTableError,

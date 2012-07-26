@@ -579,6 +579,18 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 }
             }
             
+            /* Labels aren't supported in MBR */
+            if (p->partitionTableScheme() == "mbr" && !mpa->label().isEmpty()) {
+                error.setType(PartitioningError::MBRLabelError);
+                return false;
+            }
+            
+            /* In GPT, label must be below 36 characters in size */
+            if (p->partitionTableScheme() == "gpt" && mpa->isLabelChanged() && mpa->label().size() > 36) {
+                error.setType(PartitioningError::LabelTooBigError);
+                return false;
+            }
+            
             if (!mpa->flags().isEmpty() && p->partitionType() == ExtendedPartition) {
                 error.setType(PartitioningError::PartitionFlagsError);
                 error.arg( mpa->flags().first() );
