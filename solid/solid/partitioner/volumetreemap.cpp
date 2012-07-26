@@ -18,7 +18,7 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <solid/partitioner/volumetreemap.h>
+#include <solid/partitioner/volumetreemap_p.h>
 #include <solid/block.h>
 #include <solid/device.h>
 #include <solid/partitioner/utils/utils.h>
@@ -33,48 +33,16 @@ namespace Partitioner
 {
     
 using namespace Devices;
-    
-class VolumeTreeMap::Private
-{
-public:
-    Private()
-        : backend( new Backends::UDisks::UDisksManager(0) )
-    {}
-    
-    ~Private()
-    {}
-    
-    QMap<QString, VolumeTree> devices;
-    QMap<QString, VolumeTree> beginningCopies; /* the original copy */
-    
-    /* This manager sends us the notifications about added and removed devices. */
-    Ifaces::DeviceManager* backend;
-
-    /*
-     * NOTE: while detecting, either because we have to build the map or because a new device was added/removed,
-     * we must update both maps.
-     */
-    void buildDisk(Device &);
-    Disk* addDisk(StorageDrive *, const QString &, QMap<QString, VolumeTree> &);
-    void detectChildrenOfDisk(const QString &);
-    void detectPartitionsOfDisk(const QString &, QMap<QString, VolumeTree> &);
-    void detectFreeSpaceOfDisk(const QString &, QMap<QString, VolumeTree> &);
-    
-    /* The following functions help detecting free space blocks between partitions */
-    QList< FreeSpace* > freeSpaceOfDisk(const VolumeTree &);
-    QList< FreeSpace* > findSpace(QList< VolumeTreeItem* >, DeviceModified *);
-    FreeSpace* spaceBetweenPartitions(DeviceModified *, DeviceModified *, DeviceModified *);
-};
 
 VolumeTreeMap::VolumeTreeMap()
-    : d( new Private )
+    : d( new Private(this) )
 {
-    connectSignals();
+    d->connectSignals();
 }
 
 VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
     : QObject()
-    , d( new Private )
+    , d( new Private(this) )
 {
     d->devices = other.d->devices;
     d->beginningCopies = other.d->beginningCopies;
@@ -82,47 +50,7 @@ VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
 
 VolumeTreeMap::~VolumeTreeMap()
 {
-    clear();
-    d->backend->deleteLater();
-    
     delete d;
-}
-
-void VolumeTreeMap::build()
-{
-    clear();
-    
-    /*
-     * Detection of drives.
-     * A new tree is built for each disk on the system.
-     */
-    foreach(Device dev, Device::listFromType(DeviceInterface::StorageDrive)) {
-        d->buildDisk(dev);
-    }
-}
-
-/*
- * FIXME: this of course still doesn't work.
- */
-void VolumeTreeMap::backToOriginal()
-{
-    d->devices.clear();
-    
-    foreach (const QString& disk, d->beginningCopies.keys()) {
-        d->devices.insert(disk, d->beginningCopies[disk].copy());
-    }
-}
-
-void VolumeTreeMap::connectSignals()
-{
-    QObject::connect(d->backend, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
-    QObject::connect(d->backend, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
-}
-
-void VolumeTreeMap::disconnectSignals()
-{
-    QObject::disconnect(d->backend, SIGNAL(deviceAdded(QString)), this, SLOT(doDeviceAdded(QString)));
-    QObject::disconnect(d->backend, SIGNAL(deviceRemoved(QString)), this, SLOT(doDeviceRemoved(QString)));
 }
 
 QMap< QString, VolumeTree > VolumeTreeMap::deviceTrees() const
@@ -197,17 +125,6 @@ Partition* VolumeTreeMap::searchPartition(const QString& udi) const
     return dynamic_cast< Partition* >(device);
 }
 
-void VolumeTreeMap::remove(const QString& diskName)
-{
-    d->devices.remove(diskName);
-}
-
-void VolumeTreeMap::clear()
-{
-    d->devices.clear();
-    d->beginningCopies.clear();
-}
-
 /*
  * For a disk, adds a new tree.
  * For a partition, repeats all the detection in the correspondent disk, because the layout change can affect free
@@ -247,6 +164,57 @@ void VolumeTreeMap::doDeviceRemoved(QString udi)
             emit deviceRemoved(udi, diskName);
         }
     }
+}
+
+VolumeTreeMap::Private::Private(VolumeTreeMap *q_ptr)
+    : q(q_ptr)
+    , backend( new Backends::UDisks::UDisksManager(0) )
+{}
+
+VolumeTreeMap::Private::~Private()
+{
+    clear();
+    backend->deleteLater();
+}
+
+void VolumeTreeMap::Private::build()
+{
+    clear();
+    
+    /*
+     * Detection of drives.
+     * A new tree is built for each disk on the system.
+     */
+    foreach(Device dev, Device::listFromType(DeviceInterface::StorageDrive)) {
+        buildDisk(dev);
+    }
+}
+
+void VolumeTreeMap::Private::backToOriginal()
+{
+    devices.clear();
+    
+    foreach (const QString& disk, beginningCopies.keys()) {
+        devices.insert(disk, beginningCopies[disk].copy());
+    }
+}
+
+void VolumeTreeMap::Private::connectSignals()
+{
+    QObject::connect(backend, SIGNAL(deviceAdded(QString)), q, SLOT(doDeviceAdded(QString)));
+    QObject::connect(backend, SIGNAL(deviceRemoved(QString)), q, SLOT(doDeviceRemoved(QString)));
+}
+
+void VolumeTreeMap::Private::disconnectSignals()
+{
+    QObject::disconnect(backend, SIGNAL(deviceAdded(QString)), q, SLOT(doDeviceAdded(QString)));
+    QObject::disconnect(backend, SIGNAL(deviceRemoved(QString)), q, SLOT(doDeviceRemoved(QString)));
+}
+
+void VolumeTreeMap::Private::clear()
+{
+    devices.clear();
+    beginningCopies.clear();
 }
 
 void VolumeTreeMap::Private::buildDisk(Device& dev)

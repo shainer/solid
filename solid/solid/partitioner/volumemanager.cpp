@@ -32,6 +32,7 @@
 #include <solid/partitioner/utils/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
+#include "volumetreemap_p.h"
 #include <solid/device.h>
 #include <backends/udisks/udisksmanager.h>
 #include <solid/block.h>
@@ -124,7 +125,7 @@ VolumeManager::VolumeManager()
     Q_ASSERT(!s_volumemanager->q);
     s_volumemanager->q = this;
 
-    d->volumeTreeMap.build(); /* builds all the layout detecting the current status of the hardware */
+    d->volumeTreeMap.d->build(); /* builds all the layout detecting the current status of the hardware */
     
     /* Register this object for receiving notifications about changes in the system */
     QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree, DeviceModified *)), SLOT(doDeviceAdded(VolumeTree, DeviceModified *)));
@@ -212,7 +213,7 @@ void VolumeManager::undo()
          * action list may be empty later.
          */
         DeviceModified* ownerDisk = d->actionstack.list().last()->ownerDisk();
-        d->volumeTreeMap.backToOriginal();
+        d->volumeTreeMap.d->backToOriginal();
 
         foreach (Action* action, d->actionstack.undo()) {
             d->applyAction(action, true); /* don't put on stack as they are already there */
@@ -285,9 +286,9 @@ VolumeTree VolumeManager::diskTree(const QString& udi) const
     return d->volumeTreeMap[udi];
 }
 
-QMap< QString, VolumeTree > VolumeManager::allDiskTrees() const
+VolumeTreeMap VolumeManager::allDiskTrees() const
 {
-    return d->volumeTreeMap.deviceTrees();
+    return d->volumeTreeMap;
 }
 
 bool VolumeManager::apply()
@@ -305,13 +306,13 @@ bool VolumeManager::apply()
         return false;
     }
     
-    d->volumeTreeMap.disconnectSignals();
+    d->volumeTreeMap.d->disconnectSignals();
     QObject::connect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)), Qt::DirectConnection);
     bool success = executer.execute();
     
     QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
-    d->volumeTreeMap.build(); /* repeats hw detection */
-    d->volumeTreeMap.connectSignals();
+    d->volumeTreeMap.d->build(); /* repeats hw detection */
+    d->volumeTreeMap.d->connectSignals();
     d->actionstack.clear();
     
     if (!success) {

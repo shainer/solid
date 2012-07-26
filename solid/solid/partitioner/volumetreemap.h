@@ -51,30 +51,6 @@ namespace Solid
             virtual ~VolumeTreeMap();
             
             /**
-             * Builds all the trees, detecting devices.
-             */
-            void build();
-            
-            /**
-             * We internally store two copies of the map. One is modified as the application registers new actions,
-             * while the other isn't; thus the latter always maintains the actual state of the hardware.
-             * 
-             * This method synchronizes the modified copy with the original one; it's used when undoing actions.
-             */
-            void backToOriginal();
-            
-            /**
-             * Receive signals from the hardware about added/removed devices.
-             */
-            void connectSignals();
-            
-            /**
-             * Receive signals from the hardware about added/removed devices.
-             * This is used when executing actions to avoid being flooded with useless signals.
-             */
-            void disconnectSignals();
-            
-            /**
              * Retrieves the map of trees.
              * 
              * @returns a map of couples in the form (disk name -> disk layout tree).
@@ -129,18 +105,6 @@ namespace Solid
              */
             bool contains(const QString &) const;
             
-            /**
-             * Removes a tree from the map.
-             * 
-             * @param diskName the UDI of the disk layout to remove.
-             */
-            void remove(const QString &);
-            
-            /**
-             * Clears the map and destroys all the trees.
-             */
-            void clear();
-            
         public slots:
             void doDeviceAdded(QString);
             void doDeviceRemoved(QString);
@@ -165,6 +129,7 @@ namespace Solid
             void deviceRemoved(QString, QString);
             
         private:
+            friend class VolumeManager;
             class Private;
             Private* d;
         };

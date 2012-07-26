@@ -108,9 +108,10 @@ namespace Solid
             VolumeTree diskTree(const QString &) const;
             
             /**
-             * @returns all the disk layouts in a map indexed by disk UDIs.
+             * @returns all the disk layouts.
+             * @see VolumeTreeMap
              */
-            QMap<QString, VolumeTree> allDiskTrees() const;
+            VolumeTreeMap allDiskTrees() const;
             
             /**
              * Retrieves the latest error occurred.

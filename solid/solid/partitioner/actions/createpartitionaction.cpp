@@ -44,11 +44,11 @@ public:
         , label(l)
         , flags(f)
     {
-        QMap<QString, VolumeTree> trees = VolumeManager::instance()->allDiskTrees();
-        VolumeTree diskLayout = trees[disk];
+        VolumeTreeMap map = VolumeManager::instance()->allDiskTrees();
+        VolumeTree diskTree = map.searchTreeWithDevice(disk).first;
         
-        if (trees.contains(disk)) {
-            DeviceModified* extended = diskLayout.extendedPartition();
+        if (diskTree.valid()) {
+            DeviceModified* extended = diskTree.extendedPartition();
             
             if (extended && (extended->offset() <= offset && extended->rightBoundary() >= offset + size)) {
                 logical = true;
