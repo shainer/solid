@@ -28,7 +28,7 @@ namespace Actions
 {
 
 RemovePartitionAction::RemovePartitionAction(const QString& partition)
-    : PartitionAction(partition)
+    : Action(partition)
 {
     QString desc( "Removing partition %0." );
     desc = desc.arg( partition );

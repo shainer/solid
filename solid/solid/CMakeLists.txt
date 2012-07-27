@@ -143,7 +143,6 @@ set(solid_LIB_SRCS
    partitioner/devices/freespace.cpp
 
    partitioner/actions/action.cpp
-   partitioner/actions/partitionaction.cpp
    partitioner/actions/formatpartitionaction.cpp
    partitioner/actions/createpartitionaction.cpp
    partitioner/actions/removepartitionaction.cpp
@@ -387,7 +386,7 @@ if ( UDEV_FOUND )
    set(solid_OPTIONAL_LIBS ${solid_OPTIONAL_LIBS} ${UDEV_LIBS})
 endif ( UDEV_FOUND )
 
-target_link_libraries(solid ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTGUI_LIBRARY} ${solid_OPTIONAL_LIBS} )
+target_link_libraries(solid ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTGUI_LIBRARY} ${solid_OPTIONAL_LIBS} parted )
 target_link_libraries(solid LINK_INTERFACE_LIBRARIES ${QT_CORE_LIBRARY} )
 
 if (WINCE)
@@ -427,7 +426,6 @@ install( FILES partitioner/volumemanager.h partitioner/volumetree.h
                partitioner/actionexecuter.h partitioner/actionstack.h partitioner/volumetreemap.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
-               partitioner/actions/partitionaction.h
                partitioner/actions/formatpartitionaction.h
                partitioner/actions/createpartitionaction.h
                partitioner/actions/removepartitionaction.h

@@ -68,7 +68,7 @@ public:
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
                                              const QString& label,
                                              const QStringList& flags)
-    : PartitionAction(partition)
+    : Action(partition)
     , d( new Private(label, flags) )
 {
     d->q = this;
@@ -77,7 +77,7 @@ ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
 
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
                                              const QStringList& flags)
-    : PartitionAction(partition)
+    : Action(partition)
     , d( new Private(flags) )
 {
     d->q = this;

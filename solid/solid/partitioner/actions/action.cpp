@@ -37,15 +37,48 @@ public:
     
     QString description;
     QString uniqueName;
+    
+    QString partition;
+    QString newPartitionName;
 };
     
 Action::Action()
     : d( new Private )
 {}
 
+Action::Action(const QString& partition)
+    : d( new Private )
+{
+    d->partition = partition;
+}
+
 Action::~Action()
 {
     delete d;
+}
+
+bool Action::isPartitionAction() const
+{
+    return !d->partition.isEmpty();
+}
+
+QString Action::partition() const
+{
+    return d->partition;
+}
+
+QString Action::newPartitionName() const
+{
+    if (d->newPartitionName.isEmpty()) {
+        return partition();
+    }
+    
+    return d->newPartitionName;
+}
+
+void Action::setNewPartitionName(const QString& newName)
+{
+    d->newPartitionName = newName;
 }
 
 bool Action::operator==(Action *other) const

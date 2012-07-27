@@ -44,7 +44,7 @@ public:
 };
     
 ResizePartitionAction::ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize)
-    : PartitionAction(partition)
+    : Action(partition)
     , d( new Private(newOffset, newSize) )
 {
     QString desc( "Changing %0 to offset %1 and size %2" );

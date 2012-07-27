@@ -38,18 +38,6 @@ qulonglong getDiskSize(const QString& udi)
     return tree.disk()->size();
 }
 
-bool isPartitionAction(Action* action)
-{
-    QList< Action::ActionType > partitionTypes;
-    partitionTypes << Action::FormatPartition
-                   << Action::ModifyPartition
-                   << Action::RemovePartition
-                   << Action::ResizePartition
-                   << Action::ModifyFilesystem;
-                   
-    return partitionTypes.contains(action->actionType());
-}
-
 qulonglong sectorSize(const QString& disk)
 {
     QString diskName = disk.split("/").last();

@@ -21,7 +21,7 @@
 #ifndef SOLID_PARTITIONER_ACTIONS_REMOVEPARTITIONACTION_H
 #define SOLID_PARTITIONER_ACTIONS_REMOVEPARTITIONACTION_H
 
-#include <solid/partitioner/actions/partitionaction.h>
+#include <solid/partitioner/actions/action.h>
 
 namespace Solid
 {
@@ -31,11 +31,11 @@ namespace Solid
         {
             /**
              * @class RemovePartitionAction
-             * @extends PartitionAction
+             * @extends Action
              * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief Action for removing a partition.
              */
-            class SOLID_EXPORT RemovePartitionAction : public PartitionAction
+            class SOLID_EXPORT RemovePartitionAction : public Action
             {
             public:
                 /**

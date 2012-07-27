@@ -37,7 +37,7 @@ public:
 };
 
 ModifyFilesystemAction::ModifyFilesystemAction(const QString& partition, const QString& fsLabel)
-    : PartitionAction(partition)
+    : Action(partition)
     , d( new Private(fsLabel) )
 {
     QString desc( "Setting a new label for the filesystem of %0: %1" );

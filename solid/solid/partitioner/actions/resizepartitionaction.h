@@ -21,7 +21,7 @@
 #ifndef SOLID_PARTITIONER_ACTIONS_RESIZEPARTITIONACTION_H
 #define SOLID_PARTITIONER_ACTIONS_RESIZEPARTITIONACTION_H
 
-#include <solid/partitioner/actions/partitionaction.h>
+#include <solid/partitioner/actions/action.h>
 
 namespace Solid
 {
@@ -31,11 +31,11 @@ namespace Solid
         {
             /**
              * @class ResizePartitionAction
-             * @extends PartitionAction
+             * @extends Action
              * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief A class to resize and/or move a partition.
              */
-            class SOLID_EXPORT ResizePartitionAction : public PartitionAction
+            class SOLID_EXPORT ResizePartitionAction : public Action
             {
             public:
                 /**

@@ -649,10 +649,9 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
     return true;
 }
 
-bool VolumeManager::Private::partitionChecks(Action* a)
+bool VolumeManager::Private::partitionChecks(Action* action)
 {
-    if (Utils::isPartitionAction(a)) {
-        PartitionAction* action = dynamic_cast< PartitionAction* >(a);
+    if (action->isPartitionAction()) {
         Partition* partition = volumeTreeMap.searchPartition( action->partition() );
         
         if (!partition) {

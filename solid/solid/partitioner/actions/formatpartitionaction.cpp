@@ -66,7 +66,7 @@ public:
 };
     
 FormatPartitionAction::FormatPartitionAction(const QString& partition, const Utils::Filesystem& fs)
-    : PartitionAction(partition)
+    : Action(partition)
     , d( new Private(fs) )
 {
     d->q = this;
@@ -74,7 +74,7 @@ FormatPartitionAction::FormatPartitionAction(const QString& partition, const Uti
 }
 
 FormatPartitionAction::FormatPartitionAction(const QString& partition, const QString& fsName)
-    : PartitionAction(partition)
+    : Action(partition)
     , d( new Private(Utils::Filesystem(fsName)) )
 {
     d->q = this;

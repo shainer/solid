@@ -283,11 +283,9 @@ void ActionExecuter::Private::translateFutureNames(QList< Action* >::iterator cu
     for (QList< Action* >::iterator it = currentpos + 1; it != actions.end(); it++) {
         Action* current = (*it);
         
-        if (Utils::isPartitionAction(current)) {
-            PartitionAction* pAction = dynamic_cast< PartitionAction* >(current);
-            
-            if (pAction->partition() == currentPartitionName) {
-                pAction->setNewPartitionName(newPartitionName);
+        if (current->isPartitionAction()) {            
+            if (current->partition() == currentPartitionName) {
+                current->setNewPartitionName(newPartitionName);
             }
         }
     }

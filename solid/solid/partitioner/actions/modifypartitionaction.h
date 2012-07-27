@@ -20,7 +20,7 @@
 #ifndef SOLID_PARTITIONER_ACTIONS_MODIFYPARTITIONACTION_H
 #define SOLID_PARTITIONER_ACTIONS_MODIFYPARTITIONACTION_H
 
-#include <solid/partitioner/actions/partitionaction.h>
+#include <solid/partitioner/actions/action.h>
 #include <QtCore/QStringList>
 
 namespace Solid
@@ -31,11 +31,11 @@ namespace Solid
         {
             /**
              * @class ModifyPartitionAction
-             * @extends PartitionAction
+             * @extends Action
              * @author Lisa Vitolo <shainer@chakra-project.org>
              * @brief Action to modify label and/or flags of a partition.
              */
-            class SOLID_EXPORT ModifyPartitionAction : public PartitionAction
+            class SOLID_EXPORT ModifyPartitionAction : public Action
             {
             public:
                 

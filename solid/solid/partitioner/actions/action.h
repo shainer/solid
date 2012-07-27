@@ -61,7 +61,18 @@ namespace Solid
                     RemovePartitionTable
                 };
                 
+                /**
+                 * Default constructor.
+                 */
                 explicit Action();
+                
+                /**
+                 * "Partition constructor". This one is used by actions regarding partitions, to save the partition name
+                 * as their property.
+                 * 
+                 * @param partitionName the partition name.
+                 */
+                explicit Action(const QString &);
                 virtual ~Action();
                 
                 /**
@@ -70,6 +81,32 @@ namespace Solid
                  * @returns the most derived class a generic Action object is instance of.
                  */
                 virtual Action::ActionType actionType() const = 0;
+                
+                /**
+                 * @returns true if the specific action involves a partition, false otherwise.
+                 */
+                virtual bool isPartitionAction() const;
+                
+                /**
+                 * @returns the partition involved in the action, if any, otherwise an empty string.
+                 */
+                virtual QString partition() const;
+                
+                /**
+                 * If this action referred to a partition that didn't exist yet in the system, partition()
+                 * returns a dummy identifier name. After the partition is created the system assigns it a name,
+                 * which we know after the call to setNewPartitionName().
+                 * 
+                 * @returns the system name assigned to the new partition, or partition() if there isn't any yet.
+                 */
+                virtual QString newPartitionName() const;
+                
+                /**
+                 * Sets a different partition name for this action.
+                 * 
+                 * @param name the new partition name.
+                 */
+                virtual void setNewPartitionName(const QString &);
                 
                 /**
                  * @returns a localized string describing the action. This description isn't unique.

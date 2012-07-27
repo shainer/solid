@@ -20,7 +20,7 @@
 
 #ifndef SOLID_PARTITIONER_ACTIONS_MODIFYFILESYSTEMACTION_H
 #define SOLID_PARTITIONER_ACTIONS_MODIFYFILESYSTEMACTION_H
-#include <solid/partitioner/actions/partitionaction.h>
+#include <solid/partitioner/actions/action.h>
 
 namespace Solid
 {
@@ -30,10 +30,10 @@ namespace Solid
         {
             /**
              * @class ModifyFilesystemAction
-             * @extends PartitionAction
+             * @extends Action
              * @brief This class allows to change the filesystem properties (for now, only the label) without reformatting.
              */
-            class SOLID_EXPORT ModifyFilesystemAction : public PartitionAction
+            class SOLID_EXPORT ModifyFilesystemAction : public Action
             {
             public:
                 /**
