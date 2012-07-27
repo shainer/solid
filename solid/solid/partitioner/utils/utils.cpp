@@ -44,7 +44,8 @@ bool isPartitionAction(Action* action)
     partitionTypes << Action::FormatPartition
                    << Action::ModifyPartition
                    << Action::RemovePartition
-                   << Action::ResizePartition;
+                   << Action::ResizePartition
+                   << Action::ModifyFilesystem;
                    
     return partitionTypes.contains(action->actionType());
 }
