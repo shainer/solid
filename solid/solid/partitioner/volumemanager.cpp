@@ -389,6 +389,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 mfa->fsLabel().size() > FilesystemUtils::instance()->filesystemProperty( filesystem.name(), "max_label_len" ).toInt() ) {
                 error.setType(PartitioningError::FilesystemLabelError);
                 error.arg( filesystem.name() );
+                return false;
             }
             
             QString oldLabel = partition->label();
