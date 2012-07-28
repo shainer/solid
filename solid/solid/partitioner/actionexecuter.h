@@ -23,7 +23,7 @@
 #include <solid/solid_export.h>
 #include <solid/partitioner/actions/action.h>
 #include <solid/partitioner/volumetree.h>
-#include <solid/partitioner/utils/partitioningerror.h>
+#include <solid/partitioner/partitioningerror.h>
 #include "volumetreemap.h"
 
 #include <QtCore/QObject>
@@ -69,7 +69,7 @@ namespace Solid
             /**
              * @returns the latest error occurred.
              */
-            Utils::PartitioningError error() const;
+            PartitioningError error() const;
             
         signals:
             

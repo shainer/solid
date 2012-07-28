@@ -34,7 +34,7 @@ using namespace Utils;
 class CreatePartitionAction::Private
 {
 public:
-    Private(const QString& d, qulonglong o, qulonglong s, bool e, Utils::Filesystem fs, const QString& l, const QStringList& f)
+    Private(const QString& d, qulonglong o, qulonglong s, bool e, Filesystem fs, const QString& l, const QStringList& f)
         : disk(d)
         , offset(o)
         , size(s)
@@ -64,7 +64,7 @@ public:
     qulonglong size;
     bool extended;
     bool logical;
-    Utils::Filesystem filesystem;
+    Filesystem filesystem;
     QString label;
     QStringList flags;
     
@@ -75,7 +75,7 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
                                              bool extended,
-                                             const Utils::Filesystem& fs,
+                                             const Filesystem& fs,
                                              const QString& label,
                                              const QStringList& flags
                                             )
@@ -88,7 +88,7 @@ CreatePartitionAction::CreatePartitionAction(const QString& disk,
 CreatePartitionAction::CreatePartitionAction(const QString& disk,
                                              qulonglong offset,
                                              qulonglong size,
-                                             const Utils::Filesystem& fs,
+                                             const Filesystem& fs,
                                              const QString& label,
                                              const QStringList& flags)
     : d( new Private(disk, offset, size, false, fs, label, flags) )

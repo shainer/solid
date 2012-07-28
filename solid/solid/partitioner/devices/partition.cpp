@@ -50,7 +50,7 @@ public:
         , mounted(false)
     {
         QString fsName = FilesystemUtils::instance()->filesystemNameFromId( v->fsType() );
-        filesystem = Utils::Filesystem(fsName);
+        filesystem = Filesystem(fsName);
         
         /* For an existing partition we know the type string but not the actual type (primary, extended, ...) */
         setTypeFromString();
@@ -63,7 +63,6 @@ public:
         , filesystem( action->filesystem() )
         , label(action->label())
         , size(action->size())
-        , minimumSize(0)
         , offset(action->offset())
         , partitionType(action->partitionType())
         , scheme(s)
@@ -99,7 +98,7 @@ public:
     
     bool ignored;
     StorageVolume::UsageType usage;
-    Utils::Filesystem filesystem;
+    Filesystem filesystem;
     QString label;
     QString uuid;
     qulonglong size;
@@ -185,7 +184,7 @@ StorageVolume::UsageType Partition::usage() const
     return d->usage;
 }
     
-Utils::Filesystem Partition::filesystem() const
+Filesystem Partition::filesystem() const
 {
     return d->filesystem;
 }
@@ -272,7 +271,7 @@ void Partition::setUsage(StorageVolume::UsageType usage)
     d->usage = usage;
 }
 
-void Partition::setFilesystem(const Utils::Filesystem& fs)
+void Partition::setFilesystem(const Filesystem& fs)
 {
     d->filesystem = fs;
     d->setStringFromType();

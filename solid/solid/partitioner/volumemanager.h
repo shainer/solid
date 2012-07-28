@@ -118,7 +118,7 @@ namespace Solid
              * 
              * @returns an error object, with None as type for success.
              */
-            Utils::PartitioningError error() const;
+            PartitioningError error() const;
             
             /**
              * Retrieves the list of registered actions.

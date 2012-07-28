@@ -24,8 +24,6 @@ namespace Solid
 {
 namespace Partitioner
 {
-namespace Utils
-{
 
 FilesystemPrivate::FilesystemPrivate(const QString& n, const QStringList& flags)
     : name(n)
@@ -139,6 +137,5 @@ void Filesystem::setLabel(const QString& label)
     d->label = label;
 }
 
-}
 }
 }

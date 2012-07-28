@@ -30,7 +30,7 @@ namespace Actions
 class FormatPartitionAction::Private
 {
 public:
-    Private(const Utils::Filesystem& fs)
+    Private(const Filesystem& fs)
         : filesystem(fs)
     {}
     
@@ -62,10 +62,10 @@ public:
     }
     
     FormatPartitionAction* q;
-    Utils::Filesystem filesystem;
+    Filesystem filesystem;
 };
     
-FormatPartitionAction::FormatPartitionAction(const QString& partition, const Utils::Filesystem& fs)
+FormatPartitionAction::FormatPartitionAction(const QString& partition, const Filesystem& fs)
     : Action(partition)
     , d( new Private(fs) )
 {
@@ -75,7 +75,7 @@ FormatPartitionAction::FormatPartitionAction(const QString& partition, const Uti
 
 FormatPartitionAction::FormatPartitionAction(const QString& partition, const QString& fsName)
     : Action(partition)
-    , d( new Private(Utils::Filesystem(fsName)) )
+    , d( new Private(Filesystem(fsName)) )
 {
     d->q = this;
     d->setNames();
@@ -91,7 +91,7 @@ Action::ActionType FormatPartitionAction::actionType() const
     return Action::FormatPartition;
 }
 
-Utils::Filesystem FormatPartitionAction::filesystem() const
+Filesystem FormatPartitionAction::filesystem() const
 {
     return d->filesystem;
 }

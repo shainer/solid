@@ -29,7 +29,7 @@
 #include <solid/partitioner/actions/modifypartitionaction.h>
 #include <solid/partitioner/actions/removepartitiontableaction.h>
 #include <solid/partitioner/actions/modifyfilesystemaction.h>
-#include <solid/partitioner/utils/partitioningerror.h>
+#include <solid/partitioner/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
 #include "volumetreemap_p.h"
@@ -365,7 +365,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition(fpa->partition());
             VolumeTree tree = pair.first;
             Partition* volume = pair.second;
-            Utils::Filesystem fs = fpa->filesystem();
+            Filesystem fs = fpa->filesystem();
             
             /* Other kinds of volume aren't currently supported. Plus, you cannot format an extended partition */
             if ((volume->usage() != StorageVolume::FileSystem && volume->usage() != StorageVolume::Other)
@@ -379,7 +379,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 return false;
             }
             
-            Utils::Filesystem oldFs = volume->filesystem();
+            Filesystem oldFs = volume->filesystem();
             volume->setFilesystem(fs);
             ownerDisk = tree.disk();
             break;
@@ -389,7 +389,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             Actions::ModifyFilesystemAction* mfa = dynamic_cast< ModifyFilesystemAction* >(action); 
             QPair< VolumeTree, Partition* > pair = volumeTreeMap.searchTreeWithPartition( mfa->partition() );
             Partition* partition = pair.second;
-            Utils::Filesystem filesystem = partition->filesystem();
+            Filesystem filesystem = partition->filesystem();
             
             if (!FilesystemUtils::instance()->supportsLabel( filesystem.name() ) ||
                 mfa->fsLabel().size() > FilesystemUtils::instance()->filesystemProperty( filesystem.name(), "max_label_len" ).toInt() ) {

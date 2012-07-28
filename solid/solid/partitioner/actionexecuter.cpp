@@ -68,7 +68,7 @@ public:
     VolumeTreeMap map;
     QDBusConnection connection;
     bool valid;
-    Utils::PartitioningError error;
+    PartitioningError error;
 };
     
 ActionExecuter::ActionExecuter(const QList< Action* >& actions, const VolumeTreeMap& map)
@@ -101,7 +101,7 @@ bool ActionExecuter::isValid() const
     return d->valid;
 }
 
-Utils::PartitioningError ActionExecuter::error() const
+PartitioningError ActionExecuter::error() const
 {
     return d->error;
 }
@@ -135,7 +135,7 @@ bool ActionExecuter::execute()
                     break;
                 }
                 
-                Utils::Filesystem fs = fpa->filesystem();
+                Filesystem fs = fpa->filesystem();
                 QString fsName = Utils::FilesystemUtils::instance()->filesystemIdFromName( fs.name() );
                 success = device->format( fsName, fs.flags());
                 break;
@@ -264,7 +264,7 @@ bool ActionExecuter::execute()
         device->deleteLater();
         
         if (!success) {
-            d->error.setType(Utils::PartitioningError::ExecutionError);
+            d->error.setType(PartitioningError::ExecutionError);
             d->error.arg( action->description() );
             d->error.arg( device->latestError() );
             return false;

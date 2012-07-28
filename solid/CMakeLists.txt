@@ -1,3 +1,5 @@
+include_directories(${CMAKE_INSTALL_DIR}/include)
+
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_CURRENT_BINARY_DIR}
                      ${QT_INCLUDE_DIR}

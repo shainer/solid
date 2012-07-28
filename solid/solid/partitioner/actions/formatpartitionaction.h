@@ -21,7 +21,7 @@
 #define SOLID_PARTITIONER_ACTIONS_FORMATPARTITIONACTION_H
 
 #include <solid/partitioner/actions/action.h>
-#include <solid/partitioner/utils/filesystem.h>
+#include <solid/partitioner/filesystem.h>
 #include <QtCore/QStringList>
 
 namespace Solid
@@ -45,7 +45,7 @@ namespace Solid
                  * @param partition the partition to format.
                  * @param fs the new filesystem: name and flags.
                  */
-                explicit FormatPartitionAction(const QString &, const Utils::Filesystem &);
+                explicit FormatPartitionAction(const QString &, const Filesystem &);
                 
                 /**
                  * Creates a new object.
@@ -65,7 +65,7 @@ namespace Solid
                 /**
                  * @returns an object representing the new filesystem.
                  */
-                Utils::Filesystem filesystem() const;
+                Filesystem filesystem() const;
 
             private:
                 class Private;

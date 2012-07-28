@@ -1,6 +1,6 @@
 set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR} )
 add_subdirectory( ifaces )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
+include_directories( ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
 
 if(WIN32)
    include_directories( ${KDEWIN_INCLUDES} )
@@ -136,6 +136,8 @@ set(solid_LIB_SRCS
    partitioner/volumetreemap.cpp
    partitioner/actionexecuter.cpp
    partitioner/actionstack.cpp
+   partitioner/filesystem.cpp
+   partitioner/partitioningerror.cpp
 
    partitioner/devices/devicemodified.cpp
    partitioner/devices/disk.cpp
@@ -152,8 +154,6 @@ set(solid_LIB_SRCS
    partitioner/actions/removepartitiontableaction.cpp
    partitioner/actions/modifyfilesystemaction.cpp
 
-   partitioner/utils/filesystem.cpp
-   partitioner/utils/partitioningerror.cpp
    partitioner/utils/partitiontableutils.cpp
    partitioner/utils/utils.cpp
    partitioner/utils/filesystemutils.cpp
@@ -386,7 +386,13 @@ if ( UDEV_FOUND )
    set(solid_OPTIONAL_LIBS ${solid_OPTIONAL_LIBS} ${UDEV_LIBS})
 endif ( UDEV_FOUND )
 
-target_link_libraries(solid ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTGUI_LIBRARY} ${solid_OPTIONAL_LIBS} parted )
+target_link_libraries(solid ${QT_QTCORE_LIBRARY}
+                            ${QT_QTDBUS_LIBRARY}
+                            ${QT_QTXML_LIBRARY}
+                            ${QT_QTGUI_LIBRARY}
+                            ${solid_OPTIONAL_LIBS}
+                            ${CMAKE_INSTALL_PREFIX}/lib/libparted.so # FIXME: do this properly!
+                            ${CMAKE_INSTALL_PREFIX}/lib/libparted-fs-resize.so)
 target_link_libraries(solid LINK_INTERFACE_LIBRARIES ${QT_CORE_LIBRARY} )
 
 if (WINCE)
@@ -408,7 +414,10 @@ install(FILES org.freedesktop.PowerManagement.Inhibit.xml DESTINATION ${DBUS_INT
 
 kde4_add_library(solid_static STATIC ${solid_LIB_SRCS})
 
-target_link_libraries(solid_static ${QT_QTCORE_LIBRARY} ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTGUI_LIBRARY} ${solid_OPTIONAL_LIBS})
+target_link_libraries(solid_static ${QT_QTCORE_LIBRARY}
+                                   ${CMAKE_INSTALL_PREFIX}/lib/libparted.so
+                                   ${CMAKE_INSTALL_PREFIX}/lib/libparted-fs-resize.so
+                                   ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTGUI_LIBRARY} ${solid_OPTIONAL_LIBS})
 
 if(WIN32)
    set_target_properties(solid_static PROPERTIES COMPILE_FLAGS -DSOLID_EXPORT=)
@@ -422,8 +431,13 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/solid_export.h solidnamespace.h devic
                button.h audiointerface.h dvbinterface.h predicate.h powermanagement.h
                networking.h video.h serialinterface.h smartcardreader.h internetgateway.h
                networkshare.h DESTINATION ${INCLUDE_INSTALL_DIR}/solid COMPONENT Devel)
-install( FILES partitioner/volumemanager.h partitioner/volumetree.h
-               partitioner/actionexecuter.h partitioner/actionstack.h partitioner/volumetreemap.h
+install( FILES partitioner/volumemanager.h
+               partitioner/volumetree.h
+               partitioner/actionexecuter.h
+               partitioner/actionstack.h
+               partitioner/volumetreemap.h
+               partitioner/filesystem.h partitioner/filesystem_p.h
+               partitioner/partitioningerror.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h
@@ -440,9 +454,7 @@ install( FILES partitioner/devices/partition.h
                partitioner/devices/disk.h
                partitioner/devices/freespace.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/devices COMPONENT Devel)
-install( FILES partitioner/utils/filesystem.h partitioner/utils/filesystem_p.h
-	       partitioner/utils/partitioningerror.h
-               partitioner/utils/partitiontableutils.h
+install( FILES partitioner/utils/partitiontableutils.h
                partitioner/utils/partitioner_enums.h
                partitioner/utils/utils.h
                partitioner/utils/filesystemutils.h

@@ -23,7 +23,7 @@
 #include "devicemodified.h"
 #include <solid/partitioner/actions/createpartitionaction.h>
 #include <solid/partitioner/utils/partitioner_enums.h>
-#include <solid/partitioner/utils/filesystem.h>
+#include <solid/partitioner/filesystem.h>
 #include <solid/storagevolume.h>
 #include <unistd.h>
 #include <solid/storageaccess.h>
@@ -97,7 +97,7 @@ namespace Solid
                 /**
                  * @returns an object representing the filesystem of this partition, if any.
                  */
-                virtual Utils::Filesystem filesystem() const;
+                virtual Filesystem filesystem() const;
                 
                 /**
                  * @returns the partition label.
@@ -179,7 +179,7 @@ namespace Solid
                  * 
                  * @param fs the object representing the filesystem.
                  */
-                virtual void setFilesystem(const Utils::Filesystem &);
+                virtual void setFilesystem(const Filesystem &);
                 
                 /**
                  * Sets a new label.
