@@ -77,6 +77,12 @@ public:
     bool filesystemChecks(const Filesystem &);
     
     /*
+     * Performs some standard checks on a partition's label.
+     * Parameters: the partition table scheme and the label.
+     */
+    bool labelChecks(const QString &, const QString &);
+    
+    /*
      * Performs a series of check to see if the requested resizing/moving is legal, plus calls the following
      * methods in the right order.
      */
@@ -454,6 +460,10 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 }
             }
             
+            if (!labelChecks(scheme, cpa->label())) {
+                return false;
+            }
+            
             if (!filesystemChecks( cpa->filesystem() )) {
                 return false;
             }
@@ -582,15 +592,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 }
             }
             
-            /* Labels aren't supported in MBR */
-            if (p->partitionTableScheme() == "mbr" && !mpa->label().isEmpty()) {
-                error.setType(PartitioningError::MBRLabelError);
-                return false;
-            }
-            
-            /* In GPT, label must be below 36 characters in size */
-            if (p->partitionTableScheme() == "gpt" && mpa->isLabelChanged() && mpa->label().size() > 36) {
-                error.setType(PartitioningError::LabelTooBigError);
+            if (mpa->isLabelChanged() && !labelChecks(p->partitionTableScheme(), mpa->label())) {
                 return false;
             }
             
@@ -702,6 +704,23 @@ bool VolumeManager::Private::filesystemChecks(const Filesystem& fs)
     if (!fs.unsupportedFlags().isEmpty()) {
         error.setType(PartitioningError::FilesystemFlagsError);
         error.arg( fs.unsupportedFlags().join(", ") );
+        return false;
+    }
+    
+    return true;
+}
+
+bool VolumeManager::Private::labelChecks(const QString& scheme, const QString& label)
+{
+    /* Labels aren't supported in MBR */
+    if (scheme == "mbr" && !label.isEmpty()) {
+        error.setType(PartitioningError::MBRLabelError);
+        return false;
+    }
+    
+    /* In GPT, label must be below 36 characters in size */
+    if (scheme == "gpt" && label.size() > 36) {
+        error.setType(PartitioningError::LabelTooBigError);
         return false;
     }
     
