@@ -295,8 +295,6 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
         if (volume->partitionType() == EXTENDED_TYPE_STRING) {
             extended = new Partition(device);
             extended->setPartitionType(Utils::ExtendedPartition);
-            extended->setName(device.udi());
-            extended->setParentName(parentUdi);
             
             tree.d->addDevice(parentUdi, extended);
         }
@@ -323,9 +321,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
             part->setPartitionType(Utils::PrimaryPartition);
         }
         
-        part->setName(device.udi());
         part->setParentName(parentName);
-        
         tree.d->addDevice(parentName, part);
     }    
 }

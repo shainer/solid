@@ -20,7 +20,7 @@
 #include <solid/partitioner/devices/partition.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
-#include <backends/udisks/udisksdevice.h>
+
 #include <solid/storageaccess.h>
 
 namespace Solid
@@ -63,6 +63,7 @@ public:
         , filesystem( action->filesystem() )
         , label(action->label())
         , size(action->size())
+        , minimumSize(0)
         , offset(action->offset())
         , partitionType(action->partitionType())
         , scheme(s)
@@ -118,6 +119,10 @@ Partition::Partition(Device& dev)
     if (dev.is<StorageAccess>()) {
         setAccess( dev.as<StorageAccess>() );
     }
+    
+    DeviceModified::setName( dev.udi() );
+    DeviceModified::setDescription( dev.udi() );
+    DeviceModified::setParentName( dev.parentUdi() );    
 }
 
 Partition::Partition(Actions::CreatePartitionAction* action, const QString& scheme)
