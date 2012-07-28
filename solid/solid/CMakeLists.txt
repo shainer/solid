@@ -437,10 +437,11 @@ endif ( UDEV_FOUND )
 
 target_link_libraries(solid ${QT_QTCORE_LIBRARY}
                             ${QT_QTDBUS_LIBRARY}
-                            ${KDE4_KDECORE_LIBS}
                             ${QT_QTXML_LIBRARY}
                             ${QT_QTGUI_LIBRARY}
-                            ${solid_OPTIONAL_LIBS})
+                            ${solid_OPTIONAL_LIBS}
+                            ${CMAKE_INSTALL_PREFIX}/lib/libparted.so # FIXME: do this properly!
+                            ${CMAKE_INSTALL_PREFIX}/lib/libparted-fs-resize.so)
 target_link_libraries(solid LINK_INTERFACE_LIBRARIES ${QT_CORE_LIBRARY} )
 
 if (WINCE)
