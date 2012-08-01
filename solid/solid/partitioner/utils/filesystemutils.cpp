@@ -22,6 +22,8 @@
 #include <kglobal.h>
 #include <QtCore/QDebug>
 
+#define MEGABYTE 1024*1024
+
 namespace Solid
 {
 namespace Partitioner
@@ -38,6 +40,7 @@ public:
     {}
     
     QHash< QString, KnownFilesystem > filesystems;
+    QHash< QString, qulonglong > filesystemMinimumSizes;
 };
 
 class FilesystemUtilsHelper
@@ -65,6 +68,17 @@ FilesystemUtils::FilesystemUtils()
     
     UDisksFilesystem udisksFs;
     d->filesystems = udisksFs.filesystems();
+    
+    /*
+     * FIXME: check these values.
+     * These values are in megabytes.
+     */
+    d->filesystemMinimumSizes.insert("NTFS", 8);
+    d->filesystemMinimumSizes.insert("Linux Ext2", 8);
+    d->filesystemMinimumSizes.insert("Linux Ext3", 8);
+    d->filesystemMinimumSizes.insert("Linux Ext4", 8);
+    d->filesystemMinimumSizes.insert("ReiserFS", 32);
+    d->filesystemMinimumSizes.insert("FAT", 32);
     
     s_filesystemutils->q = this;
 }
@@ -169,6 +183,15 @@ QVariant FilesystemUtils::filesystemProperty(const QString& fsName, const QStrin
     }
     
     return property;
+}
+
+qulonglong FilesystemUtils::minimumFilesystemSize(const QString& fs)
+{
+    if (!d->filesystemMinimumSizes.contains(fs)) {
+        return 0;
+    }
+    
+    return d->filesystemMinimumSizes[fs] * MEGABYTE;
 }
 
 }

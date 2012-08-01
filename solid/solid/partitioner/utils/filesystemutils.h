@@ -76,6 +76,14 @@ namespace Solid
                  */
                 QVariant filesystemProperty(const QString &, const QString &) const;
                 
+                /**
+                 * Retrieves the minimum size a partition with this filesystem must have.
+                 * 
+                 * @param fsName the filesystem name.
+                 * @returns the minimum size in bytes.
+                 */
+                qulonglong minimumFilesystemSize(const QString &);
+                
             private:
                 FilesystemUtils();
                 

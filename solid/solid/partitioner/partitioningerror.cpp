@@ -128,6 +128,12 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
             break;
         }
         
+        case FilesystemMinSizeError: {
+            d->description = "Partition is too small for the %0 filesystem.";
+            d->markersLeft = 1;
+            break;
+        }
+        
         case MBRLabelError: {
             d->description = "The MBR scheme doesn't support labeled partitions.";
             d->markersLeft = 0;

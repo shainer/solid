@@ -57,6 +57,7 @@ namespace Solid
                 FilesystemError,
                 FilesystemLabelError,
                 FilesystemFlagsError,
+                FilesystemMinSizeError,
                 PartitionFlagsError,
                 MBRLabelError,
                 LabelTooBigError,

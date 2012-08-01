@@ -379,6 +379,12 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 return false;
             }
             
+            if (volume->size() < FilesystemUtils::instance()->minimumFilesystemSize( fs.name() )) {
+                error.setType(PartitioningError::FilesystemMinSizeError);
+                error.arg( fs.name() );
+                return false;
+            }
+            
             Filesystem oldFs = volume->filesystem();
             volume->setFilesystem(fs);
             ownerDisk = tree.disk();
@@ -465,6 +471,12 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             }
             
             if (!filesystemChecks( cpa->filesystem() )) {
+                return false;
+            }
+            
+            if (cpa->size() < FilesystemUtils::instance()->minimumFilesystemSize( cpa->filesystem().name() )) {
+                error.setType(PartitioningError::FilesystemMinSizeError);
+                error.arg( cpa->filesystem().name() );
                 return false;
             }
             
