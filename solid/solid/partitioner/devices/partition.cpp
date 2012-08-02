@@ -20,13 +20,16 @@
 #include <solid/partitioner/devices/partition.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
+#include <solid/partitioner/resizehelper.h>
 
 #include <solid/storageaccess.h>
+#include <QtCore/QEventLoop>
 
 namespace Solid
 {
 namespace Partitioner
 {
+
 namespace Devices
 {
 
@@ -38,10 +41,12 @@ public:
     Private(StorageVolume* v)
         : access(0)
         , ignored(v->isIgnored())
+        , isFsExistent(true)
         , usage(v->usage())
         , label(v->label())
         , uuid(v->uuid())
         , size(v->size())
+        , minimumSize(-1)
         , offset(v->offset())
         , partitionType(PrimaryPartition)
         , partitionTypeString(v->partitionType())
@@ -59,10 +64,12 @@ public:
     Private(Actions::CreatePartitionAction* action, const QString& s)
         : access(0)
         , ignored(false)
+        , isFsExistent(false)
         , usage(StorageVolume::FileSystem)
         , filesystem( action->filesystem() )
         , label(action->label())
         , size(action->size())
+        , minimumSize(-1)
         , offset(action->offset())
         , partitionType(action->partitionType())
         , scheme(s)
@@ -97,11 +104,13 @@ public:
     StorageAccess* access;
     
     bool ignored;
+    bool isFsExistent;
     StorageVolume::UsageType usage;
     Filesystem filesystem;
     QString label;
     QString uuid;
     qulonglong size;
+    qulonglong minimumSize;
     qulonglong offset;
     PartitionType partitionType;
     QString partitionTypeString;
@@ -121,7 +130,9 @@ Partition::Partition(Device& dev)
     
     DeviceModified::setName( dev.udi() );
     DeviceModified::setDescription( dev.udi() );
-    DeviceModified::setParentName( dev.parentUdi() );    
+    DeviceModified::setParentName( dev.parentUdi() );
+
+    setMinimumSize();
 }
 
 Partition::Partition(Actions::CreatePartitionAction* action, const QString& scheme)
@@ -130,7 +141,9 @@ Partition::Partition(Actions::CreatePartitionAction* action, const QString& sche
 {    
     DeviceModified::setName( action->partitionName() );
     DeviceModified::setDescription( action->partitionName() );
-    DeviceModified::setParentName(action->disk());
+    DeviceModified::setParentName( action->disk() );
+    
+    setMinimumSize();
 }
 
 Partition::Partition()
@@ -146,6 +159,7 @@ DeviceModified* Partition::copy() const
 {
     Partition* partitionCopy = new Partition;
     
+    partitionCopy->setAccess( access() );
     partitionCopy->setFilesystem( filesystem() );
     partitionCopy->setFlags( flags() );
     partitionCopy->setIgnored( ignored() );
@@ -159,7 +173,8 @@ DeviceModified* Partition::copy() const
     partitionCopy->setDescription( description() );
     partitionCopy->setName( name() );
     partitionCopy->setParentName( parentName() );
-    partitionCopy->setAccess( access() );
+    partitionCopy->d->isFsExistent = d->isFsExistent;
+    partitionCopy->setMinimumSize();
     
     return partitionCopy;
 }
@@ -167,6 +182,40 @@ DeviceModified* Partition::copy() const
 DeviceModified::DeviceModifiedType Partition::deviceType() const
 {
     return DeviceModified::PartitionDevice;
+}
+
+void Partition::setMinimumSize()
+{
+    KAuth::Action asyncAction("org.solid.partitioner.resize.minsize");
+    asyncAction.addArgument("partition", name());
+    asyncAction.addArgument("disk", parentName());
+    asyncAction.addArgument("filesystem", d->filesystem.name());
+    asyncAction.addArgument("isOriginal", d->isFsExistent);
+    asyncAction.addArgument("minimumFilesystemSize", FilesystemUtils::instance()->minimumFilesystemSize( d->filesystem.name() ));
+    asyncAction.setExecutesAsync(true); /* it must be asynchronous to avoid timeouts */
+        
+    QEventLoop loop;
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit()));
+    asyncAction.execute("org.solid.partitioner.resize");
+    loop.exec(); /* wait until the action has terminated */
+    
+    disconnect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
+}
+
+void Partition::minimumSizeReady(ActionReply reply)
+{    
+    if (reply.succeeded() && reply.data().contains("minimumPartitionSize")) {
+        qlonglong minSize = reply.data().value("minimumPartitionSize").toLongLong();
+        
+        if (minSize != -1) {
+            d->minimumSize = minSize;
+        } else {
+            d->minimumSize = d->size; /* if resizing isn't supported, these two are the same */
+        }
+    } else {
+        d->minimumSize = d->size;
+    }
 }
 
 QString Partition::uuid() const
@@ -217,6 +266,11 @@ QStringList Partition::flags() const
 qulonglong Partition::size() const
 {
     return d->size;
+}
+
+qulonglong Partition::minimumSize() const
+{
+    return d->minimumSize;
 }
 
 qulonglong Partition::offset() const
@@ -275,6 +329,9 @@ void Partition::setFilesystem(const Filesystem& fs)
 {
     d->filesystem = fs;
     d->setStringFromType();
+    
+    d->isFsExistent = false;
+    setMinimumSize();
 }
 
 void Partition::setLabel(const QString& label)
@@ -309,6 +366,17 @@ void Partition::setAccess(StorageAccess* access)
                             this,
                             SLOT(doAccessibilityChanged(bool, const QString &)));
     }
+}
+
+bool Partition::supportsResizing() const
+{
+    return (d->minimumSize != d->size);
+}
+
+bool Partition::resize(qulonglong newSize)
+{
+    Q_UNUSED(newSize);
+    return true;
 }
 
 void Partition::doAccessibilityChanged(bool accessible, const QString& udi)

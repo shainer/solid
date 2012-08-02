@@ -46,6 +46,8 @@ file(MAKE_DIRECTORY
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${KDE4_C_FLAGS}") # enable -fvisibility=hidden for C sources
 
+add_subdirectory(partitioner)
+
 set(solid_LIB_SRCS
    solidnamespace.cpp
    managerbase.cpp
@@ -388,11 +390,10 @@ endif ( UDEV_FOUND )
 
 target_link_libraries(solid ${QT_QTCORE_LIBRARY}
                             ${QT_QTDBUS_LIBRARY}
+                            ${KDE4_KDECORE_LIBS}
                             ${QT_QTXML_LIBRARY}
                             ${QT_QTGUI_LIBRARY}
-                            ${solid_OPTIONAL_LIBS}
-                            ${CMAKE_INSTALL_PREFIX}/lib/libparted.so # FIXME: do this properly!
-                            ${CMAKE_INSTALL_PREFIX}/lib/libparted-fs-resize.so)
+                            ${solid_OPTIONAL_LIBS})
 target_link_libraries(solid LINK_INTERFACE_LIBRARIES ${QT_CORE_LIBRARY} )
 
 if (WINCE)
@@ -415,6 +416,7 @@ install(FILES org.freedesktop.PowerManagement.Inhibit.xml DESTINATION ${DBUS_INT
 kde4_add_library(solid_static STATIC ${solid_LIB_SRCS})
 
 target_link_libraries(solid_static ${QT_QTCORE_LIBRARY}
+                                   ${KDE4_KDECORE_LIBS}
                                    ${CMAKE_INSTALL_PREFIX}/lib/libparted.so
                                    ${CMAKE_INSTALL_PREFIX}/lib/libparted-fs-resize.so
                                    ${QT_QTDBUS_LIBRARY} ${QT_QTXML_LIBRARY} ${QT_QTGUI_LIBRARY} ${solid_OPTIONAL_LIBS})
@@ -438,6 +440,7 @@ install( FILES partitioner/volumemanager.h
                partitioner/volumetreemap.h
                partitioner/filesystem.h partitioner/filesystem_p.h
                partitioner/partitioningerror.h
+               partitioner/externalcommand.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner COMPONENT Devel)
 install( FILES partitioner/actions/action.h
                partitioner/actions/formatpartitionaction.h
@@ -498,4 +501,3 @@ else (FLEX_EXECUTABLE AND BISON_EXECUTABLE)
    add_custom_target(UpdateSolidPredicateParser
                      COMMAND echo "flex and/or bison not found, so target UpdateSolidPredicateParser inactive")
 endif (FLEX_EXECUTABLE AND BISON_EXECUTABLE)
-add_subdirectory(partitioner/utils)

@@ -20,12 +20,12 @@
 #ifndef SOLID_PARTITIONER_DEVICES_PARTITION_H
 #define SOLID_PARTITIONER_DEVICES_PARTITION_H
 
-#include "devicemodified.h"
+#include <solid/partitioner/devices/devicemodified.h>
 #include <solid/partitioner/actions/createpartitionaction.h>
 #include <solid/partitioner/utils/partitioner_enums.h>
 #include <solid/partitioner/filesystem.h>
 #include <solid/storagevolume.h>
-#include <unistd.h>
+#include <kauthactionreply.h>
 #include <solid/storageaccess.h>
 #include <solid/device.h>
 
@@ -35,6 +35,8 @@ namespace Solid
     {        
         namespace Devices
         {
+            using namespace KAuth;
+            
             /**
              * @class Partition
              * @extends DeviceModified
@@ -115,6 +117,15 @@ namespace Solid
                 virtual qulonglong size() const;
                 
                 /**
+                 * Retrieves the minimum size this partition can be resized to. This is 0 unless the partition has a filesystem
+                 * for which we support resizing: in that case, the minimum size is the minimum this partition can have without
+                 * deleting any data.
+                 * 
+                 * @returns the partition's minimum size, in bytes.
+                 */
+                virtual qulonglong minimumSize() const;
+                
+                /**
                  * @returns the initial offset in bytes.
                  */
                 virtual qulonglong offset() const;
@@ -159,6 +170,19 @@ namespace Solid
                  * @returns the StorageAccess object, which can be used to mount or unmount.
                  */
                 virtual StorageAccess* access() const;
+                
+                /**
+                 * @returns whether this partition can be resized safely
+                 */
+                virtual bool supportsResizing() const;
+                
+                /**
+                 * Resizes this partition.
+                 * 
+                 * @param newSize the new partition's size.
+                 * @returns whether the resizing succeeded
+                 */
+                virtual bool resize(qulonglong);
                 
                 /**
                  * Sets whether this partition should be displayed by the system.
@@ -239,6 +263,13 @@ namespace Solid
                  * @param access the Solid::StorageAccess interface.
                  */
                 virtual void setAccess(StorageAccess *);
+                
+                /**
+                 * Calls the resize helper to retrieve the partition's minimum size.
+                 * 
+                 * @internal
+                 */
+                virtual void setMinimumSize();
 
             private:
                 class Private;
@@ -246,6 +277,7 @@ namespace Solid
                 
             private slots:
                 void doAccessibilityChanged(bool accessible, const QString &udi);
+                void minimumSizeReady(ActionReply);
             };
             
         }
