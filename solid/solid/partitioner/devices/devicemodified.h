@@ -25,7 +25,7 @@
 namespace Solid
 {
     namespace Partitioner
-    {
+    {   
         namespace Devices
         {
             /**
@@ -123,27 +123,6 @@ namespace Solid
                 virtual QString parentName() const;
                 
                 /**
-                 * Sets a new name for the device.
-                 * 
-                 * @param udi the new UDI.
-                 */
-                virtual void setName(const QString &);
-                
-                /**
-                 * Sets a new description for this device.
-                 * 
-                 * @param description the new description
-                 */
-                virtual void setDescription(const QString &);
-                
-                /**
-                 * Sets a new parent name for the device.
-                 * 
-                 * @param udi the new parent UDI.
-                 */
-                virtual void setParentName(const QString &);
-                
-                /**
                  * Sets a new size.
                  * 
                  * @param size the new size in bytes.
@@ -163,6 +142,29 @@ namespace Solid
                  * @returns true if both devices share the same UDI, false otherwise.
                  */
                 virtual bool operator==(const DeviceModified &) const;
+                
+                /**
+                 * Sets a new parent name for the device.
+                 * 
+                 * @param udi the new parent UDI.
+                 */
+                virtual void setParentName(const QString &);
+                
+            protected:
+                             
+                /**
+                 * Sets a new name for the device.
+                 * 
+                 * @param udi the new UDI.
+                 */
+                virtual void setName(const QString &);
+                
+                /**
+                 * Sets a new description for this device.
+                 * 
+                 * @param description the new description
+                 */
+                virtual void setDescription(const QString &);
                 
             private:
                 class Private;

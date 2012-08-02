@@ -67,7 +67,7 @@ namespace Solid
             * we must update both maps.
             */
             void buildDisk(Device &);
-            Devices::Disk* addDisk(StorageDrive *, const QString &, QMap<QString, VolumeTree> &);
+            Devices::Disk* addDisk(Device &, QMap<QString, VolumeTree> &);
             void detectChildrenOfDisk(const QString &);
             void detectPartitionsOfDisk(const QString &, QMap<QString, VolumeTree> &);
             void detectFreeSpaceOfDisk(const QString &, QMap<QString, VolumeTree> &);

@@ -225,8 +225,8 @@ void VolumeTreeMap::Private::buildDisk(Device& dev)
     
     if (drive->driveType() == StorageDrive::HardDisk)
     {
-        addDisk(drive, udi, beginningCopies);
-        Disk* newDisk = addDisk(drive, udi, devices);
+        addDisk(dev, beginningCopies);
+        Disk* newDisk = addDisk(dev, devices);
         
        /*
         * Loop partitions, identified by a particular major number, aren't considered for partition detection.
@@ -238,11 +238,9 @@ void VolumeTreeMap::Private::buildDisk(Device& dev)
     }
 }
 
-Disk* VolumeTreeMap::Private::addDisk(StorageDrive* drive, const QString& udi, QMap<QString, VolumeTree>& devList)
+Disk* VolumeTreeMap::Private::addDisk(Device& device, QMap<QString, VolumeTree>& devList)
 {
-    Devices::Disk* disk = new Devices::Disk( drive );
-    disk->setName(udi);
-
+    Devices::Disk* disk = new Devices::Disk( device );
     VolumeTree tree( disk );
     devList.insert(disk->name(), tree);
 

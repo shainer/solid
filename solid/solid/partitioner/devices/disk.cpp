@@ -46,10 +46,12 @@ public:
     QString scheme;
 };
 
-Disk::Disk(StorageDrive* drive)
-    : DeviceModified(drive)
-    , d( new Private( drive ) )
-{}
+Disk::Disk(Device dev)
+    : DeviceModified( dev.as<StorageDrive>() )
+    , d( new Private( dev.as<StorageDrive>() ) )
+{
+    setName( dev.udi() );
+}
 
 Disk::Disk()
     : d( new Private )

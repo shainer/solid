@@ -20,10 +20,10 @@
 #ifndef SOLID_PARTITIONER_DEVICES_STORAGEDRIVEMODIFIED_H
 #define SOLID_PARTITIONER_DEVICES_STORAGEDRIVEMODIFIED_H
 
-#include "devicemodified.h"
-#include <solid/storagedrive.h>
+#include <solid/partitioner/devices/devicemodified.h>
 #include <solid/partitioner/utils/partitiontableutils.h>
 #include <solid/partitioner/utils/partitioner_enums.h>
+#include <device.h>
 
 namespace Solid
 {
@@ -42,11 +42,11 @@ namespace Solid
             public:
                 
                 /**
-                 * Builds a new disk from a StorageDrive object.
+                 * Builds a new disk from system information.
                  * 
-                 * @param drive the StorageDrive.
+                 * @param dev the Device object.
                  */
-                explicit Disk(StorageDrive *);
+                explicit Disk(Device);
                 
                 /**
                  * Builds a new disk object with all properties set to their default values.
