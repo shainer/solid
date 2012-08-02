@@ -306,7 +306,7 @@ namespace Solid
             /*
              * Adds a new device given the parent name. 
              */
-            void addDevice(const QString &, DeviceModified *);
+            void addDevice(DeviceModified *);
             
             /*
              * Removes a device. A device inside a tree is uniquely identified by name.

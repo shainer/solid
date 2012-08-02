@@ -294,7 +294,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
             extended = new Partition(device);
             extended->setPartitionType(Utils::ExtendedPartition);
             
-            tree.d->addDevice(parentUdi, extended);
+            tree.d->addDevice(extended);
         }
     }
     
@@ -320,7 +320,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
         }
         
         part->setParentName(parentName);
-        tree.d->addDevice(parentName, part);
+        tree.d->addDevice(part);
     }    
 }
 
@@ -329,7 +329,7 @@ void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi, QMa
     VolumeTree tree = devList[parentUdi];
     
     foreach (FreeSpace* space, freeSpaceOfDisk(tree)) {
-        tree.d->addDevice(space->parentName(), space);
+        tree.d->addDevice(space);
     }
 }
 

@@ -502,11 +502,11 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 newPartition->setSize( newPartition->size() - SPACE_BETWEEN_LOGICALS );
             }
             
-            tree.d->addDevice(newPartition->parentName(), newPartition);
+            tree.d->addDevice(newPartition);
             
             if (newPartition->partitionType() == ExtendedPartition) {
                 FreeSpace* logicalSpace = new FreeSpace(newPartition->offset() + SPACE_BETWEEN_LOGICALS, newPartition->size() - SPACE_BETWEEN_LOGICALS, newPartition->name());
-                tree.d->addDevice(newPartition->name(), logicalSpace);
+                tree.d->addDevice(logicalSpace);
             }
             
             ownerDisk = disk;
@@ -834,7 +834,7 @@ void VolumeManager::Private::resizePartition(Partition* partition,
         
         if (spaceSize > 0) {
             FreeSpace* freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
-            disk.d->addDevice(partition->parentName(), freeSpaceRight);
+            disk.d->addDevice(freeSpaceRight);
         }
     } else {
         FreeSpace* spaceRight = dynamic_cast< FreeSpace* >(rightDevice);
@@ -904,7 +904,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
         
         if (spaceSize > 0) {
             freeSpaceRight = new FreeSpace(spaceOffset, spaceSize, partition->parentName());
-            tree.d->addDevice(partition->parentName(), freeSpaceRight);
+            tree.d->addDevice(freeSpaceRight);
         }
     } else {
         qulonglong rightOffset = newOffset + partition->size();
@@ -928,7 +928,7 @@ void VolumeManager::Private::movePartition(Partition* partition,
      * But the offset of "partition" has changed above so we may have errors in the sorting.
      */
     if (freeSpaceLeft) {
-        tree.d->addDevice(partition->parentName(), freeSpaceLeft);
+        tree.d->addDevice(freeSpaceLeft);
     }
 }
 
