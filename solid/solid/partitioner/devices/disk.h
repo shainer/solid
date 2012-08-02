@@ -23,7 +23,7 @@
 #include <solid/partitioner/devices/devicemodified.h>
 #include <solid/partitioner/utils/partitiontableutils.h>
 #include <solid/partitioner/utils/partitioner_enums.h>
-#include <device.h>
+#include <solid/device.h>
 
 namespace Solid
 {
