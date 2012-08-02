@@ -566,7 +566,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             }
             
             /* The minimum partition size constraint has to be respected here too */
-            if (rpa->newSize() < disk->minimumPartitionSize()) {
+            if (rpa->newSize() < disk->minimumPartitionSize() || rpa->newSize() < toResize->minimumSize()) {
                 error.setType(PartitioningError::PartitionTooSmallError);
                 return false;
             }
