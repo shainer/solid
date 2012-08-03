@@ -182,6 +182,11 @@ namespace Solid
              */
             void executionError(QString);
             
+            /**
+             * This signal reports that the execution finished successfully AND the new device state has been detected.
+             */
+            void executionFinished();
+            
         private:
             VolumeManager();
             

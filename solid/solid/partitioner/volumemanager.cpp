@@ -327,6 +327,7 @@ bool VolumeManager::apply()
         return false;
     }
     
+    emit executionFinished();
     return true;
 }
 
@@ -387,6 +388,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             
             Filesystem oldFs = volume->filesystem();
             volume->setFilesystem(fs);
+            volume->computeMinimumSize();
             ownerDisk = tree.disk();
             break;
         }
