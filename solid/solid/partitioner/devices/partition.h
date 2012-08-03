@@ -269,7 +269,15 @@ namespace Solid
                  * 
                  * @internal
                  */
-                virtual void setMinimumSize();
+                virtual void computeMinimumSize();
+                
+                /**
+                 * Sets a new minimum size. Used to speed up copies, avoiding recalculating this property.
+                 * 
+                 * @param minSize the partition's minimum size.
+                 * @internal
+                 */
+                virtual void setMinimumSize(qulonglong);
 
             private:
                 class Private;

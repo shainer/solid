@@ -132,7 +132,7 @@ Partition::Partition(Device& dev)
     DeviceModified::setDescription( dev.udi() );
     DeviceModified::setParentName( dev.parentUdi() );
 
-    setMinimumSize();
+    computeMinimumSize();
 }
 
 Partition::Partition(Actions::CreatePartitionAction* action, const QString& scheme)
@@ -143,7 +143,7 @@ Partition::Partition(Actions::CreatePartitionAction* action, const QString& sche
     DeviceModified::setDescription( action->partitionName() );
     DeviceModified::setParentName( action->disk() );
     
-    setMinimumSize();
+    computeMinimumSize();
 }
 
 Partition::Partition()
@@ -174,7 +174,7 @@ DeviceModified* Partition::copy() const
     partitionCopy->setName( name() );
     partitionCopy->setParentName( parentName() );
     partitionCopy->d->isFsExistent = d->isFsExistent;
-    partitionCopy->setMinimumSize();
+    partitionCopy->setMinimumSize( d->minimumSize );
     
     return partitionCopy;
 }
@@ -182,40 +182,6 @@ DeviceModified* Partition::copy() const
 DeviceModified::DeviceModifiedType Partition::deviceType() const
 {
     return DeviceModified::PartitionDevice;
-}
-
-void Partition::setMinimumSize()
-{
-    KAuth::Action asyncAction("org.solid.partitioner.resize.minsize");
-    asyncAction.addArgument("partition", name());
-    asyncAction.addArgument("disk", parentName());
-    asyncAction.addArgument("filesystem", d->filesystem.name());
-    asyncAction.addArgument("isOriginal", d->isFsExistent);
-    asyncAction.addArgument("minimumFilesystemSize", FilesystemUtils::instance()->minimumFilesystemSize( d->filesystem.name() ));
-    asyncAction.setExecutesAsync(true); /* it must be asynchronous to avoid timeouts */
-        
-    QEventLoop loop;
-    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
-    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit()));
-    asyncAction.execute("org.solid.partitioner.resize");
-    loop.exec(); /* wait until the action has terminated */
-    
-    disconnect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
-}
-
-void Partition::minimumSizeReady(ActionReply reply)
-{    
-    if (reply.succeeded() && reply.data().contains("minimumPartitionSize")) {
-        qlonglong minSize = reply.data().value("minimumPartitionSize").toLongLong();
-        
-        if (minSize != -1) {
-            d->minimumSize = minSize;
-        } else {
-            d->minimumSize = d->size; /* if resizing isn't supported, these two are the same */
-        }
-    } else {
-        d->minimumSize = d->size;
-    }
 }
 
 QString Partition::uuid() const
@@ -331,7 +297,6 @@ void Partition::setFilesystem(const Filesystem& fs)
     d->setStringFromType();
     
     d->isFsExistent = false;
-    setMinimumSize();
 }
 
 void Partition::setLabel(const QString& label)
@@ -365,6 +330,50 @@ void Partition::setAccess(StorageAccess* access)
                             SIGNAL(accessibilityChanged(bool, const QString &)),
                             this,
                             SLOT(doAccessibilityChanged(bool, const QString &)));
+    }
+}
+
+void Partition::setMinimumSize(qulonglong minSize)
+{
+    d->minimumSize = minSize;
+}
+
+void Partition::computeMinimumSize()
+{
+    qRegisterMetaType<ActionReply>("ActionReply");
+    
+    KAuth::Action asyncAction("org.solid.partitioner.resize.minsize");
+    asyncAction.addArgument("partition", name());
+    asyncAction.addArgument("disk", parentName());
+    asyncAction.addArgument("filesystem", d->filesystem.name());
+    asyncAction.addArgument("isOriginal", d->isFsExistent);
+    asyncAction.addArgument("minimumFilesystemSize", FilesystemUtils::instance()->minimumFilesystemSize( d->filesystem.name() ));
+    asyncAction.setExecutesAsync(true); /* it must be asynchronous to avoid timeouts */
+        
+    QEventLoop loop;
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit()));
+    ActionReply earlyReply = asyncAction.execute("org.solid.partitioner.resize");
+    if (earlyReply.failed()) {
+        return;
+    }
+
+    loop.exec(); /* wait until the action has terminated */
+    disconnect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
+}
+
+void Partition::minimumSizeReady(ActionReply reply)
+{    
+    if (reply.succeeded() && reply.data().contains("minimumPartitionSize")) {
+        qlonglong minSize = reply.data().value("minimumPartitionSize").toLongLong();
+        
+        if (minSize != -1) {
+            d->minimumSize = minSize;
+        } else {
+            d->minimumSize = d->size; /* if resizing isn't supported, these two are the same */
+        }
+    } else {
+        d->minimumSize = d->size;
     }
 }
 
