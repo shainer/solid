@@ -97,14 +97,6 @@ namespace Solid
                 virtual qulonglong minimumPartitionSize() const;
                 
                 /**
-                 * Sets a new name for the disk. This extends the already existing method in DeviceModified because
-                 * when we know the disk's name we can obtain its sector size (which is needed by other methods).
-                 * 
-                 * @param name the new name.
-                 */
-                virtual void setName(const QString &);
-                
-                /**
                  * Sets a size.
                  * 
                  * @note the partitioning module cannot change the size of a disk. This method doesn't do anything.

@@ -33,12 +33,10 @@ class Disk::Private
 public:
     Private(StorageDrive *i)
         : size( i->size() )
-        , sectorSize(512) /* default value, will be changed when we know the disk's name */
         , scheme( i->partitionTableScheme() )
     {}
     
     Private()
-        : sectorSize(512)
     {}
     
     qulonglong size;
@@ -51,6 +49,7 @@ Disk::Disk(Device dev)
     , d( new Private( dev.as<StorageDrive>() ) )
 {
     setName( dev.udi() );
+    d->sectorSize = Utils::sectorSize( dev.udi() );    
 }
 
 Disk::Disk()
@@ -71,6 +70,7 @@ DeviceModified* Disk::copy() const
     copyDisk->setDescription( description() );
     copyDisk->setName( name() );
     copyDisk->setParentName( parentName() );
+    copyDisk->d->sectorSize = d->sectorSize;
     
     return copyDisk;
 }
@@ -88,7 +88,7 @@ qulonglong Disk::size() const
     if (d->scheme == "gpt") {
         s -= d->sectorSize * 34; /* secondary GPT table which replicates the first at the end for safety purposes */
     }
-
+    
     return s;
 }
 
@@ -114,12 +114,6 @@ QString Disk::partitionTableScheme() const
 qulonglong Disk::rightBoundary() const
 {
     return d->size;
-}
-
-void Disk::setName(const QString& name)
-{
-    DeviceModified::setName(name);
-    d->sectorSize = Utils::sectorSize(name);
 }
 
 void Disk::setOffset(qulonglong offset)
