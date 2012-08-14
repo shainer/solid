@@ -321,15 +321,15 @@ void Partition::setFlags(const QStringList& flags)
 
 void Partition::setAccess(StorageAccess* access)
 {
+    d->access = access;
+    
     if (access) {
-        d->access = access;
         d->mounted = access->isAccessible();
         d->mountFile = access->filePath();
         
         QObject::connect(access,
-                            SIGNAL(accessibilityChanged(bool, const QString &)),
-                            this,
-                            SLOT(doAccessibilityChanged(bool, const QString &)));
+                         SIGNAL(accessibilityChanged(bool, const QString &)),
+                         SLOT(doAccessibilityChanged(bool, const QString &)));
     }
 }
 
