@@ -46,22 +46,19 @@ public:
     void setDescription()
     {
         QString descPart1 = "Setting label of %0 to \"%1\".";
-        QString desc;
+        QString descPart2, desc;
         
         if (isLabelChanged) {
             desc += descPart1.arg(q->partition(), label);
         }
-        if (!flags.isEmpty()) {
-            QString descPart2;
-            
-            if (isLabelChanged) {
-                descPart2 = "Setting the following flags: %0";
-                desc += descPart2.arg( flags.join(" ") );
-            }
-            else {
-                descPart2 = "Setting the following flags for %0: %1";
-                desc += descPart2.arg( q->partition(), flags.join(" ") );
-            }
+        
+        if (isLabelChanged) {
+            descPart2 = "Setting the following flags: %0";
+            desc += descPart2.arg( flags.join(" ") );
+        }
+        else {
+            descPart2 = "Setting the following flags for %0: %1";
+            desc += descPart2.arg( q->partition(), flags.join(" ") );
         }
 
         q->setDescription(desc);
