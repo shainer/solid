@@ -43,17 +43,25 @@ public:
     ~Private()
     {}
     
-    void setNames()
+    void setDescription()
     {
-        QString desc1 = " Setting the following flags for %0: %1.";
-        QString desc3 = "Setting label of %0 to %1.";
+        QString descPart1 = "Setting label of %0 to \"%1\".";
         QString desc;
         
         if (isLabelChanged) {
-            desc += desc3.arg(q->partition(), label);
+            desc += descPart1.arg(q->partition(), label);
         }
         if (!flags.isEmpty()) {
-            desc += desc1.arg(q->partition(), flags.join(" "));
+            QString descPart2;
+            
+            if (isLabelChanged) {
+                descPart2 = "Setting the following flags: %0";
+                desc += descPart2.arg( flags.join(" ") );
+            }
+            else {
+                descPart2 = "Setting the following flags for %0: %1";
+                desc += descPart2.arg( q->partition(), flags.join(" ") );
+            }
         }
 
         q->setDescription(desc);
@@ -72,7 +80,7 @@ ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
     , d( new Private(label, flags) )
 {
     d->q = this;
-    d->setNames();
+    d->setDescription();
 }
 
 ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
@@ -81,7 +89,7 @@ ModifyPartitionAction::ModifyPartitionAction(const QString& partition,
     , d( new Private(flags) )
 {
     d->q = this;
-    d->setNames();
+    d->setDescription();
 }
 
 ModifyPartitionAction::~ModifyPartitionAction()

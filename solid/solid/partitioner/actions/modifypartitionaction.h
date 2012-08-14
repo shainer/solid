@@ -52,7 +52,7 @@ namespace Solid
                 
                 /**
                  * Creates an action object.
-                 * This must be used when you don't want to change the label from the current value.
+                 * This can be used when you want the label to stay the same without telling it explicitly.
                  * 
                  * @param partition the partition to be changed.
                  * @param flags a list of flags to set.
