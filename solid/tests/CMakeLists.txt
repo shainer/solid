@@ -6,7 +6,7 @@ set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR} )
 set(fakehardwaretest_SRCS fakehardwaretest.cpp )
 
 
-kde4_add_unit_test(fakehardwaretest ${fakehardwaretest_SRCS})
+kde4_add_executable(fakehardwaretest ${fakehardwaretest_SRCS})
 
 if(WIN32)
   set_target_properties(fakehardwaretest PROPERTIES COMPILE_FLAGS -DSOLID_EXPORT=)
@@ -36,7 +36,7 @@ set(solidhwtest_SRCS
    solidhwtest.cpp )
 
 
-kde4_add_unit_test(solidhwtest ${solidhwtest_SRCS})
+kde4_add_executable(solidhwtest ${solidhwtest_SRCS})
 add_definitions(-DFAKE_COMPUTER_XML="\\"${CMAKE_CURRENT_SOURCE_DIR}/../solid/backends/fakehw/fakecomputer.xml\\"")
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../solid/backends/fakehw )
@@ -54,7 +54,7 @@ set(solidmttest_SRCS
    solidmttest.cpp )
 
 
-kde4_add_unit_test(solidmttest ${solidmttest_SRCS})
+kde4_add_executable(solidmttest ${solidmttest_SRCS})
 add_definitions(-DFAKE_COMPUTER_XML="\\"${CMAKE_CURRENT_SOURCE_DIR}/../solid/backends/fakehw/fakecomputer.xml\\"")
 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/../solid/backends/fakehw )
