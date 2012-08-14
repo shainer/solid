@@ -62,20 +62,20 @@ void PartitionCreationTest::test()
     
     /* This action tries to create an extended partition when one is already present */
     manager->registerAction(actionExtended);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::BadPartitionTypeError);
+    QCOMPARE(manager->error().type(), PartitioningError::BadPartitionTypeError);
     
     /* This action specifies an offset and size which doesn't fall inside a free space block */
     manager->registerAction(actionWrongGeometry);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::PartitionGeometryError);
+    QCOMPARE(manager->error().type(), PartitioningError::PartitionGeometryError);
     
     /* This action takes some space in a normal free blocks */
     manager->registerAction(actionGood1);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     QCOMPARE(actionGood1->partitionName(), QString("New partition 1"));
     
     /* This action takes some space in a free block between logical partitions */
     manager->registerAction(actionGood2);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     QCOMPARE(actionGood2->partitionName(), QString("New partition 2"));
     
     /* Check all the right free space blocks are present and there isn't anything else */

@@ -57,13 +57,13 @@ void PartitionFormattingTest::test()
     
     FormatPartitionAction* unsupported = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume", "unexistent");
     FormatPartitionAction* wrongLabel = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                  Utils::Filesystem("Swap Space", "veeery long label"));
+                                                                  Filesystem("Swap Space", "veeery long label"));
     FormatPartitionAction* ownership = new FormatPartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                 Utils::Filesystem("FAT", "", 3, 4));
+                                                                 Filesystem("FAT", "", 3, 4));
     
     /* First test: valid formatting */
     manager->registerAction(good1);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     
     /*
      * NOTE: this device always exists and the cast doesn't fail, otherwise the previous instructions would have failed
@@ -75,19 +75,19 @@ void PartitionFormattingTest::test()
     
     /* This action isn't legal, as you can't format an extended partition. */
     manager->registerAction(extended);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::CannotFormatPartition);
+    QCOMPARE(manager->error().type(), PartitioningError::CannotFormatPartition);
     
     /* Trying to format with an unexistent filesystem. */
     manager->registerAction(unsupported);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::FilesystemError);
+    QCOMPARE(manager->error().type(), PartitioningError::FilesystemError);
     
     /* Trying to set a label, but it's too long. */
     manager->registerAction(wrongLabel);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::FilesystemLabelError);
+    QCOMPARE(manager->error().type(), PartitioningError::FilesystemLabelError);
     
     /* Trying to set ownership on a filesystem that doesn't support it. */
     manager->registerAction(ownership);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::FilesystemFlagsError);
+    QCOMPARE(manager->error().type(), PartitioningError::FilesystemFlagsError);
 }
 
 #include "partitionformattingtest.moc"

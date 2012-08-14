@@ -58,9 +58,9 @@ void UndoRedoTest::test()
      * the tests cannot be removed/formatted for some reason.
      */
     manager->registerAction(action1);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     manager->registerAction(action2);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     
     manager->undo();
     QCOMPARE(manager->isRedoPossible(), true);

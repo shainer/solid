@@ -55,28 +55,28 @@ void PartitionRemovalTest::test()
     
     /* You cannot remove a mounted partition */
     manager->registerAction(mountedRemoval);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::MountedPartitionError);
+    QCOMPARE(manager->error().type(), PartitioningError::MountedPartitionError);
     
     /*
      * These are the removals of two logical partitions, which means the merge is more complicated due to the reserved
      * space for EBR entries.
      */
     manager->registerAction(good1);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);    
+    QCOMPARE(manager->error().type(), PartitioningError::None);    
     QCOMPARE(diskTree.searchDevice("Free space of offset 23613400960 and size 223348331648") == NULL, false);
     
     manager->registerAction(good2);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     QCOMPARE(diskTree.searchDevice("Free space of offset 21475917312 and size 225485815296") == NULL, false);
     
     /* Primary partition, but we check the merge result anyway */
     manager->registerAction(good3);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     QCOMPARE(diskTree.searchDevice("Free space of offset 1048576 and size 21474836480") == NULL, false);
     
     /* Try to remove an extended */
     manager->registerAction(extended);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::RemovingExtendedError);
+    QCOMPARE(manager->error().type(), PartitioningError::RemovingExtendedError);
 }
 
 #include "partitionremovaltest.moc" 

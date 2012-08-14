@@ -52,7 +52,7 @@ void PartitionTableTest::test()
      * with a huge free space block.
      */
     manager->registerAction( new CreatePartitionTableAction("/org/kde/solid/fakehw/storage_serial_HD56890I", Utils::GPTScheme) );
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     
     VolumeTree tree = manager->diskTree("/org/kde/solid/fakehw/storage_serial_HD56890I");
     QCOMPARE(tree.freeSpaceBlocks("/org/kde/solid/fakehw/storage_serial_HD56890I").size(), 1);

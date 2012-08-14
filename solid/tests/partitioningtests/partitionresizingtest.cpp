@@ -100,61 +100,62 @@ void PartitionResizingTest::test()
                                                                              223343299392);
     
     manager->registerAction(offsetBBad);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
+    QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
     
     manager->registerAction(extendedResizing);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::ExtendedResizingError);
+    QCOMPARE(manager->error().type(), PartitioningError::ExtendedResizingError);
     
     manager->registerAction(offsetBsizeF);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(23613400960, 9900000, 3);
     
     manager->registerAction(offsetBsizeFBad);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
+    QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
     
     manager->registerAction(offsetB);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     
     checkFreeSpace(246951832608, 9900000, 3);
     QCOMPARE(tree.leftDevice(home)->deviceType(), DeviceModified::PartitionDevice);
     QCOMPARE(tree.rightDevice(home)->deviceType(), DeviceModified::FreeSpaceDevice);
     
     manager->registerAction(sizeB);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(246951732608, 10000000, 3);
     
     manager->registerAction(mounted);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::MountedPartitionError);
+    QCOMPARE(manager->error().type(), PartitioningError::MountedPartitionError);
     
     manager->registerAction(offsetF);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(1048576, 10000000, 3);
     QCOMPARE(tree.leftDevice(root)->deviceType(), DeviceModified::FreeSpaceDevice);
     
     manager->registerAction(offsetFBad);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
+    QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
         
     manager->registerAction(offsetBsizeB);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    qDebug() << manager->error().description();
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(1048576, 9000000, 4);
     checkFreeSpace(21473885056, 2000000, 4);
     QCOMPARE(tree.leftDevice(root)->deviceType(), DeviceModified::FreeSpaceDevice);
     QCOMPARE(tree.rightDevice(root)->deviceType(), DeviceModified::FreeSpaceDevice);
         
     manager->registerAction(offsetFsizeB);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(21475917312, 967744, 5);
     QCOMPARE(tree.leftDevice(swap)->deviceType(), DeviceModified::FreeSpaceDevice);
     QCOMPARE(tree.rightDevice(swap)->deviceType(), DeviceModified::PartitionDevice);
     
     manager->registerAction(offsetFsizeBBad);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
+    QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
     
     manager->registerAction(offsetFsizeFBad);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::ResizeOutOfBoundsError);
+    QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
     
     manager->registerAction(offsetFsizeF);
-    QCOMPARE(manager->error().type(), Utils::PartitioningError::None);
+    QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(23613400960, 5000000, 5);
     QCOMPARE(tree.leftDevice(home)->deviceType(), DeviceModified::FreeSpaceDevice);
     QCOMPARE(tree.rightDevice(home)->deviceType(), DeviceModified::PartitionDevice);
