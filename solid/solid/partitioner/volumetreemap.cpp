@@ -177,19 +177,6 @@ VolumeTreeMap::Private::~Private()
     backend->deleteLater();
 }
 
-void VolumeTreeMap::Private::build()
-{
-    clear();
-    
-    /*
-     * Detection of drives.
-     * A new tree is built for each disk on the system.
-     */
-    foreach(Device dev, Device::listFromType(DeviceInterface::StorageDrive)) {
-        buildDisk(dev);
-    }
-}
-
 void VolumeTreeMap::Private::backToOriginal()
 {
     devices.clear();
@@ -217,6 +204,27 @@ void VolumeTreeMap::Private::clear()
     beginningCopies.clear();
 }
 
+void VolumeTreeMap::Private::build()
+{
+    clear();
+    
+    /*
+     * Detection of drives.
+     * A new tree is built for each disk on the system.
+     */
+    foreach(Device dev, Device::listFromType(DeviceInterface::StorageDrive)) {
+        buildDisk(dev);
+    }
+    
+    /*
+     * All detection is inserted only in the beginningCopies map: this creates an hard copy
+     * of every tree for the devices map.
+     */
+    foreach (const QString& disk, beginningCopies.keys()) {
+        devices.insert(disk, beginningCopies[disk].copy());
+    }
+}
+
 void VolumeTreeMap::Private::buildDisk(Device& dev)
 {
     QString udi = dev.udi();
@@ -225,8 +233,7 @@ void VolumeTreeMap::Private::buildDisk(Device& dev)
     
     if (drive->driveType() == StorageDrive::HardDisk)
     {
-        addDisk(dev, beginningCopies);
-        Disk* newDisk = addDisk(dev, devices);
+        Disk* newDisk = addDisk(dev);
         
        /*
         * Loop partitions, identified by a particular major number, aren't considered for partition detection.
@@ -238,11 +245,11 @@ void VolumeTreeMap::Private::buildDisk(Device& dev)
     }
 }
 
-Disk* VolumeTreeMap::Private::addDisk(Device& device, QMap<QString, VolumeTree>& devList)
+Disk* VolumeTreeMap::Private::addDisk(Device& device)
 {
     Devices::Disk* disk = new Devices::Disk( device );
     VolumeTree tree( disk );
-    devList.insert(disk->name(), tree);
+    beginningCopies.insert(disk->name(), tree);
 
     return disk;
 }
@@ -253,26 +260,19 @@ void VolumeTreeMap::Private::detectChildrenOfDisk(const QString& diskName)
      * The old detection is removed in both trees. This is useful when repeating the detection after a deviceAdded or
      * deviceRemoved signal has been delivered, and it's harmless in the initial building.
      */
-    VolumeTree tree = devices[diskName];
+    VolumeTree tree = beginningCopies[diskName];
     tree.d->removeAllOfType(DeviceModified::PartitionDevice);
     tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
     
-    VolumeTree treeCopy = beginningCopies[diskName];
-    treeCopy.d->removeAllOfType(DeviceModified::PartitionDevice);
-    treeCopy.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
-    
-    detectPartitionsOfDisk(diskName, beginningCopies);
-    detectPartitionsOfDisk(diskName, devices);
-
-    detectFreeSpaceOfDisk(diskName, beginningCopies);
-    detectFreeSpaceOfDisk(diskName, devices);
+    detectPartitionsOfDisk(diskName);
+    detectFreeSpaceOfDisk(diskName);
 }
 
-void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QMap<QString, VolumeTree>& devList)
+void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi)
 {
     QList<Device> devs = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
     Devices::Partition* extended = 0;
-    VolumeTree tree = devList[parentUdi];
+    VolumeTree tree = beginningCopies[parentUdi];
     
     /* For now doesn't consider all the volume types not supported. */
     for (QList<Device>::iterator it = devs.begin(); it != devs.end(); it++) {
@@ -324,9 +324,9 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi, QM
     }    
 }
 
-void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi, QMap<QString, VolumeTree>& devList)
+void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi)
 {
-    VolumeTree tree = devList[parentUdi];
+    VolumeTree tree = beginningCopies[parentUdi];
     
     foreach (FreeSpace* space, freeSpaceOfDisk(tree)) {
         tree.d->addDevice(space);

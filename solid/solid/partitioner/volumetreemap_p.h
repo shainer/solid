@@ -67,10 +67,10 @@ namespace Solid
             * we must update both maps.
             */
             void buildDisk(Device &);
-            Devices::Disk* addDisk(Device &, QMap<QString, VolumeTree> &);
+            Devices::Disk* addDisk(Device &);
             void detectChildrenOfDisk(const QString &);
-            void detectPartitionsOfDisk(const QString &, QMap<QString, VolumeTree> &);
-            void detectFreeSpaceOfDisk(const QString &, QMap<QString, VolumeTree> &);
+            void detectPartitionsOfDisk(const QString &);
+            void detectFreeSpaceOfDisk(const QString &);
             
             /* The following functions help detecting free space blocks between partitions */
             QList< Devices::FreeSpace* > freeSpaceOfDisk(const VolumeTree &);
