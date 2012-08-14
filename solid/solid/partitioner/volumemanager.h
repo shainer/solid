@@ -61,17 +61,6 @@ namespace Solid
             bool registerAction(Actions::Action *);
             
             /**
-             * Specify whether conflicting actions should be automatically detected and deleted
-             * from the list of registered actions. By default, this happens.
-             * 
-             * Two actions are called "conflicting" if when applied in their given order they have eventually no effect on
-             * the disk. An example is an action that creates a partition followed by an action that removes it.
-             * 
-             * @param deleteConflicts whether conflicting actions should be detected and removed.
-             */
-            void setDeletionOfConflictingActions(bool);
-            
-            /**
              * Undoes the last action registered.
              * If no action is registered, nothing happens.
              */

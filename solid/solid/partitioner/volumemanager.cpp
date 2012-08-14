@@ -53,7 +53,6 @@ class SOLID_EXPORT VolumeManager::Private
 public:
     Private()
         : newPartitionId(1)
-        , deleteConflictingActions(true)
     {}
     
     ~Private()
@@ -105,7 +104,6 @@ public:
     ActionStack actionstack; /* stack of registered actions */
     PartitioningError error; /* latest error */
     int newPartitionId; /* incremental ID for new partition's unique names */
-    bool deleteConflictingActions; /* whether conflicting actions should be removed */
 };
 
 class VolumeManagerHelper
@@ -170,11 +168,6 @@ VolumeManager* VolumeManager::instance()
     return s_volumemanager->q;
 }
 
-void VolumeManager::setDeletionOfConflictingActions(bool deleteConflicts)
-{
-    d->deleteConflictingActions = deleteConflicts;
-}
-
 bool VolumeManager::registerAction(Actions::Action* action)
 {
     Q_ASSERT(action);
@@ -191,19 +184,6 @@ bool VolumeManager::registerAction(Actions::Action* action)
     
     if (success) {
         emit diskChanged(action->ownerDisk()->name());
-    }
-  
-    if (d->deleteConflictingActions) {
-        if (d->actionstack.size() >= 2) {
-            Action* previousAction = d->actionstack.list().at( d->actionstack.size() - 2 );
-            Action* opposite = previousAction->oppositeAction();
-                    
-            if (opposite && opposite->description() == action->description()) {
-                d->actionstack.removeAction(action);
-                d->actionstack.removeAction(previousAction);
-                delete opposite;
-            }
-        }
     }
     
     return success;
@@ -357,7 +337,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
      * See the doDeviceAdded slot for more information on the usefulness of this property.
      */
     Disk* ownerDisk = 0;
-    Actions::Action* oppositeAction = 0;
     
     switch (action->actionType()) {
         case Action::FormatPartition: {
@@ -423,7 +402,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             }
             
             ownerDisk = pair.first.disk();
-            oppositeAction = new ModifyFilesystemAction(mfa->partition(), oldLabel);
             break;
         }
         
@@ -512,7 +490,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             }
             
             ownerDisk = disk;
-            oppositeAction = new RemovePartitionAction( newPartition->name() );
             break;
         }
         
@@ -528,14 +505,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 error.setType(PartitioningError::RemovingExtendedError);
                 return false;
             }
-            
-            oppositeAction = new CreatePartitionAction(tree.disk()->name(),
-                                                       partition->offset(),
-                                                       partition->size(),
-                                                       partition->partitionType() == ExtendedPartition,
-                                                       partition->filesystem(),
-                                                       partition->label(),
-                                                       partition->flags());
             
             /* Deletes the partition merging adjacent free blocks if present. */
             tree.d->mergeAndDelete( rpa->partition() );
@@ -584,7 +553,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 return false;
             }
             
-            oppositeAction = new ResizePartitionAction(rpa->partition(), oldOffset, oldSize);
             ownerDisk = disk;
             break;
         }
@@ -615,9 +583,7 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
                 error.arg( mpa->flags().first() );
                 return false;
             }
-            
-            oppositeAction = new ModifyPartitionAction(p->name(), p->label(), p->flags());
-            
+                        
             if (mpa->isLabelChanged()) {
                 p->setLabel( mpa->label() );
             }
@@ -656,7 +622,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
     }
     
     action->setOwnerDisk(ownerDisk);
-    action->setOppositeAction(oppositeAction);
     
     if (!undoOrRedo) {
         actionstack.push(action);

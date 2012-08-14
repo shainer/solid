@@ -33,7 +33,6 @@ class Action::Private
 {
 public:
     DeviceModified* owner;
-    Action* oppositeAction;
     
     QString description;
     QString uniqueName;
@@ -110,16 +109,6 @@ DeviceModified* Action::ownerDisk() const
 void Action::setOwnerDisk(DeviceModified* owner)
 {
     d->owner = owner;
-}
-
-Action* Action::oppositeAction() const
-{
-    return d->oppositeAction;
-}
-
-void Action::setOppositeAction(Action* a)
-{
-    d->oppositeAction = a;
 }
 
 } 

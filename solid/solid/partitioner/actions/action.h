@@ -141,20 +141,6 @@ namespace Solid
                  */
                 virtual DeviceModified* ownerDisk() const;
                 
-                /**
-                 * Sets the "opposite action" of this one. The opposite action is the one that undoes all the changes
-                 * introduced by this one.
-                 * 
-                 * @param a the opposite action.
-                 */
-                virtual void setOppositeAction(Action *);
-                
-                /**
-                 * @returns the opposite action of this one.
-                 * @see setOppositeAction().
-                 */
-                virtual Action* oppositeAction() const;
-                
             protected:
                 virtual void setDescription(const QString &);
                 
