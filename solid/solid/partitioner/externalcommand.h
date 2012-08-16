@@ -44,9 +44,13 @@ namespace Solid
              * 
              * @param cmd the command name.
              * @param args a list of arguments (empty by default).
+             * @param path the PATH environment variable (unavailable from inside the helper).
              * @param parent the QObject parent.
              */
-            explicit ExternalCommand(const QString& cmd, const QStringList& args = QStringList(), QObject* parent = 0);
+            explicit ExternalCommand(const QString& cmd,
+                                     const QStringList& args,
+                                     const QString& path,
+                                     QObject* parent = 0);
             
             /**
              * Deconstructor.

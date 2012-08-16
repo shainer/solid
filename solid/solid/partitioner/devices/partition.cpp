@@ -341,19 +341,23 @@ void Partition::setMinimumSize(qulonglong minSize)
 void Partition::computeMinimumSize()
 {
     qRegisterMetaType<ActionReply>("ActionReply");
-    
     KAuth::Action asyncAction("org.solid.partitioner.resize.minsize");
+    
     asyncAction.addArgument("partition", name());
     asyncAction.addArgument("disk", parentName());
     asyncAction.addArgument("filesystem", d->filesystem.name());
     asyncAction.addArgument("isOriginal", d->isFsExistent);
     asyncAction.addArgument("minimumFilesystemSize", FilesystemUtils::instance()->minimumFilesystemSize( d->filesystem.name() ));
+    asyncAction.addArgument("path", QString::fromAscii( getenv("PATH") ));
+    
     asyncAction.setExecutesAsync(true); /* it must be asynchronous to avoid timeouts */
         
     QEventLoop loop;
+    
     connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
     connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit()));
     ActionReply earlyReply = asyncAction.execute("org.solid.partitioner.resize");
+    
     if (earlyReply.failed()) {
         return;
     }

@@ -33,20 +33,23 @@ namespace Partitioner
 class ExternalCommand::Private
 {
 public:
-    Private(const QString& c, const QStringList& a)
+    Private(const QString& c, const QStringList& a, const QString& p)
         : command(c)
         , args(a)
+        , path(p)
     {}
     
     QString command;
     QStringList args;
+    QString path;
+    
     QString output;
     int exitCode;
 };
     
-ExternalCommand::ExternalCommand(const QString& cmd, const QStringList& args, QObject* parent)
+ExternalCommand::ExternalCommand(const QString& cmd, const QStringList& args, const QString& path, QObject* parent)
     : QProcess(parent)
-    , d( new Private(cmd, args) )
+    , d( new Private(cmd, args, path) )
 {
     connect(this, SIGNAL(finished(int)), this, SLOT(onFinished(int)));
     connect(this, SIGNAL(readyReadStandardOutput()), this, SLOT(addOutput()));
@@ -60,10 +63,8 @@ ExternalCommand::~ExternalCommand()
 }
 
 bool ExternalCommand::run()
-{
-    /* FIXME: use the PATH environment variable instead */
-    QString paths = "/usr/bin:/usr/sbin:/sbin:/usr/local/bin:/bin:/usr/local/sbin";
-    foreach (const QString& path, paths.split(":")) {
+{    
+    foreach (const QString& path, d->path.split(":")) {
         QString cmd = d->command;
         cmd.prepend(path + "/");
         

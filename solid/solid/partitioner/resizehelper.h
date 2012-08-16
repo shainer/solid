@@ -49,7 +49,9 @@ namespace Solid
              * @param filesystem (string) the filesystem name
              * @param isOriginal (bool) whether the filesystem exists on the partition or was set later
              * @param minimumFilesystemSize (qulonglong) the filesystem's minimum size allowed.
-             * The last one is required by the caller to avoid having to include FilesystemUtils as a dependency of the helper.
+             * @param path the PATH environment variable, as getenv() doesn't work properly inside an helper for now.
+             * The minimum fs size is required to avoid having to include FilesystemUtils as a dependency of the helper.
+             * 
              * @note these parameters must be passed in a QVariantMap.
              * 
              * @returns the minimum partition size.
@@ -75,9 +77,9 @@ namespace Solid
             
             /*
              * For the other filesystems, specific tools have to be invoked and their output analyzed.
-             * The parameters here are the partition name and the filesystem name.
+             * The parameters here are the partition name, the filesystem name, and the PATH environment variable.
              */
-            qlonglong minSizeTool(const QString &, const QString &);
+            qlonglong minSizeTool(const QString &, const QString &, const QString &);
         };
     }
 }

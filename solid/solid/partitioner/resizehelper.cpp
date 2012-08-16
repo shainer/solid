@@ -64,7 +64,7 @@ ActionReply ResizeHelper::minsize(QVariantMap arguments)
         returnValues["minimumPartitionSize"] = minSizeParted(diskName, partitionName);
     }
     else {        
-        returnValues["minimumPartitionSize"] = minSizeTool(partitionName, filesystem);
+        returnValues["minimumPartitionSize"] = minSizeTool(partitionName, filesystem, arguments["path"].toString());
     }
     
     finalReply.setData(returnValues);
@@ -104,7 +104,7 @@ qlonglong ResizeHelper::minSizeParted(const QString& diskName, const QString& pa
     return minSize;
 }
 
-qlonglong ResizeHelper::minSizeTool(const QString& partitionName, const QString& filesystem)
+qlonglong ResizeHelper::minSizeTool(const QString& partitionName, const QString& filesystem, const QString& envPath)
 {
     QStringList commandLine;
     QRegExp numBlocksReg("unused");
@@ -141,7 +141,7 @@ qlonglong ResizeHelper::minSizeTool(const QString& partitionName, const QString&
         blockSizeReg = QRegExp("blocksize = (\\d+)");
     }
     
-    ExternalCommand command(commandLine.takeFirst(), commandLine);
+    ExternalCommand command(commandLine.takeFirst(), commandLine, envPath);
     bool started = command.run();
     
     if (!started || command.exitCode() != 0) {
