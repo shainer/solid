@@ -31,9 +31,10 @@ namespace Actions
 class ResizePartitionAction::Private
 {
 public:
-    Private(qulonglong o, qulonglong s)
+    Private(qulonglong o, qulonglong s, bool b)
         : newOffset(o)
         , newSize(s)
+        , safe(b)
     {}
     
     ~Private()
@@ -41,11 +42,12 @@ public:
     
     qlonglong newOffset;
     qlonglong newSize;
+    bool safe;
 };
     
-ResizePartitionAction::ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize)
+ResizePartitionAction::ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize, bool safe)
     : Action(partition)
-    , d( new Private(newOffset, newSize) )
+    , d( new Private(newOffset, newSize, safe) )
 {
     QString desc( "Changing %0 to offset %1 and size %2" );
     QString offsetStr = formatByteSize((double)(d->newOffset));
@@ -72,6 +74,11 @@ qulonglong ResizePartitionAction::newOffset() const
 qulonglong ResizePartitionAction::newSize() const
 {
     return d->newSize;
+}
+
+bool ResizePartitionAction::safe() const
+{
+    return d->safe;
 }
 
 }

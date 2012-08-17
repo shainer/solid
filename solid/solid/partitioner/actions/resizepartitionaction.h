@@ -39,16 +39,19 @@ namespace Solid
             {
             public:
                 /**
-                 * Constructors.
+                 * Constructor.
                  * 
                  * @param partition the partition to modify.
                  * @param newOffset the new offset, in bytes.
                  * @param newSize the new size, in bytes.
+                 * @param safe whether the resizing should preserve the filesystem and data, if present. Default to true.
                  * 
-                 * Passing -1 means you don't want the offset or size to change.
-                 * If you use the second constructor the new offset is automatically set to -1.
+                 * @warning setting safe to true means the action can be denied if safe resizing isn't possible for some reason.
                  */
-                explicit ResizePartitionAction(const QString& partition, qulonglong newOffset, qulonglong newSize);
+                explicit ResizePartitionAction(const QString& partition,
+                                               qulonglong newOffset,
+                                               qulonglong newSize,
+                                               bool safe = true);
                 virtual ~ResizePartitionAction();
                 
                 /**
@@ -65,6 +68,11 @@ namespace Solid
                  * @returns the new offset, in bytes.
                  */
                 qulonglong newOffset() const;
+                
+                /**
+                 * @returns whether safe resizing should be performed.
+                 */
+                bool safe() const;
                 
             private:
                 class Private;
