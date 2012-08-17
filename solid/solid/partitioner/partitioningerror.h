@@ -50,6 +50,7 @@ namespace Solid
                 PartitionGeometryError,
                 ResizingToZeroError,
                 ResizingToTheSameError,
+                SafeResizingError,
                 ExtendedResizingError,
                 ResizeOutOfBoundsError,
                 ExceedingPrimariesError,
