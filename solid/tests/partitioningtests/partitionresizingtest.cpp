@@ -57,47 +57,33 @@ void PartitionResizingTest::test()
     DeviceModified* swap = tree.searchDevice("/org/kde/solid/fakehw/swap_volume");
     
     Actions::ResizePartitionAction* offsetBBad = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
-                                                                           1000000,
-                                                                           21464836480);
+                                                                           1000000, 21464836480, false);
     Actions::ResizePartitionAction* extendedResizing = new ResizePartitionAction("/org/kde/solid/fakehw/extended_volume",
-                                                                                 21475885056,
-                                                                                 246950716288);
+                                                                                 21475885056, 246950716288, false);
     Actions::ResizePartitionAction* offsetBsizeF = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                             23623333216,
-                                                                             223338399392);
+                                                                             23623333216, 223338399392, false);
     Actions::ResizePartitionAction* offsetBsizeFBad = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                                23623333216,
-                                                                                223338399492);
+                                                                                23623333216, 223338399492, false);
     Actions::ResizePartitionAction* offsetB = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                        23613433216,
-                                                                        223338399392);
+                                                                        23613433216, 223338399392, false);
     Actions::ResizePartitionAction* sizeB = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                      23613433216,
-                                                                      223338299392);
+                                                                      23613433216, 223338299392, false);
     Actions::ResizePartitionAction* mounted = new ResizePartitionAction("/org/kde/solid/fakehw/foreign_logical",
-                                                                        246971764864,
-                                                                        21464836480);
+                                                                        246971764864, 21464836480, false);
     Actions::ResizePartitionAction* offsetF = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
-                                                                        11048576,
-                                                                        21464836480);
+                                                                        11048576, 21464836480, false);
     Actions::ResizePartitionAction* offsetFBad = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
-                                                                           12048576,
-                                                                           21464836480);
+                                                                           12048576, 21464836480, false);
     Actions::ResizePartitionAction* offsetBsizeB = new ResizePartitionAction("/org/kde/solid/fakehw/root_volume",
-                                                                             10048576,
-                                                                             21463836480);
+                                                                             10048576, 21463836480, false);
     Actions::ResizePartitionAction* offsetFsizeB = new ResizePartitionAction("/org/kde/solid/fakehw/swap_volume",
-                                                                             21476917312,
-                                                                             2136483648);
+                                                                             21476917312, 2136483648, false);
     Actions::ResizePartitionAction* offsetFsizeBBad = new ResizePartitionAction("/org/kde/solid/fakehw/swap_volume",
-                                                                                21477917312,
-                                                                                 2136383648);
+                                                                                21477917312, 2136383648, false);
     Actions::ResizePartitionAction* offsetFsizeFBad = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                                23618433216,
-                                                                                223353299392);
+                                                                                23618433216, 223353299392, false);
     Actions::ResizePartitionAction* offsetFsizeF = new ResizePartitionAction("/org/kde/solid/fakehw/home_volume",
-                                                                             23618433216,
-                                                                             223343299392);
+                                                                             23618433216, 223343299392, false);
     
     manager->registerAction(offsetBBad);
     QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
@@ -135,7 +121,6 @@ void PartitionResizingTest::test()
     QCOMPARE(manager->error().type(), PartitioningError::ResizeOutOfBoundsError);
         
     manager->registerAction(offsetBsizeB);
-    qDebug() << manager->error().description();
     QCOMPARE(manager->error().type(), PartitioningError::None);
     checkFreeSpace(1048576, 9000000, 4);
     checkFreeSpace(21473885056, 2000000, 4);
