@@ -32,13 +32,15 @@
 #include <solid/partitioner/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
-#include "volumetreemap_p.h"
+#include <solid/partitioner/utils/deviceevent.h>
+#include <solid/partitioner/volumetreemap_p.h>
 #include <solid/device.h>
-#include <backends/udisks/udisksmanager.h>
 #include <solid/block.h>
 #include <solid/predicate.h>
+#include <backends/udisks/udisksmanager.h>
 
 #include <kglobal.h>
+#include <stdlib.h>
 
 namespace Solid
 {   
@@ -53,6 +55,8 @@ class SOLID_EXPORT VolumeManager::Private
 public:
     Private()
         : newPartitionId(1)
+        , deviceManager( new Backends::UDisks::UDisksManager(0) )
+        , acceptEvents(true)
     {}
     
     ~Private()
@@ -104,6 +108,8 @@ public:
     ActionStack actionstack; /* stack of registered actions */
     PartitioningError error; /* latest error */
     int newPartitionId; /* incremental ID for new partition's unique names */
+    Ifaces::DeviceManager* deviceManager;
+    bool acceptEvents; /* whether the manager processes deviceAdded and deviceRemoved signals. */
 };
 
 class VolumeManagerHelper
@@ -128,12 +134,11 @@ VolumeManager::VolumeManager()
 {
     Q_ASSERT(!s_volumemanager->q);
     s_volumemanager->q = this;
-
+        
     d->volumeTreeMap.d->build(); /* builds all the layout detecting the current status of the hardware */
     
-    /* Register this object for receiving notifications about changes in the system */
-    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceAdded(VolumeTree, DeviceModified *)), SLOT(doDeviceAdded(VolumeTree, DeviceModified *)));
-    QObject::connect(&(d->volumeTreeMap), SIGNAL(deviceRemoved(QString,QString)), SLOT(doDeviceRemoved(QString,QString)));
+    QObject::connect(d->deviceManager, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
+    QObject::connect(d->deviceManager, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
     
     /*
      * Acquire a list of all the partitions to notify whether one of them is mounted or umounted.
@@ -155,6 +160,7 @@ VolumeManager::VolumeManager()
 
 VolumeManager::~VolumeManager()
 {
+    d->deviceManager->deleteLater();
     d->actionstack.clear();
     delete d;
 }
@@ -237,8 +243,17 @@ bool VolumeManager::isRedoPossible() const
  * This is because the disk's layout and/or properties have changed so those actions could be out-of-context.
  * Of course when a disk is added no action has to be removed at all.
  */
-void VolumeManager::doDeviceAdded(VolumeTree tree, DeviceModified *dev)
+void VolumeManager::doDeviceAdded(QString udi)
 {
+    if (!d->acceptEvents) {
+        return;
+    }
+    
+    d->volumeTreeMap.d->addDevice(udi);
+    QPair< VolumeTree, DeviceModified* > pair = d->volumeTreeMap.searchTreeWithDevice(udi);
+    VolumeTree tree = pair.first;
+    DeviceModified* dev = pair.second;
+    
     QString diskName = tree.disk()->name();
     d->actionstack.removeActionsOfDisk(diskName);
     
@@ -261,9 +276,14 @@ void VolumeManager::doDeviceAdded(VolumeTree tree, DeviceModified *dev)
 /*
  * See above.
  */
-void VolumeManager::doDeviceRemoved(QString udi, QString parentUdi)
+void VolumeManager::doDeviceRemoved(QString udi)
 {
-    d->actionstack.removeActionsOfDisk(parentUdi);
+    if (!d->acceptEvents) {
+        return;
+    }
+    
+    d->volumeTreeMap.d->removeDevice(udi);
+    d->actionstack.removeActionsOfDisk(udi);
     emit deviceRemoved(udi);
 }
 
@@ -279,6 +299,7 @@ VolumeTreeMap VolumeManager::allDiskTrees() const
 
 bool VolumeManager::apply()
 {
+    d->acceptEvents = false;
     d->error.setType(PartitioningError::None);
     ActionExecuter executer( d->actionstack.list(), d->volumeTreeMap );
     
@@ -292,14 +313,11 @@ bool VolumeManager::apply()
         return false;
     }
     
-    d->volumeTreeMap.d->disconnectSignals();
-    
     QObject::connect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)), Qt::DirectConnection);
     bool success = executer.execute();
     QObject::disconnect(&executer, SIGNAL(nextActionCompleted(int)), this, SLOT(doNextActionCompleted(int)));
     
     d->volumeTreeMap.d->build(); /* repeats hw detection */
-    d->volumeTreeMap.d->connectSignals();
     d->actionstack.clear();
     
     if (!success) {
@@ -309,6 +327,7 @@ bool VolumeManager::apply()
     }
     
     emit executionFinished();
+    d->acceptEvents = true;
     return true;
 }
 
@@ -368,7 +387,6 @@ bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)
             
             Filesystem oldFs = volume->filesystem();
             volume->setFilesystem(fs);
-            volume->computeMinimumSize();
             ownerDisk = tree.disk();
             break;
         }

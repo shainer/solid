@@ -34,10 +34,8 @@ namespace Solid
          * 
          * @author Lisa Vitolo <shainer@chakra-project.org>
          */
-        class SOLID_EXPORT VolumeTreeMap : public QObject
+        class SOLID_EXPORT VolumeTreeMap
         {
-            Q_OBJECT
-
         public:
             /**
              * Creates an empty tree map.
@@ -104,29 +102,6 @@ namespace Solid
              * @returns true if there's a layout tree for the disk, false otherwise.
              */
             bool contains(const QString &) const;
-            
-        public slots:
-            void doDeviceAdded(QString);
-            void doDeviceRemoved(QString);
-            
-        signals:
-            
-            /**
-             * This signal is emitted when a new disk or partition is added to the system.
-             * 
-             * @param tree the updated disk layout's tree.
-             * @param dev the new device object.
-             */
-            void deviceAdded(VolumeTree, DeviceModified *);
-            
-            /**
-             * This signal is emitted when a disk or partition is removed from the system.
-             * 
-             * @param udi the device UDI.
-             * @param parentUdi the UDI of the disk on which this device is found.
-             * @note if the deleted device is a disk, the two params contain the same value.
-             */
-            void deviceRemoved(QString, QString);
             
         private:
             friend class VolumeManager;

@@ -38,7 +38,6 @@ namespace Solid
             VolumeTreeMap* q;
             QMap<QString, VolumeTree> devices;
             QMap<QString, VolumeTree> beginningCopies; /* the original copy */
-            Ifaces::DeviceManager* backend; /* This manager sends us the notifications about added and removed devices. */
             
             /* Builds all the trees, detecting devices. */
             void build();
@@ -50,17 +49,6 @@ namespace Solid
              * This method synchronizes the modified copy with the original one; it's used when undoing actions.
              */
             void backToOriginal();
-            
-            /*
-             * Receive signals from the hardware about added/removed devices.
-             */
-            void connectSignals();
-            
-            /*
-             * Receive signals from the hardware about added/removed devices.
-             * This is used when executing actions to avoid being flooded with useless signals.
-             */
-            void disconnectSignals();
 
             /*
             * NOTE: while detecting, either because we have to build the map or because a new device was added/removed,
@@ -77,8 +65,15 @@ namespace Solid
             QList< Devices::FreeSpace* > findSpace(QList< VolumeTreeItem* >, DeviceModified *);
             Devices::FreeSpace* spaceBetweenPartitions(DeviceModified *, DeviceModified *, DeviceModified *);
             
+            /* Called when a new device is added or removd */
+            void addDevice(QString);
+            void removeDevice(QString);
+            
             /* Clears the map, destroying all the trees */
             void clear();
+            
+            /* Synchronizes the beginning copy with the normal one */
+            void synchronize();
             
             friend class VolumeManager;
         };

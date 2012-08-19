@@ -110,7 +110,7 @@ public:
     QString label;
     QString uuid;
     qulonglong size;
-    qulonglong minimumSize;
+    qlonglong minimumSize;
     qulonglong offset;
     PartitionType partitionType;
     QString partitionTypeString;
@@ -131,8 +131,6 @@ Partition::Partition(Device& dev)
     DeviceModified::setName( dev.udi() );
     DeviceModified::setDescription( dev.udi() );
     DeviceModified::setParentName( dev.parentUdi() );
-
-    computeMinimumSize();
 }
 
 Partition::Partition(Actions::CreatePartitionAction* action, const QString& scheme)
@@ -142,8 +140,6 @@ Partition::Partition(Actions::CreatePartitionAction* action, const QString& sche
     DeviceModified::setName( action->partitionName() );
     DeviceModified::setDescription( action->partitionName() );
     DeviceModified::setParentName( action->disk() );
-    
-    computeMinimumSize();
 }
 
 Partition::Partition()
@@ -234,9 +230,13 @@ qulonglong Partition::size() const
     return d->size;
 }
 
-qulonglong Partition::minimumSize() const
+qulonglong Partition::minimumSize()
 {
-    return d->minimumSize;
+    if (d->minimumSize == -1) {
+        computeMinimumSize();
+    }
+    
+    return (qulonglong)d->minimumSize;
 }
 
 qulonglong Partition::offset() const
@@ -297,6 +297,7 @@ void Partition::setFilesystem(const Filesystem& fs)
     d->setStringFromType();
     
     d->isFsExistent = false;
+    computeMinimumSize();
 }
 
 void Partition::setLabel(const QString& label)
@@ -340,18 +341,34 @@ void Partition::setMinimumSize(qulonglong minSize)
 
 void Partition::computeMinimumSize()
 {
+    QString fsName = d->filesystem.name();
+    QStringList notSupported = QStringList() << "NILFS2" << "BTRFS" << "Minix";
+
+    /* Note that for swap space we don't need to preserve data, so a simple value of 0 is returned */
+    if (fsName.isEmpty() || fsName == "unformatted" || fsName == "Swap Space") {
+        d->minimumSize = 0;
+        return;
+    }
+    
+    if (notSupported.contains(fsName)) {
+        d->minimumSize = d->size;
+        return;
+    }
+    
+    if (!d->isFsExistent) {
+        d->minimumSize = FilesystemUtils::instance()->minimumFilesystemSize(fsName);
+        return;
+    }
+    
     qRegisterMetaType<ActionReply>("ActionReply");
     KAuth::Action asyncAction("org.solid.partitioner.resize.minsize");
     
     asyncAction.addArgument("partition", name());
     asyncAction.addArgument("disk", parentName());
     asyncAction.addArgument("filesystem", d->filesystem.name());
-    asyncAction.addArgument("isOriginal", d->isFsExistent);
-    asyncAction.addArgument("minimumFilesystemSize", FilesystemUtils::instance()->minimumFilesystemSize( d->filesystem.name() ));
     asyncAction.addArgument("path", QString::fromAscii( getenv("PATH") ));
     
     asyncAction.setExecutesAsync(true); /* it must be asynchronous to avoid timeouts */
-        
     QEventLoop loop;
     
     connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
@@ -387,8 +404,7 @@ bool Partition::supportsResizing() const
 }
 
 bool Partition::resize(qulonglong newSize)
-{
-    Q_UNUSED(newSize);
+{   
     return true;
 }
 

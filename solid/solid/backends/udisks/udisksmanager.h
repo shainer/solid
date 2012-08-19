@@ -25,7 +25,6 @@
 #include "udisksdevice.h"
 
 #include "solid/ifaces/devicemanager.h"
-#include <partitioner/devices/partition.h>
 
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusArgument>
@@ -38,8 +37,6 @@ namespace Backends
 {
 namespace UDisks
 {
-
-using namespace Solid::Partitioner::Devices;
     
 class UDisksManager : public Solid::Ifaces::DeviceManager
 {

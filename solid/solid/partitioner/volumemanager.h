@@ -117,12 +117,22 @@ namespace Solid
             QList< Action* > registeredActions() const;
             
         public slots:
+            /**
+             * Slot called when a new device is added to the system.
+             * @param udi the new device's UDI.
+             */
+            void doDeviceAdded(QString);
             
             /**
-             * @see class VolumeTreeMap.
+             * Slot called when a device is removed from the system.
+             * @param udi the device's UDI.
              */
-            void doDeviceAdded(VolumeTree, DeviceModified *);
-            void doDeviceRemoved(QString, QString);
+            void doDeviceRemoved(QString);
+            
+            /**
+             * Slot called when the applying of a new action was completed.
+             * @param index the new action's index within the registered list, starting from 1.
+             */
             void doNextActionCompleted(int);
             
         signals:

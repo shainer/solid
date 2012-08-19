@@ -32,35 +32,14 @@ namespace Partitioner
 
 ActionReply ResizeHelper::minsize(QVariantMap arguments)
 {
-    QStringList notSupported = QStringList() << "NILFS2" << "BTRFS" << "Minix";
     QString filesystem = arguments["filesystem"].toString();
     QString diskName = udiToName( arguments["disk"].toString() );
     QString partitionName = udiToName( arguments["partition"].toString() );
-    
-    /*
-     * If this flag is set to false, the partition filesystem isn't the one actually present on the disk, but a new one
-     * requested to the partitioner. When it will be created, it will be empty, so in that case
-     * we just return the minimum filesystem's size.
-     */
-    bool isOriginalFs = arguments["isOriginal"].toBool();
 
     ActionReply finalReply = ActionReply::SuccessReply; /* we always "succeed" */
     QVariantMap returnValues;
     
-    /*
-     * Note that for swap space all the resizing problem is irrelevant, as we don't need to save data. Thus a simple
-     * value of 0 is returned.
-     */
-    if (filesystem == "unformatted" || filesystem.isEmpty() || filesystem == "Swap Space") {
-        returnValues["minimumPartitionSize"] = 0;
-    }
-    else if (notSupported.contains(filesystem)) {
-        returnValues["minimumPartitionSize"] = -1; /* resizing isn't supported for these ones */
-    }
-    else if (!isOriginalFs) {
-        returnValues["minimumPartitionSize"] = arguments["minimumFilesystemSize"].toLongLong();
-    }
-    else if (filesystem == "FAT") {
+    if (filesystem == "FAT") {
         returnValues["minimumPartitionSize"] = minSizeParted(diskName, partitionName);
     }
     else {        
@@ -71,7 +50,6 @@ ActionReply ResizeHelper::minsize(QVariantMap arguments)
     return finalReply;
 }
 
-/* TODO: implement */
 ActionReply ResizeHelper::resize(QVariantMap arguments)
 {
     return ActionReply::SuccessReply;

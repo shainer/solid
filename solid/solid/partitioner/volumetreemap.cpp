@@ -25,7 +25,6 @@
 #include <solid/partitioner/devices/partition.h>
 #include <solid/predicate.h>
 #include <ifaces/devicemanager.h>
-#include <backends/udisks/udisksmanager.h>
 
 namespace Solid
 {
@@ -36,13 +35,10 @@ using namespace Devices;
 
 VolumeTreeMap::VolumeTreeMap()
     : d( new Private(this) )
-{
-    d->connectSignals();
-}
+{}
 
 VolumeTreeMap::VolumeTreeMap(const VolumeTreeMap& other)
-    : QObject()
-    , d( new Private(this) )
+    : d( new Private(this) )
 {
     d->devices = other.d->devices;
     d->beginningCopies = other.d->beginningCopies;
@@ -130,51 +126,47 @@ Partition* VolumeTreeMap::searchPartition(const QString& udi) const
  * For a partition, repeats all the detection in the correspondent disk, because the layout change can affect free
  * space blocks too.
  */
-void VolumeTreeMap::doDeviceAdded(QString udi)
+void VolumeTreeMap::Private::addDevice(QString udi)
 {
     Device newDevice(udi);
-    
+        
     if (newDevice.is<StorageDrive>()) {
-        d->buildDisk(newDevice);
-        emit deviceAdded( d->devices[udi], d->devices[udi].disk() );
+        buildDisk(newDevice);
+        synchronize();
     }
     else if (newDevice.is<StorageVolume>()) {
         QString diskName = newDevice.parentUdi();
-        d->detectChildrenOfDisk(diskName);
-        
-        emit deviceAdded( d->devices[diskName], d->devices[diskName].searchDevice(udi) );
+        detectChildrenOfDisk(diskName);
+        synchronize();
     }
 }
 
-void VolumeTreeMap::doDeviceRemoved(QString udi)
+void VolumeTreeMap::Private::removeDevice(QString udi)
 {
-    QPair< VolumeTree, DeviceModified* > pair = searchTreeWithDevice(udi);
+    QPair< VolumeTree, DeviceModified* > pair = q->searchTreeWithDevice(udi);
     VolumeTree tree = pair.first;
     DeviceModified* toRemove = pair.second;
-    
+        
     if (toRemove) {
         if (toRemove->deviceType() == DeviceModified::DiskDevice) {
-            d->devices.remove(udi);
-            d->beginningCopies.remove(udi);
-            emit deviceRemoved(udi, udi);
+            devices.remove(udi);
+            beginningCopies.remove(udi);
         }
         else {
             QString diskName = tree.disk()->name();
-            d->detectChildrenOfDisk(diskName);
-            emit deviceRemoved(udi, diskName);
+            detectChildrenOfDisk(diskName);
+            synchronize();
         }
-    }
+    }    
 }
 
 VolumeTreeMap::Private::Private(VolumeTreeMap *q_ptr)
     : q(q_ptr)
-    , backend( new Backends::UDisks::UDisksManager(0) )
 {}
 
 VolumeTreeMap::Private::~Private()
 {
     clear();
-    backend->deleteLater();
 }
 
 void VolumeTreeMap::Private::backToOriginal()
@@ -186,22 +178,19 @@ void VolumeTreeMap::Private::backToOriginal()
     }
 }
 
-void VolumeTreeMap::Private::connectSignals()
-{
-    QObject::connect(backend, SIGNAL(deviceAdded(QString)), q, SLOT(doDeviceAdded(QString)));
-    QObject::connect(backend, SIGNAL(deviceRemoved(QString)), q, SLOT(doDeviceRemoved(QString)));
-}
-
-void VolumeTreeMap::Private::disconnectSignals()
-{
-    QObject::disconnect(backend, SIGNAL(deviceAdded(QString)), q, SLOT(doDeviceAdded(QString)));
-    QObject::disconnect(backend, SIGNAL(deviceRemoved(QString)), q, SLOT(doDeviceRemoved(QString)));
-}
-
 void VolumeTreeMap::Private::clear()
 {
     devices.clear();
     beginningCopies.clear();
+}
+
+void VolumeTreeMap::Private::synchronize()
+{
+    beginningCopies.clear();
+    
+    foreach (const QString& disk, devices.keys()) {
+        beginningCopies.insert(disk, devices[disk].copy());
+    }
 }
 
 void VolumeTreeMap::Private::build()
@@ -216,13 +205,7 @@ void VolumeTreeMap::Private::build()
         buildDisk(dev);
     }
     
-    /*
-     * All detection is inserted only in the beginningCopies map: this creates an hard copy
-     * of every tree for the devices map.
-     */
-    foreach (const QString& disk, beginningCopies.keys()) {
-        devices.insert(disk, beginningCopies[disk].copy());
-    }
+    synchronize();
 }
 
 void VolumeTreeMap::Private::buildDisk(Device& dev)
@@ -249,21 +232,24 @@ Disk* VolumeTreeMap::Private::addDisk(Device& device)
 {
     Devices::Disk* disk = new Devices::Disk( device );
     VolumeTree tree( disk );
-    beginningCopies.insert(disk->name(), tree);
+    devices.insert(disk->name(), tree);
 
     return disk;
 }
 
 void VolumeTreeMap::Private::detectChildrenOfDisk(const QString& diskName)
-{
+{    
     /*
      * The old detection is removed in both trees. This is useful when repeating the detection after a deviceAdded or
      * deviceRemoved signal has been delivered, and it's harmless in the initial building.
      */
-    VolumeTree tree = beginningCopies[diskName];
-    tree.d->removeAllOfType(DeviceModified::PartitionDevice);
-    tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
-    
+        
+    VolumeTree tree = devices[diskName];
+    if (tree.valid()) {
+        tree.d->removeAllOfType(DeviceModified::PartitionDevice);
+        tree.d->removeAllOfType(DeviceModified::FreeSpaceDevice);
+    }
+
     detectPartitionsOfDisk(diskName);
     detectFreeSpaceOfDisk(diskName);
 }
@@ -272,7 +258,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi)
 {
     QList<Device> devs = Device::listFromType(DeviceInterface::StorageVolume, parentUdi);
     Devices::Partition* extended = 0;
-    VolumeTree tree = beginningCopies[parentUdi];
+    VolumeTree tree = devices[parentUdi];
     
     /* For now doesn't consider all the volume types not supported. */
     for (QList<Device>::iterator it = devs.begin(); it != devs.end(); it++) {
@@ -326,7 +312,7 @@ void VolumeTreeMap::Private::detectPartitionsOfDisk(const QString& parentUdi)
 
 void VolumeTreeMap::Private::detectFreeSpaceOfDisk(const QString& parentUdi)
 {
-    VolumeTree tree = beginningCopies[parentUdi];
+    VolumeTree tree = devices[parentUdi];
     
     foreach (FreeSpace* space, freeSpaceOfDisk(tree)) {
         tree.d->addDevice(space);

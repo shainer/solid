@@ -28,13 +28,9 @@
 #include <QtDBus/QDBusConnectionInterface>
 
 #include "../shared/rootdevice.h"
-#include <partitioner/devices/disk.h>
-#include <solid/partitioner/utils/utils.h>
 
 using namespace Solid::Backends::UDisks;
 using namespace Solid::Backends::Shared;
-using namespace Solid::Partitioner;
-using namespace Solid::Partitioner::Devices;
 
 UDisksManager::UDisksManager(QObject *parent)
     : Solid::Ifaces::DeviceManager(parent),

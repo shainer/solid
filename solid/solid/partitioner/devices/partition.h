@@ -26,8 +26,8 @@
 #include <solid/partitioner/filesystem.h>
 #include <solid/storagevolume.h>
 #include <kauthactionreply.h>
+#include <kauthaction.h>
 #include <solid/storageaccess.h>
-#include <solid/device.h>
 
 namespace Solid
 {
@@ -123,7 +123,7 @@ namespace Solid
                  * 
                  * @returns the partition's minimum size, in bytes.
                  */
-                virtual qulonglong minimumSize() const;
+                virtual qulonglong minimumSize();
                 
                 /**
                  * @returns the initial offset in bytes.
