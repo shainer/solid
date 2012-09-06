@@ -172,19 +172,6 @@ namespace Solid
                 virtual StorageAccess* access() const;
                 
                 /**
-                 * @returns whether this partition can be resized safely
-                 */
-                virtual bool supportsResizing() const;
-                
-                /**
-                 * Resizes this partition.
-                 * 
-                 * @param newSize the new partition's size.
-                 * @returns whether the resizing succeeded
-                 */
-                virtual bool resize(qulonglong);
-                
-                /**
                  * Sets whether this partition should be displayed by the system.
                  * 
                  * @param ignored whether this partition is to be ignored.

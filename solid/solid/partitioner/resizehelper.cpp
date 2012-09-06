@@ -19,9 +19,12 @@
 */
 #include <solid/partitioner/resizehelper.h>
 #include <solid/partitioner/externalcommand.h>
+#include <QtCore/QDebug>
 
 #include <parted/parted.h>
 #include <parted/filesys.h>
+#include <unistd.h>
+#include <ktempdir.h>
 
 #define MEGABYTE 1024*1024
 
@@ -52,7 +55,159 @@ ActionReply ResizeHelper::minsize(QVariantMap arguments)
 
 ActionReply ResizeHelper::resize(QVariantMap arguments)
 {
-    return ActionReply::SuccessReply;
+    QString filesystem = arguments["filesystem"].toString();
+    QString diskName = udiToName( arguments["disk"].toString() );
+    QString partitionName = udiToName( arguments["partition"].toString() );
+    QString path = arguments["path"].toString();
+    
+    qulonglong newSize = arguments["newSize"].toULongLong();
+    qulonglong oldSize = arguments["oldSize"].toULongLong();
+    bool expanding = newSize > oldSize;
+    
+    QString errorString;
+    QVariantMap returnValues;
+    ActionReply reply = ActionReply::SuccessReply;
+    
+    if (expanding) {
+        errorString = resizePartition(diskName, partitionName, newSize);
+        
+        if (errorString.isEmpty()) {
+            errorString = resizeFilesystem(diskName, partitionName, filesystem, newSize, path);
+        }
+    } else {
+        errorString = resizeFilesystem(diskName, partitionName, filesystem, newSize, path);
+        
+        if (errorString.isEmpty()) {
+            errorString = resizePartition(diskName, partitionName, newSize);
+        }
+    }
+    
+    returnValues["errorString"] = errorString;
+    reply.setData(returnValues);
+    
+    return reply;
+}
+
+QString ResizeHelper::resizePartition(const QString& diskName, const QString& partitionName, qulonglong size)
+{
+    qDebug() << "RESIZE PARTITION...";
+    int partitionNum = partitionName.right(1).toInt();
+    long long int sectorSize = size / 512;
+    
+    ped_device_probe_all();
+    
+    PedDevice* device = ped_device_get( diskName.toUtf8().data() );
+    PedDisk* disk = ped_disk_new(device);
+    PedPartition* partition = ped_disk_get_partition(disk, partitionNum);
+    PedGeometry geometry = partition->geom;
+    
+    PedGeometry* newGeometry = ped_geometry_new(device, geometry.start, sectorSize);
+    PedConstraint* constraint = ped_constraint_exact(newGeometry);
+    
+    if (!constraint) {
+        return QString("Error while creating partition's constraint: check the new geometry.");
+    }
+    
+    if (ped_disk_set_partition_geom(disk, partition, constraint, newGeometry->start, newGeometry->start + newGeometry->length - 1) == 0) {
+        return QString("Error while setting the partition's new geometry");
+    }
+    
+    ped_disk_commit_to_dev(disk);
+    
+    if (!ped_disk_commit_to_os(disk)) {
+        sleep(1);
+        ped_disk_commit_to_os(disk); /* NOTE: this is necessary because of a libparted bug */
+    }
+    
+    qDebug() << "done";
+    return QString();
+}
+
+QString ResizeHelper::resizeFilesystem(const QString& diskName,
+                                    const QString& partition,
+                                    const QString& filesystem,
+                                    qulonglong size,
+                                    const QString& path)
+{
+    QStringList commandLine;
+    qDebug() << "RESIZE FILESYSTEM...";
+    int exitCode = 0;
+    
+    if (filesystem == "NTFS") {
+        ExternalCommand cmd("ntfsresize", QStringList() << "-P" << "-F" << partition << "-s" << QString::number(size), path);
+        cmd.run();
+        exitCode = cmd.exitCode();
+    }
+    else if (filesystem.startsWith("Linux Ext")) {
+        QString sectors = QString::number(size / 512);
+        sectors += "s";
+        
+        ExternalCommand cmd("resize2fs", QStringList() << partition << sectors, path);
+        cmd.run();
+        exitCode = cmd.exitCode();
+    }
+    else if (filesystem == "ReiserFS") {
+        ExternalCommand cmd("resize_reiserfs", QStringList() << partition << "-q" << "-s" << QString::number(size), path);
+        
+        cmd.start();
+        cmd.write("y\n", 2);
+        cmd.waitFor();
+        exitCode = cmd.exitCode();
+    }
+    else if (filesystem == "XFS") {
+        KTempDir tempDir;
+        
+        if (!tempDir.exists()) {
+            exitCode = 1;
+        }
+        
+        ExternalCommand mount("mount", QStringList() << "-v" << "-t" << "xfs" << partition << tempDir.name(), path);
+        if (!mount.run()) {
+            exitCode = 1;
+        }
+        
+        ExternalCommand grow("xfs_growfs", QStringList() << tempDir.name(), path);
+        grow.run();
+        
+        ExternalCommand umount("umount", QStringList() << tempDir.name(), path);
+        umount.run();
+        
+        exitCode = 0;
+    }
+    else if (filesystem == "FAT") {
+        int partitionNum = partition.right(1).toInt();
+        ped_device_probe_all();
+        
+        PedDevice* device = ped_device_get( diskName.toUtf8().data() );
+        PedDisk* disk = ped_disk_new(device);
+        PedGeometry geometry = ped_disk_get_partition(disk, partitionNum)->geom;
+        PedFileSystem* partitionFilesystem = ped_file_system_open(&geometry);
+        
+        PedGeometry newGeometry;
+        newGeometry.dev = device;
+        newGeometry.start = geometry.start;
+        newGeometry.length = size / 512;
+        newGeometry.end = newGeometry.start + newGeometry.length;
+        
+        /* For LibParted 0 means failure, while for the filesystem tools it means success, so we change it */
+        if (ped_file_system_resize(partitionFilesystem, &newGeometry, 0) == 0) {
+            exitCode = 1;
+        }
+        
+        ped_disk_commit_to_dev(disk);
+        ped_disk_commit_to_os(disk);
+        
+        ped_disk_destroy(disk);
+        ped_device_destroy(device);
+    }
+    
+    qDebug() << "done.";
+    
+    if (exitCode == 0) {
+        return QString();
+    }
+    
+    return QString("Error while resizing the filesystem.");
 }
 
 QString ResizeHelper::udiToName(const QString& udi)

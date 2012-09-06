@@ -398,16 +398,6 @@ void Partition::minimumSizeReady(ActionReply reply)
     }
 }
 
-bool Partition::supportsResizing() const
-{
-    return (d->minimumSize != d->size);
-}
-
-bool Partition::resize(qulonglong newSize)
-{   
-    return true;
-}
-
 void Partition::doAccessibilityChanged(bool accessible, const QString& udi)
 {
     Q_UNUSED(udi)

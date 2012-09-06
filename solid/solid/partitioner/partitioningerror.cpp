@@ -87,7 +87,7 @@ void PartitioningError::setType(PartitioningError::ErrorType type)
         }
         
         case SafeResizingError: {
-            d->description = "Safe resizing is impossible: either the offset is changed, or the size is too small.";
+            d->description = "Safe resizing is impossible: the offset is changed, the size is too small, or the filesystem isn't supported.";
             d->markersLeft = 0;
             break;
         }

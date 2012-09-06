@@ -34,12 +34,16 @@
 
 #include <QtCore/QStringList>
 #include <QtCore/QDebug>
+#include <QtCore/QEventLoop>
 
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusMetaType>
 #include <QtDBus/QDBusPendingReply>
 
+#include <kauth.h>
+
 using namespace Solid::Backends::UDisks;
+using namespace KAuth;
 
 // Adapted from KLocale as Solid needs to be Qt-only
 QString formatByteSize(double size)
@@ -849,6 +853,41 @@ bool UDisksDevice::createTable(const QString& scheme, const QStringList& options
 
     errorDescription = reply.error().message();
     return false;
+}
+
+bool UDisksDevice::safelyResizePartition(qulonglong oldSize, qulonglong newSize, const QString& filesystem)
+{
+    qRegisterMetaType<ActionReply>("ActionReply");
+    qRegisterMetaType<Action::AuthStatus>("Action::AuthStatus");
+    KAuth::Action asyncAction("org.solid.partitioner.resize.resize");
+    
+    asyncAction.addArgument("newSize", newSize);
+    asyncAction.addArgument("oldSize", oldSize);
+    asyncAction.addArgument("partition", udi());
+    asyncAction.addArgument("disk", parentUdi());
+    asyncAction.addArgument("filesystem", filesystem);
+    asyncAction.addArgument("path", QString::fromAscii( getenv("PATH") ));
+    
+    asyncAction.setExecutesAsync(true);
+    QEventLoop loop;
+    
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit()));
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(resizeDone(ActionReply)));
+    ActionReply earlyReply = asyncAction.execute("org.solid.partitioner.resize");
+    
+    if (earlyReply.failed()) {
+        errorDescription = "Error while starting resize helper: " + earlyReply.errorDescription();
+        return false;
+    }
+    
+    loop.exec();
+    return true;
+}
+
+void UDisksDevice::resizeDone(ActionReply reply)
+{
+    errorDescription = reply.data().value("errorString").toString();
+    qDebug() << "ehii";
 }
 
 QString UDisksDevice::latestError() const

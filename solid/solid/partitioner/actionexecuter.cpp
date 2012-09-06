@@ -220,22 +220,32 @@ bool ActionExecuter::execute()
                 }
                 
                 Partition* partition = d->map.searchPartition( rpa->partition() );
+                QString filesystem = partition->filesystem().name();
                 
-                QString oldType = partition->partitionTypeString();
-                QString oldLabel = partition->label();
-                QStringList oldFlags = partition->flags();
-                
-                success = device->deletePartition();
-                device->deleteLater();
-                
-                QPair<VolumeTree, DeviceModified* > pair = d->map.searchTreeWithDevice( rpa->partition() );
-                Disk* disk = pair.first.disk();
-                device = new UDisksDevice( disk->name() );
-                
-                QDBusObjectPath p = device->createPartition(rpa->newOffset(), rpa->newSize(), oldType, oldLabel, oldFlags);
-                
-                if (p.path().isEmpty()) {
-                    success = false;
+                /*
+                 * If safe resizing isn't required, or if the partition's filesystem can be resized safely in any circumstances,
+                 * just use the udisks services.
+                 */
+                if (!rpa->safe() || filesystem.isEmpty() || filesystem == "unformatted" || filesystem == "Swap Space") {
+                    QString oldType = partition->partitionTypeString();
+                    QString oldLabel = partition->label();
+                    QStringList oldFlags = partition->flags();
+                    
+                    success = device->deletePartition();
+                    device->deleteLater();
+                    
+                    QPair<VolumeTree, DeviceModified* > pair = d->map.searchTreeWithDevice( rpa->partition() );
+                    Disk* disk = pair.first.disk();
+                    device = new UDisksDevice( disk->name() );
+                    
+                    QDBusObjectPath p = device->createPartition(rpa->newOffset(), rpa->newSize(), oldType, oldLabel, oldFlags);
+                    
+                    if (p.path().isEmpty()) {
+                        success = false;
+                    }
+                } else {
+                    success = device->safelyResizePartition(device->prop("DeviceSize").toULongLong(), rpa->newSize(), partition->filesystem().name());
+                    success = device->latestError().isEmpty();
                 }
                 
                 break;

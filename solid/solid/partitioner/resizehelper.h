@@ -80,6 +80,9 @@ namespace Solid
              * The parameters here are the partition name, the filesystem name, and the PATH environment variable.
              */
             qlonglong minSizeTool(const QString &, const QString &, const QString &);
+            
+            QString resizePartition(const QString &, const QString &, qulonglong);
+            QString resizeFilesystem(const QString &, const QString &, const QString &, qulonglong, const QString &);
         };
     }
 }

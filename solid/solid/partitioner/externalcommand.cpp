@@ -62,8 +62,8 @@ ExternalCommand::~ExternalCommand()
     delete d;
 }
 
-bool ExternalCommand::run()
-{    
+bool ExternalCommand::start()
+{
     foreach (const QString& path, d->path.split(":")) {
         QString cmd = d->command;
         cmd.prepend(path + "/");
@@ -73,12 +73,17 @@ bool ExternalCommand::run()
         }
     }
     
-    start(d->command, d->args);
+    QProcess::start(d->command, d->args);
     
     if (!waitForStarted()) {
         return false;
     }
     
+    return true;
+}
+
+bool ExternalCommand::waitFor()
+{
     closeWriteChannel();
     
     if (!waitForFinished()) {
@@ -86,6 +91,19 @@ bool ExternalCommand::run()
     }
     
     addOutput();
+    return true;
+}
+
+bool ExternalCommand::run()
+{    
+    if (!this->start()) {
+        return false;
+    }
+    
+    if (!waitFor()) {
+        return false;
+    }
+    
     return true;
 }
 

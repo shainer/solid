@@ -29,6 +29,7 @@
 #include <QtDBus/QDBusInterface>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
+#include <kauthactionreply.h>
 
 QString formatByteSize(double);
 
@@ -38,6 +39,8 @@ namespace Backends
 {
 namespace UDisks
 {
+
+using namespace KAuth;
     
 class UDisksDevice : public Solid::Ifaces::Device
 {
@@ -84,6 +87,10 @@ public:
                                     const QStringList& options = QStringList(),
                                     const QString& filesystem = QString(),
                                     const QStringList& filesystemFlags = QStringList());
+    bool safelyResizePartition(qulonglong oldSize,
+                               qulonglong newSize,
+                               const QString& filesystem);
+                               
     
     QString latestError() const;
     
@@ -92,6 +99,7 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void slotChanged();
+    void resizeDone(ActionReply);
 
 private:
     QString storageDescription() const;

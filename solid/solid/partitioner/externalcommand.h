@@ -58,7 +58,22 @@ namespace Solid
             virtual ~ExternalCommand();
             
             /**
+             * Starts the command on a separate process.
+             * 
+             * @returns true if the command was started successfully, false otherwise.
+             */
+            bool start();
+            
+            /**
+             * Waits for the command execution to finish.
+             * 
+             * @returns true if we didn't timeout while waiting, false otherwise.
+             */
+            bool waitFor();
+            
+            /**
              * Executes the command synchronously.
+             * This is a combination of the two previous commands, for when you want a simple execution.
              * 
              * @returns false if something goes wrong while calling the process, true otherwise.
              */
