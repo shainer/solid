@@ -1,11 +1,5 @@
-[org.solid.partitioner.resize.minsize]
-Name=Minimum partition size
-Description=Minimum partition size
-Policy=auth_admin
-Persistence=session
-
-[org.solid.partitioner.resize.resize]
-Name=Resizing
-Description=Resizes the filesystem and partition when supported
+[org.solid.partitioner.resize.resizehelper]
+Name=Resize-related functions
+Description=Safely resizing partitions
 Policy=auth_admin
 Persistence=session

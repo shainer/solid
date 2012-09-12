@@ -40,34 +40,30 @@ namespace Solid
             
         public slots:            
             /**
-             * Retrieves the minimum partition size we can set if we want to avoid crushing any data; -1 is returned if we don't
-             * support resizing for the filesystem, or some error occurred during the execution.
-             * The return value is a qlonglong, named "minimumPartitionSize".
+             * This method includes both the operations supported by this helper: computing the partition's minimum size and
+             * actually resizing it. We only have the one method because since the application often needs to call both
+             * in the same execution, we avoid having to ask twice for the root's password.
              * 
-             * @param partition (string) the partition UDI
-             * @param disk (string) the disk UDI, needed by libparted
-             * @param filesystem (string) the filesystem name
-             * @param isOriginal (bool) whether the filesystem exists on the partition or was set later
-             * @param minimumFilesystemSize (qulonglong) the filesystem's minimum size allowed.
-             * @param path the PATH environment variable, as getenv() doesn't work properly inside an helper for now.
-             * The minimum fs size is required to avoid having to include FilesystemUtils as a dependency of the helper.
+             * @param minSize true if computing minimum size, false for resizing
+             * @param filesystem the filesystem's name
+             * @param disk the disk's UDI
+             * @param partition the partition's UDI
+             * @param path the PATH environment variable.
              * 
-             * @note these parameters must be passed in a QVariantMap.
-             * 
-             * @returns the minimum partition size.
+             * Only for resizing:
+             * @param newSize the new partition's size in bytes
+             * @param oldSize the current partition's size in bytes.
              */
-            ActionReply minsize(QVariantMap);
-            
-            /**
-             * @todo to be implemented.
-             */
-            ActionReply resize(QVariantMap);
+            ActionReply resizehelper(QVariantMap);
             
         private:
             /*
              * Translates a UDI into a device name.
              */
             QString udiToName(const QString &);
+            
+            qulonglong minsize(const QVariantMap &);
+            QString resize(const QVariantMap &);
             
             /*
              * Some filesystem can be supported using libparted (root permissions are still required), namely FAT32.

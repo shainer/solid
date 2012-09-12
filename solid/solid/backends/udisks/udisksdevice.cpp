@@ -859,8 +859,9 @@ bool UDisksDevice::safelyResizePartition(qulonglong oldSize, qulonglong newSize,
 {
     qRegisterMetaType<ActionReply>("ActionReply");
     qRegisterMetaType<Action::AuthStatus>("Action::AuthStatus");
-    KAuth::Action asyncAction("org.solid.partitioner.resize.resize");
+    KAuth::Action asyncAction("org.solid.partitioner.resize.resizehelper");
     
+    asyncAction.addArgument("minSize", false);
     asyncAction.addArgument("newSize", newSize);
     asyncAction.addArgument("oldSize", oldSize);
     asyncAction.addArgument("partition", udi());
@@ -887,7 +888,6 @@ bool UDisksDevice::safelyResizePartition(qulonglong oldSize, qulonglong newSize,
 void UDisksDevice::resizeDone(ActionReply reply)
 {
     errorDescription = reply.data().value("errorString").toString();
-    qDebug() << "ehii";
 }
 
 QString UDisksDevice::latestError() const

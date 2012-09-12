@@ -361,8 +361,9 @@ void Partition::computeMinimumSize()
     }
     
     qRegisterMetaType<ActionReply>("ActionReply");
-    KAuth::Action asyncAction("org.solid.partitioner.resize.minsize");
+    KAuth::Action asyncAction("org.solid.partitioner.resize.resizehelper");
     
+    asyncAction.addArgument("minSize", true);
     asyncAction.addArgument("partition", name());
     asyncAction.addArgument("disk", parentName());
     asyncAction.addArgument("filesystem", d->filesystem.name());

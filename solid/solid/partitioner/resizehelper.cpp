@@ -33,27 +33,36 @@ namespace Solid
 namespace Partitioner
 {
 
-ActionReply ResizeHelper::minsize(QVariantMap arguments)
+ActionReply ResizeHelper::resizehelper(QVariantMap arguments)
+{
+    ActionReply finalReply = ActionReply::SuccessReply;  /* we always "succeed" */
+    QVariantMap returnData;
+    
+    if (arguments["minSize"].toBool()) {
+        returnData["minimumPartitionSize"] = minsize(arguments);
+    }
+    else {
+        returnData["errorString"] = resize(arguments);
+    }
+    
+    finalReply.setData(returnData);
+    return finalReply;
+}
+    
+qulonglong ResizeHelper::minsize(const QVariantMap& arguments)
 {
     QString filesystem = arguments["filesystem"].toString();
     QString diskName = udiToName( arguments["disk"].toString() );
     QString partitionName = udiToName( arguments["partition"].toString() );
-
-    ActionReply finalReply = ActionReply::SuccessReply; /* we always "succeed" */
-    QVariantMap returnValues;
     
     if (filesystem == "FAT") {
-        returnValues["minimumPartitionSize"] = minSizeParted(diskName, partitionName);
-    }
-    else {        
-        returnValues["minimumPartitionSize"] = minSizeTool(partitionName, filesystem, arguments["path"].toString());
+        return minSizeParted(diskName, partitionName);
     }
     
-    finalReply.setData(returnValues);
-    return finalReply;
+    return minSizeTool(partitionName, filesystem, arguments["path"].toString());
 }
 
-ActionReply ResizeHelper::resize(QVariantMap arguments)
+QString ResizeHelper::resize(const QVariantMap& arguments)
 {
     QString filesystem = arguments["filesystem"].toString();
     QString diskName = udiToName( arguments["disk"].toString() );
@@ -65,8 +74,6 @@ ActionReply ResizeHelper::resize(QVariantMap arguments)
     bool expanding = newSize > oldSize;
     
     QString errorString;
-    QVariantMap returnValues;
-    ActionReply reply = ActionReply::SuccessReply;
     
     if (expanding) {
         errorString = resizePartition(diskName, partitionName, newSize);
@@ -82,10 +89,7 @@ ActionReply ResizeHelper::resize(QVariantMap arguments)
         }
     }
     
-    returnValues["errorString"] = errorString;
-    reply.setData(returnValues);
-    
-    return reply;
+    return errorString;
 }
 
 QString ResizeHelper::resizePartition(const QString& diskName, const QString& partitionName, qulonglong size)
