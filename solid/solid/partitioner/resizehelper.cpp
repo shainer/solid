@@ -75,7 +75,7 @@ QString ResizeHelper::resize(const QVariantMap& arguments)
     
     QString errorString;
     
-    if (expanding) {
+    if (expanding || filesystem == "XFS") {
         errorString = resizePartition(diskName, partitionName, newSize);
         
         if (errorString.isEmpty()) {
@@ -138,7 +138,7 @@ QString ResizeHelper::resizeFilesystem(const QString& diskName,
     int exitCode = 0;
     
     if (filesystem == "NTFS") {
-        ExternalCommand cmd("ntfsresize", QStringList() << "-P" << "-F" << partition << "-s" << QString::number(size), path);
+        ExternalCommand cmd("ntfsresize", QStringList() << "-P" << "-f" << partition << "-s" << QString::number(size), path);
         cmd.run();
         exitCode = cmd.exitCode();
     }
