@@ -204,8 +204,15 @@ bool ActionExecuter::execute()
                 
                 Partition* partition = d->map.searchPartition( mpa->partition() );
                 QString type = partition->partitionTypeString();
-                QString oldLabel = partition->label();
-                QString newLabel = mpa->isLabelChanged() ? mpa->label() : oldLabel;
+                QString newLabel;
+                
+                /*
+                 * This field must be left blank for MBR, which doesn't support labeled partitions
+                 */
+                if (partition->partitionTableScheme() != "mbr") {
+                    QString oldLabel = partition->label();
+                    newLabel = mpa->isLabelChanged() ? mpa->label() : oldLabel;
+                }
                 
                 success = device->modifyPartition(type, newLabel, mpa->flags());
                 break;
