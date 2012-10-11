@@ -1,4 +1,5 @@
 /*
+    Copyright 2012 Patrick von Reth <vonreth@kde.org>
     Copyright 2006 Kevin Ottens <ervin@kde.org>
 
     This library is free software; you can redistribute it and/or
@@ -71,6 +72,7 @@ private:
     bool m_passphraseRequested;
     QString m_lastReturnObject;
     QProcess *m_process;
+    WmiQuery::Item m_logicalDisk;
 };
 }
 }

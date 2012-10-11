@@ -1,4 +1,5 @@
 /*
+    Copyright 2012 Patrick von Reth <vonreth@kde.org>
     Copyright 2006 Kevin Ottens <ervin@kde.org>
 
     This library is free software; you can redistribute it and/or
@@ -25,6 +26,13 @@ using namespace Solid::Backends::Wmi;
 Volume::Volume(WmiDevice *device)
     : Block(device)
 {
+    if(m_device->type() == Solid::DeviceInterface::StorageVolume)
+    {
+        m_logicalDisk = WmiDevice::win32LogicalDiskByDiskPartitionID(m_device->property("DeviceID").toString());
+    }else if(m_device->type() == Solid::DeviceInterface::OpticalDisc)
+    {
+        m_logicalDisk = WmiDevice::win32LogicalDiskByDriveLetter(m_device->property("Drive").toString());
+    }
 }
 
 Volume::~Volume()
@@ -35,80 +43,37 @@ Volume::~Volume()
 
 bool Volume::isIgnored() const
 {
-    if (m_device->property("volume.ignore").toBool()) {
-        return true;
-    }
-
-    /* Now be a bit more aggressive on what we want to ignore,
-     * the user generally need to check only what's removable or in /media
-     * the volumes mounted to make the system (/, /boot, /var, etc.)
-     * are useless to him.
-     */
-    WmiDevice drive(m_device->property("block.storage_device").toString());
-    QString mount_point = m_device->property("volume.mount_point").toString();
-    bool mounted = m_device->property("volume.is_mounted").toBool();
-    bool removable = drive.property("storage.removable").toBool();
-    bool hotpluggable = drive.property("storage.hotpluggable").toBool();
-
-
-    return !removable && !hotpluggable
-        && mounted && !mount_point.startsWith(QLatin1String("/media/"))
-        && !mount_point.startsWith(QLatin1String("/mnt/"));
+    return m_logicalDisk.isNull();
 }
 
 Solid::StorageVolume::UsageType Volume::usage() const
 {
-    QString usage = m_device->property("volume.fsusage").toString();
-
-    if (usage == "filesystem")
-    {
-        return Solid::StorageVolume::FileSystem;
-    }
-    else if (usage == "partitiontable")
-    {
-        return Solid::StorageVolume::PartitionTable;
-    }
-    else if (usage == "raid")
-    {
-        return Solid::StorageVolume::Raid;
-    }
-    else if (usage == "crypto")
-    {
-        return Solid::StorageVolume::Encrypted;
-    }
-    else if (usage == "unused")
-    {
-        return Solid::StorageVolume::Unused;
-    }
-    else
-    {
-        return Solid::StorageVolume::Other;
-    }
+        return Solid::StorageVolume::FileSystem;//TODO:???
 }
 
 QString Volume::fsType() const
 {
-    return m_device->property("volume.fstype").toString();
+    return m_logicalDisk.getProperty("FileSystem").toString();
 }
 
 QString Volume::label() const
 {
-    return m_device->property("volume.label").toString();
+    return m_logicalDisk.getProperty("VolumeName").toString();
 }
 
 QString Volume::uuid() const
 {
-    return m_device->property("volume.uuid").toString();
+    return m_logicalDisk.getProperty("VolumeSerialNumber").toString();
 }
 
 qulonglong Volume::size() const
 {
-    return m_device->property("volume.size").toULongLong();
+    return m_device->property("Size").toULongLong();
 }
 
 QString Solid::Backends::Wmi::Volume::encryptedContainerUdi() const
 {
-    return m_device->property("volume.crypto_luks.clear.backing_volume").toString();
+    return this->uuid();
 }
 
 #include "backends/wmi/wmivolume.moc"

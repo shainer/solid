@@ -1,4 +1,5 @@
 /*
+    Copyright 2012 Patrick von Reth <vonreth@kde.org>
     Copyright 2005,2006 Kevin Ottens <ervin@kde.org>
 
     This library is free software; you can redistribute it and/or
@@ -22,6 +23,7 @@
 #define SOLID_BACKENDS_WMI_WMIDEVICE_H
 
 #include <solid/ifaces/device.h>
+#include "wmiquery.h"
 
 namespace Solid
 {
@@ -69,6 +71,16 @@ public:
 
     static QStringList generateUDIList(const Solid::DeviceInterface::Type &type);
     static bool exists(const QString &udi);
+    const Solid::DeviceInterface::Type type() const;
+
+
+    //TODO:rename the folowing methodes...
+    static WmiQuery::Item win32LogicalDiskByDiskPartitionID(const QString &deviceID);
+    static WmiQuery::Item win32DiskDriveByDiskPartitionID(const QString &deviceID);
+    static WmiQuery::Item win32DiskPartitionByDeviceIndex(const QString &deviceID);
+    static WmiQuery::Item win32DiskPartitionByDriveLetter(const QString &driveLetter);
+    static WmiQuery::Item win32LogicalDiskByDriveLetter(const QString &driveLetter);
+
 
 Q_SIGNALS:
     void propertyChanged(const QMap<QString,int> &changes);
@@ -78,7 +90,7 @@ private Q_SLOTS:
     void slotPropertyModified(int count, const QList<ChangeDescription> &changes);
     void slotCondition(const QString &condition, const QString &reason);
 
-private:
+private:    
     WmiDevicePrivate *d;
     friend class WmiDevicePrivate;
 };

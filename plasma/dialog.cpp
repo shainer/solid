@@ -171,7 +171,8 @@ void DialogPrivate::checkBorders(bool updateMaskIfNeeded)
     qreal bottomHeight(0);
 
     //decide about disabling the border attached to the panel
-    if (applet) {
+    //don't cut borders on tooltips
+    if (applet && !q->testAttribute(Qt::WA_X11NetWmWindowTypeToolTip)) {
         background->getMargins(leftWidth, topHeight, rightWidth, bottomHeight);
 
         switch (applet->location()) {
@@ -223,7 +224,7 @@ void DialogPrivate::checkBorders(bool updateMaskIfNeeded)
     }
 
     //decide if to disable the other borders
-    if (q->isVisible()) {
+    if (q->isVisible() && !q->testAttribute(Qt::WA_X11NetWmWindowTypeToolTip)) {
         if (dialogGeom.left() <= avail.left()) {
             borders &= ~FrameSvg::LeftBorder;
         }
@@ -304,8 +305,6 @@ void Dialog::syncToGraphicsWidget()
 
         QDesktopWidget *desktop = QApplication::desktop();
         QSize maxSize = desktop->availableGeometry(desktop->screenNumber(this)).size();
-
-        graphicsWidget->setMaximumSize(maxSize - QSize(left + right, top + bottom).boundedTo(graphicsWidget->effectiveSizeHint(Qt::MaximumSize).toSize()));
 
         setMinimumSize(0, 0);
         setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);

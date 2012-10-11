@@ -107,6 +107,7 @@ install( FILES
   KCheckableProxyModel
   KCmdLineArgs
   KCmdLineOptions
+  KCodecAction
   KCodecs
   KColor
   KColorButton
@@ -325,9 +326,11 @@ install( FILES
   KPushButton
   KRandom
   KRandomSequence
+  KRatingPainter
   KRatingWidget
   KRecentDocument
   KRecentFilesAction
+  KRecursiveFilterProxyModel
   KRemoteEncoding
   KReplace
   KReplaceDialog
@@ -776,6 +779,7 @@ install( FILES
   KParts/HistoryProvider
   KParts/HtmlExtension
   KParts/LiveConnectExtension
+  KParts/ListingExtension
   KParts/MainWindow
   KParts/OpenUrlEvent
   KParts/Part
@@ -956,8 +960,6 @@ DESTINATION ${INCLUDE_INSTALL_DIR}/KDE/khtml COMPONENT Devel)
 
 install(FILES
   Nepomuk/File
-  Nepomuk/KRatingPainter
-  Nepomuk/KRatingWidget
   Nepomuk/MassUpdateJob
   Nepomuk/Resource
   Nepomuk/ResourceManager

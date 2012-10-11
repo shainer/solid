@@ -1,4 +1,5 @@
 /*
+    Copyright 2012 Patrick von Reth <vonreth@kde.org>
     Copyright 2006 Kevin Ottens <ervin@kde.org>
 
     This library is free software; you can redistribute it and/or
@@ -46,6 +47,9 @@ public:
     virtual QString uuid() const;
     virtual qulonglong size() const;
     virtual QString encryptedContainerUdi() const;
+
+private:
+    WmiQuery::Item m_logicalDisk;
 };
 }
 }

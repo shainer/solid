@@ -291,6 +291,7 @@ KCmdLineArgsStatic::KCmdLineArgsStatic () {
     qt_options.add("button <color>", ki18n("sets the default button color"));
     qt_options.add("name <name>", ki18n("sets the application name"));
     qt_options.add("title <title>", ki18n("sets the application title (caption)"));
+    qt_options.add("testability", ki18n("load the testability framework"));
 #ifdef Q_WS_X11
     qt_options.add("visual TrueColor", ki18n("forces the application to use a TrueColor visual on\nan 8-bit display"));
     qt_options.add("inputstyle <inputstyle>", ki18n("sets XIM (X Input Method) input style. Possible\nvalues are onthespot, overthespot, offthespot and\nroot"));
@@ -303,6 +304,7 @@ KCmdLineArgsStatic::KCmdLineArgsStatic () {
     qt_options.add("reverse", ki18n("mirrors the whole layout of widgets"));
     qt_options.add("stylesheet <file.qss>", ki18n("applies the Qt stylesheet to the application widgets"));
     qt_options.add("graphicssystem <system>", ki18n("use a different graphics system instead of the default one, options are raster and opengl (experimental)"));
+    qt_options.add("qmljsdebugger <port>", ki18n("QML JS debugger information. Application must be\nbuilt with -DQT_DECLARATIVE_DEBUG for the debugger to be\nenabled"));
     // KDE options
     kde_options.add("caption <caption>",   ki18n("Use 'caption' as name in the titlebar"));
     kde_options.add("icon <icon>",         ki18n("Use 'icon' as the application icon"));
@@ -1406,8 +1408,16 @@ KCmdLineArgsPrivate::setOption(const QByteArray &opt, const QByteArray &value)
       // Qt does it's own parsing.
       QByteArray argString = "-"; // krazy:exclude=doublequote_chars
       argString += opt;
-      addArgument(argString);
-      addArgument(value);
+      if (opt == "qmljsdebugger") {
+          // hack: Qt expects the value of the "qmljsdebugger" option to be 
+          // passed using a '=' separator rather than a space, so we recreate it
+          // correctly.
+          // See code of QCoreApplicationPrivate::processCommandLineArguments()
+          addArgument(argString + "=" + value);
+      } else {
+          addArgument(argString);
+          addArgument(value);
+      }
 
 #if defined(Q_WS_X11) || defined(Q_WS_QWS)
       // Hack coming up!

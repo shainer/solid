@@ -43,6 +43,24 @@ using std::memcpy;
 
 namespace KJS {
 
+/**
+ * @internal
+ *
+ * Class to implement all methods that are properties of the
+ * Object object
+ */
+class ArrayObjectFuncImp : public InternalFunctionImp {
+public:
+    ArrayObjectFuncImp(ExecState *, FunctionPrototype *, int i, int len, const Identifier& );
+
+    virtual JSValue *callAsFunction(ExecState *, JSObject *thisObj, const List &args);
+
+    enum { IsArray };
+
+private:
+    int id;
+};
+
 // ------------------------------ ArrayPrototype ----------------------------
 
 const ClassInfo ArrayPrototype::info = {"Array", &ArrayInstance::info, &arrayTable, 0};
@@ -154,18 +172,10 @@ JSValue* ArrayProtoFunc::callAsFunction(ExecState* exec, JSObject* thisObj, cons
         }
 
         if (id == ToString || id == Join || fallback) {
-            if (element->isObject()) {
-                JSObject *o = static_cast<JSObject *>(element);
-                JSValue *conversionFunction = o->get(exec, exec->propertyNames().toString);
-                if (conversionFunction->isObject() && static_cast<JSObject *>(conversionFunction)->implementsCall()) {
-                    str += static_cast<JSObject *>(conversionFunction)->call(exec, o, List())->toString(exec);
-                } else {
-                    visitedElems.remove(thisObj);
-                    return throwError(exec, RangeError, "Cannot convert " + o->className() + " object to string");
-                }
-            } else {
-                str += element->toString(exec);
-            }
+            str += element->toString(exec);
+            if (exec->hadException())
+                break;
+
             if (str.isNull()) {
                 JSObject* error = Error::create(exec, GeneralError, "Out of memory");
                 exec->setException(error);
@@ -421,7 +431,7 @@ JSValue* ArrayProtoFunc::callAsFunction(ExecState* exec, JSObject* thisObj, cons
       }
       else
       {
-        for ( unsigned int k = length - deleteCount; (int)k > begin; --k )
+        for ( unsigned int k = length - deleteCount; k > begin; --k )
         {
           if (JSValue *obj = getProperty(exec, thisObj, k + deleteCount - 1))
             thisObj->put(exec, k + additionalArgs - 1, obj);
@@ -665,8 +675,12 @@ ArrayObjectImp::ArrayObjectImp(ExecState *exec,
                                ArrayPrototype *arrayProto)
   : InternalFunctionImp(funcProto)
 {
+  static const Identifier* isArrayName = new Identifier("isArray");
+
   // ECMA 15.4.3.1 Array.prototype
   put(exec, exec->propertyNames().prototype, arrayProto, DontEnum|DontDelete|ReadOnly);
+
+  putDirectFunction(new ArrayObjectFuncImp(exec, funcProto, ArrayObjectFuncImp::IsArray, 1, *isArrayName), DontEnum);
 
   // no. of arguments for constructor
   put(exec, exec->propertyNames().length, jsNumber(1), ReadOnly|DontDelete|DontEnum);
@@ -697,6 +711,28 @@ JSValue *ArrayObjectImp::callAsFunction(ExecState *exec, JSObject * /*thisObj*/,
 {
   // equivalent to 'new Array(....)'
   return construct(exec,args);
+}
+
+// ------------------------------ ArrayObjectFuncImp ----------------------------
+
+ArrayObjectFuncImp::ArrayObjectFuncImp(ExecState* exec, FunctionPrototype* funcProto, int i, int len, const Identifier& name)
+    : InternalFunctionImp(funcProto, name), id(i)
+{
+    putDirect(exec->propertyNames().length, len, DontDelete|ReadOnly|DontEnum);
+}
+
+JSValue *ArrayObjectFuncImp::callAsFunction(ExecState* exec, JSObject*, const List& args)
+{
+    switch (id) {
+    case IsArray: {
+        JSObject* jso = args[0]->getObject();
+        if (!jso)
+            return jsBoolean(false);
+        return jsBoolean(jso->inherits(&ArrayInstance::info));
+    }
+    default:
+        return jsUndefined();
+    }
 }
 
 }

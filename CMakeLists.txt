@@ -9,10 +9,10 @@ include(CPack)
 ################# set KDE specific information #################
 
 set (KDE_VERSION_MAJOR 4)
-set (KDE_VERSION_MINOR 8)
-set (KDE_VERSION_RELEASE 2)
+set (KDE_VERSION_MINOR 9)
+set (KDE_VERSION_RELEASE 80)
 set (KDE_VERSION "${KDE_VERSION_MAJOR}.${KDE_VERSION_MINOR}.${KDE_VERSION_RELEASE}" )
-set (KDE_VERSION_STRING "${KDE_VERSION} (4.8.2)")
+set (KDE_VERSION_STRING "${KDE_VERSION}")
 
 set (KDE_DISTRIBUTION_TEXT "compiled sources" CACHE STRING "Indicate the distribution in bug reports" )
 
@@ -37,6 +37,9 @@ include(CreateKDEPlatformProfile.cmake)
 if(KDE_PLATFORM_FEATURE_DISABLE_DEPRECATED)
    set(KDE_NO_DEPRECATED TRUE)
 endif(KDE_PLATFORM_FEATURE_DISABLE_DEPRECATED)
+
+############### Give the user the option to build the udisks2 solid backend instead of the udisks backend ###############
+option(WITH_SOLID_UDISKS2 "Enable the udisks2 solid backend instead")
 
 ############### Load the CTest options ###############
 # CTestCustom.cmake has to be in the CTEST_BINARY_DIR.
@@ -79,11 +82,11 @@ else (WIN32)
     set (STRIGI_REQUIRED TRUE)
     set (STRIGI_EXTRA_TEXT "Required by some critical kioslaves")
 endif (WIN32)
-macro_log_feature(STRIGI_FOUND "Strigi" "Desktop indexing and search support" "http://strigi.sourceforge.net" ${STRIGI_REQUIRED} "${STRIGI_MIN_VERSION}" ${STRIGI_EXTRA_TEXT})
+macro_log_feature(STRIGI_FOUND "Strigi" "Desktop indexing and search support" "http://strigi.sourceforge.net" ${STRIGI_REQUIRED} "${STRIGI_MIN_VERSION}" "${STRIGI_EXTRA_TEXT}")
 
 set(LIBATTICA_MIN_VERSION "0.1.90")
 find_package(LibAttica)
-macro_log_feature(LIBATTICA_FOUND "libattica" "Support for Get Hot New Stuff" "git clone git://anongit.kde.org/attica" TRUE "${LIBATTICA_MIN_VERSION}" "")
+macro_log_feature(LIBATTICA_FOUND "libattica" "Support for Get Hot New Stuff" "git://anongit.kde.org/attica" TRUE "${LIBATTICA_MIN_VERSION}" "")
 
 #optional features
 if(X11_FOUND)
@@ -106,13 +109,13 @@ macro_log_feature(OPENSSL_FOUND "OpenSSL" "Support for secure network communicat
 macro_optional_find_package(Libintl)
 macro_log_feature(LIBINTL_FOUND "Libintl" "Support for multiple languages" "http://www.gnu.org/software/gettext" FALSE "" "STRONGLY RECOMMENDED: Enables KDE to be available in many different languages")
 
-set(SOPRANO_MIN_VERSION "2.5.60")
+set(SOPRANO_MIN_VERSION "2.7.56")
 macro_optional_find_package(Soprano ${SOPRANO_MIN_VERSION} COMPONENTS PLUGIN_RAPTORPARSER PLUGIN_REDLANDBACKEND)
 macro_log_feature(SOPRANO_FOUND "Soprano" "Support for the Nepomuk semantic desktop system" "http://soprano.sourceforge.net" FALSE "${SOPRANO_MIN_VERSION}" "")
 macro_log_feature(SOPRANO_PLUGIN_RAPTORPARSER_FOUND "Soprano Raptor Parser" "Support for the Nepomuk semantic desktop system" "http://soprano.sourceforge.net" FALSE "" "")
 macro_log_feature(SOPRANO_PLUGIN_REDLANDBACKEND_FOUND "Soprano Redland Backend" "Support for the Nepomuk semantic desktop system" "http://soprano.sourceforge.net" FALSE "" "")
 
-set(SHAREDDESKTOPONTOLOGIES_MIN_VERSION 0.6.50)
+set(SHAREDDESKTOPONTOLOGIES_MIN_VERSION 0.10)
 macro_optional_find_package(SharedDesktopOntologies ${SHAREDDESKTOPONTOLOGIES_MIN_VERSION})
 macro_log_feature(SHAREDDESKTOPONTOLOGIES_FOUND "Shared desktop ontologies" "Support for the Nepomuk semantic desktop system" "http://oscaf.sourceforge.net" FALSE "${SHAREDDESKTOPONTOLOGIES_MIN_VERSION}" "")
 

@@ -95,7 +95,7 @@ namespace KJS {
            BaseHref, BaseTarget, IsIndexForm, IsIndexPrompt, StyleDisabled,
            StyleSheet, StyleType, StyleMedia, BodyBackground, BodyVLink, BodyText,
            BodyLink, BodyALink, BodyBgColor, BodyOnLoad, BodyOnBlur, BodyOnFocus,
-           BodyOnError, BodyOnMessage, BodyFocus,
+           BodyOnError, BodyOnMessage, BodyFocus, BodyOnHashChange,
            FormAction, FormEncType, FormElements, FormLength, FormAcceptCharset,
            FormReset, FormTarget, FormName, FormMethod, FormSubmit, SelectAdd,
            SelectValue, SelectSelectedIndex, SelectLength,
@@ -233,7 +233,7 @@ namespace KJS {
     virtual bool isFunctionType() const { return false; }
     virtual bool masqueradeAsUndefined() const;
     virtual bool toBoolean(ExecState *) const;
-    virtual void getOwnPropertyNames(ExecState*, PropertyNameArray&);
+    virtual void getOwnPropertyNames(ExecState*, PropertyNameArray&, PropertyMap::PropertyMode mode);
     enum { Item, NamedItem, Tags };
     JSValue* getNamedItems(ExecState *exec, const Identifier &propertyName) const;
     virtual const ClassInfo* classInfo() const { return &info; }

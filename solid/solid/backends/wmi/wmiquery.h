@@ -1,4 +1,5 @@
 /*
+    Copyright 2012 Patrick von Reth <vonreth@kde.org>
     Copyright 2008 Jeff Mitchell <mitchell@kde.org>
 
     This library is free software; you can redistribute it and/or
@@ -30,17 +31,13 @@
 #include <solid/solid_export.h>
 
 
-#ifdef INSIDE_WMIQUERY
 #include <windows.h>
 #include <rpc.h>
 #include <comdef.h>
 #include <Wbemidl.h>
-#else
-typedef void *IWbemClassObject;
-typedef void *IWbemLocator;
-typedef void *IWbemServices;
-typedef void *IEnumWbemClassObject;
-#endif
+#include <WTypes.h>
+
+#include "wmimanager.h"
 
 namespace Solid
 {
@@ -48,24 +45,29 @@ namespace Backends
 {
 namespace Wmi
 {
-
 class WmiQuery
 {
 public:
     class Item {
     public:
+        Item();
         Item(IWbemClassObject *p);
         Item(const Item& other);
         Item& operator=(const Item& other);
         ~Item();
 
-        QString getProperty(const QString &property) const;
+        IWbemClassObject* data() const;
+        bool isNull() const;
+        QVariant getProperty(const QString &property) const;
+        QVariantMap getAllProperties();
 
     private:
-        Item() {}
+
+        static QVariant msVariantToQVariant(VARIANT msVariant, CIMTYPE variantType);
+        QVariant getProperty(BSTR property) const;
         // QSharedPointer alone doesn't help because we need to call Release()
         IWbemClassObject* m_p;
-        QSharedPointer<QAtomicInt> m_int;
+        QVariantMap m_properies;
     };
 
     typedef QList<Item> ItemList;
@@ -73,6 +75,7 @@ public:
     WmiQuery();
     ~WmiQuery();
     ItemList sendQuery( const QString &wql );
+    void addDeviceListeners(WmiManager::WmiEventSink *sink);
     bool isLegit() const;
 	static WmiQuery &instance();
 
@@ -81,7 +84,6 @@ private:
     bool m_bNeedUninit;
     IWbemLocator *pLoc;
     IWbemServices *pSvc;
-    IEnumWbemClassObject* pEnumerator;
 };
 }
 }

@@ -1,6 +1,8 @@
 set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR} )
 add_subdirectory( ifaces )
+
 include_directories( ${CMAKE_INSTALL_PREFIX}/include ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
+include_directories( ${QT_QTDBUS_INCLUDE_DIR} )
 
 if(WIN32)
    include_directories( ${KDEWIN_INCLUDES} )
@@ -81,6 +83,7 @@ set(solid_LIB_SRCS
    video.cpp
    smartcardreader.cpp
    internetgateway.cpp
+   xdgbasedirs.cpp
 
    ifaces/acadapter.cpp
    ifaces/audiointerface.cpp
@@ -225,6 +228,31 @@ if(NOT WIN32 AND NOT APPLE)
       backends/shared/udevqtclient.cpp
       backends/shared/udevqtdevice.cpp
       )
+
+      # check for media-player-info (runtime-only optional dependency)
+      set(XDG_DATA_DIRS_ENV $ENV{XDG_DATA_DIRS})  # if(ENV{..}) does not work for me
+      if(XDG_DATA_DIRS_ENV)
+         find_path(MEDIAPLAYERINFO_PATH sony_psp.mpi
+            PATHS ENV XDG_DATA_DIRS
+            PATH_SUFFIXES "media-player-info" NO_DEFAULT_PATH
+         )
+      else(XDG_DATA_DIRS_ENV)
+         set(XDG_DATA_DIRS "/usr/share")
+         message(STATUS "Warning: environment variable XDG_DATA_DIRS not set, falling back to ${XDG_DATA_DIRS}")
+         find_path(MEDIAPLAYERINFO_PATH sony_psp.mpi
+            PATHS "${XDG_DATA_DIRS}"
+            PATH_SUFFIXES "media-player-info" NO_DEFAULT_PATH
+         )
+      endif(XDG_DATA_DIRS_ENV)
+
+      macro_log_feature(MEDIAPLAYERINFO_PATH
+         "media-player-info"
+         "Enables identification and querying of portable media players"
+         "http://www.freedesktop.org/wiki/Software/media-player-info"
+         FALSE
+         ""
+         "Runtime-only dependency of the udev solid backend. Support for m-p-i is included even if not found during build"
+      )
    endif( UDEV_FOUND )
 
 
@@ -267,20 +295,38 @@ if(NOT WIN32 AND NOT APPLE)
 
    # FIXME: this should work on more Unix systems
    if (CMAKE_SYSTEM_NAME MATCHES Linux)
-      message(STATUS "Building Solid UDisks backend." )
-      set(solid_LIB_SRCS ${solid_LIB_SRCS}
-      backends/udisks/udisksmanager.cpp
-      backends/udisks/udisksfilesystem.cpp
-      backends/udisks/udisksdevice.cpp
-      backends/udisks/udisksblock.cpp
-      backends/udisks/udisksstoragevolume.cpp
-      backends/udisks/udisksdeviceinterface.cpp
-      backends/udisks/udisksopticaldisc.cpp
-      backends/udisks/udisksopticaldrive.cpp
-      backends/udisks/udisksstoragedrive.cpp
-      backends/udisks/udisksstorageaccess.cpp
-      backends/udisks/udisksgenericinterface.cpp
-      )
+
+       if ( WITH_SOLID_UDISKS2 )
+           message(STATUS "Building Solid UDisks2 backend." )
+           add_definitions(-DWITH_SOLID_UDISKS2)
+           set(solid_LIB_SRCS ${solid_LIB_SRCS}
+           backends/udisks2/udisksmanager.cpp
+           backends/udisks2/udisksdevice.cpp
+           backends/udisks2/udisksblock.cpp
+           backends/udisks2/udisksstoragevolume.cpp
+           backends/udisks2/udisksdeviceinterface.cpp
+           backends/udisks2/udisksopticaldisc.cpp
+           backends/udisks2/udisksopticaldrive.cpp
+           backends/udisks2/udisksstoragedrive.cpp
+           backends/udisks2/udisksstorageaccess.cpp
+           backends/udisks2/udisksgenericinterface.cpp
+           backends/udisks2/dbus/manager.cpp
+           )
+       else ( WITH_SOLID_UDISKS2 )
+           message(STATUS "Building Solid UDisks backend." )
+           set(solid_LIB_SRCS ${solid_LIB_SRCS}
+           backends/udisks/udisksmanager.cpp
+           backends/udisks/udisksdevice.cpp
+           backends/udisks/udisksblock.cpp
+           backends/udisks/udisksstoragevolume.cpp
+           backends/udisks/udisksdeviceinterface.cpp
+           backends/udisks/udisksopticaldisc.cpp
+           backends/udisks/udisksopticaldrive.cpp
+           backends/udisks/udisksstoragedrive.cpp
+           backends/udisks/udisksstorageaccess.cpp
+           backends/udisks/udisksgenericinterface.cpp
+          )
+       endif ( WITH_SOLID_UDISKS2 )
    endif (CMAKE_SYSTEM_NAME MATCHES Linux)
 
    message(STATUS "Building Solid fstab backend." )

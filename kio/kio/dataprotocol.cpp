@@ -68,31 +68,29 @@ struct DataHeader {
   MetaData attributes;		// attribute/value pairs (attribute lowercase,
   				// 	value unchanged)
   bool is_base64;		// true if data is base64 encoded
-  QString url;			// reference to decoded url
+  QByteArray url;		// reference to decoded url
   int data_offset;		// zero-indexed position within url
   				// where the real data begins. May point beyond
       				// the end to indicate that there is no data
-  QString charset;		// shortcut to charset (it always exists)
 };
 
 /** returns the position of the first occurrence of any of the given
-  * characters @p c1 to @p c3 or buf.length() if none is contained.
+  * characters @p c1 or comma (',') or semicolon (';') or buf.length()
+  * if none is contained.
   *
   * @param buf buffer where to look for c
   * @param begin zero-indexed starting position
-  * @param c1 character to find
-  * @param c2 alternative character to find or "\0" to ignore
-  * @param c3 alternative character to find or "\0" to ignore
+  * @param c1 character to find or '\0' to ignore
   */
-static int find(const QString &buf, int begin, QChar c1,
-		QChar c2 = QLatin1Char('\0'), QChar c3 = QLatin1Char('\0')) {
+static int find(const QByteArray &buf, int begin, const char c1)
+{
+  static const char comma = ',';
+  static const char semicolon = ';';
   int pos = begin;
   int size = buf.length();
   while (pos < size) {
-    QChar ch = buf[pos];
-    if (ch == c1
-    	|| (c2 != QLatin1Char('\0') && ch == c2)
-	|| (c3 != QLatin1Char('\0') && ch == c3))
+    const char ch = buf[pos];
+    if (ch == comma || ch == semicolon || (c1 != '\0' && ch == c1))
       break;
     pos++;
   }/*wend*/
@@ -100,19 +98,18 @@ static int find(const QString &buf, int begin, QChar c1,
 }
 
 /** extracts the string between the current position @p pos and the first
- * occurrence of either @p c1 to @p c3 exclusively and updates @p pos
- * to point at the found delimiter or at the end of the buffer if
- * neither character occurred.
+ * occurrence of either @p c1 or comma (',') or semicolon (';') exclusively
+ * and updates @p pos to point at the found delimiter or at the end of the
+ * buffer if neither character occurred.
  * @param buf buffer where to look for
  * @param pos zero-indexed position within buffer
- * @param c1 character to find
- * @param c2 alternative character to find or 0 to ignore
- * @param c3 alternative character to find or 0 to ignore
+ * @param c1 character to find or '\0' to ignore
  */
-inline QString extract(const QString &buf, int &pos, QChar c1,
-		QChar c2 = QLatin1Char('\0'), QChar c3 = QLatin1Char('\0')) {
+static inline QString extract(const QByteArray &buf, int &pos,
+                              const char c1 = '\0')
+{
   int oldpos = pos;
-  pos = find(buf,oldpos,c1,c2,c3);
+  pos = find(buf, oldpos, c1);
   return buf.mid(oldpos, pos-oldpos);
 }
 
@@ -122,11 +119,11 @@ inline QString extract(const QString &buf, int &pos, QChar c1,
  *	Upon return @p pos will either point to the first non-whitespace
  *	character or to the end of the buffer.
  */
-inline void ignoreWS(const QString &buf, int &pos) {
+static inline void ignoreWS(const QString &buf, int &pos)
+{
   int size = buf.length();
-  QChar ch = buf[pos];
-  while (pos < size && ch.isSpace())
-    ch = buf[++pos];
+  while (pos < size && buf[pos].isSpace())
+    ++pos;
 }
 
 /** parses a quoted string as per rfc 822.
@@ -145,7 +142,7 @@ static QString parseQuotedString(const QString &buf, int &pos) {
   bool escaped = false;	// if true means next character is literal
   bool parsing = true;	// true as long as end quote not found
   while (parsing && pos < size) {
-    QChar ch = buf[pos++];
+    const QChar ch = buf[pos++];
     if (escaped) {
       res += ch;
       escaped = false;
@@ -163,45 +160,48 @@ static QString parseQuotedString(const QString &buf, int &pos) {
 
 /** parses the header of a data url
  * @param url the data url
- * @param header_info fills the given DataHeader structure with the header
- *		information
+ * @param mimeOnly if the only interesting information is the mime type
+ * @return DataHeader structure with the header information
  */
-static void parseDataHeader(const KUrl &url, DataHeader &header_info) {
+static DataHeader parseDataHeader(const KUrl &url, const bool mimeOnly)
+{
   static const QString& text_plain = KGlobal::staticQString("text/plain");
   static const QString& charset = KGlobal::staticQString("charset");
   static const QString& us_ascii = KGlobal::staticQString("us-ascii");
   static const QString& base64 = KGlobal::staticQString("base64");
 
+  DataHeader header_info;
+
   // initialize header info members
   header_info.mime_type = text_plain;
-  header_info.charset = header_info.attributes.insert(charset,us_ascii).value();
+  header_info.attributes.insert(charset, us_ascii);
   header_info.is_base64 = false;
 
   // decode url and save it
-  QString &raw_url = header_info.url = QUrl::fromPercentEncoding( url.url().toLatin1() );
-  int raw_url_len = raw_url.length();
+  const QByteArray &raw_url = header_info.url = QByteArray::fromPercentEncoding( url.encodedPath() );
+  const int raw_url_len = raw_url.length();
 
-  // jump over scheme part (must be "data:", we don't even check that)
-  header_info.data_offset = raw_url.indexOf(QLatin1Char(':'));
-  header_info.data_offset++;	// jump over colon or to begin if scheme was missing
+  header_info.data_offset = 0;
 
   // read mime type
-  if (header_info.data_offset >= raw_url_len) return;
-  QString mime_type = extract(raw_url, header_info.data_offset,
-  			      QLatin1Char(';'), QLatin1Char(',')).trimmed();
+  if (raw_url_len == 0)
+    return header_info;
+  const QString mime_type = extract(raw_url, header_info.data_offset).trimmed();
   if (!mime_type.isEmpty()) header_info.mime_type = mime_type;
+  if (mimeOnly)
+      return header_info;
 
-  if (header_info.data_offset >= raw_url_len) return;
+  if (header_info.data_offset >= raw_url_len)
+      return header_info;
   // jump over delimiter token and return if data reached
-  if (raw_url[header_info.data_offset++] == QLatin1Char(',')) return;
+  if (raw_url[header_info.data_offset++] == QLatin1Char(','))
+      return header_info;
 
   // read all attributes and store them
   bool data_begin_reached = false;
   while (!data_begin_reached && header_info.data_offset < raw_url_len) {
     // read attribute
-    QString attribute = extract(raw_url, header_info.data_offset,
-    				QLatin1Char('='), QLatin1Char(';'),
-				QLatin1Char(',')).trimmed();
+    const QString attribute = extract(raw_url, header_info.data_offset, '=').trimmed();
     if (header_info.data_offset >= raw_url_len
     	|| raw_url[header_info.data_offset] != QLatin1Char('=')) {
       // no assigment, must be base64 option
@@ -212,15 +212,15 @@ static void parseDataHeader(const KUrl &url, DataHeader &header_info) {
 
       // read value
       ignoreWS(raw_url,header_info.data_offset);
-      if (header_info.data_offset >= raw_url_len) return;
+      if (header_info.data_offset >= raw_url_len)
+          return header_info;
 
       QString value;
       if (raw_url[header_info.data_offset] == QLatin1Char('"')) {
         value = parseQuotedString(raw_url,header_info.data_offset);
         ignoreWS(raw_url,header_info.data_offset);
       } else
-        value = extract(raw_url, header_info.data_offset, QLatin1Char(';'),
-			QLatin1Char(',')).trimmed();
+        value = extract(raw_url, header_info.data_offset).trimmed();
 
       // add attribute to map
       header_info.attributes[attribute.toLower()] = value;
@@ -231,6 +231,8 @@ static void parseDataHeader(const KUrl &url, DataHeader &header_info) {
       data_begin_reached = true;
     header_info.data_offset++; // jump over separator token
   }/*wend*/
+
+  return header_info;
 }
 
 #ifdef DATAKIOSLAVE
@@ -254,29 +256,24 @@ void DataProtocol::get(const KUrl& url) {
   ref();
   kDebug() << "kio_data@"<<this<<"::get(const KUrl& url)";
 
-  DataHeader hdr;
-  parseDataHeader(url,hdr);
+  const DataHeader hdr = parseDataHeader(url, false);
 
-  int size = hdr.url.length();
-  int data_ofs = qMin(hdr.data_offset,size);
+  const int size = hdr.url.length();
+  const int data_ofs = qMin(hdr.data_offset, size);
   // FIXME: string is copied, would be nice if we could have a reference only
-  QString url_data = hdr.url.mid(data_ofs);
+  const QByteArray url_data = hdr.url.mid(data_ofs);
   QByteArray outData;
 
   if (hdr.is_base64) {
     // base64 stuff is expected to contain the correct charset, so we just
     // decode it and pass it to the receiver
-    outData = QByteArray::fromBase64(url_data.toUtf8());
+    outData = QByteArray::fromBase64(url_data);
   } else {
-    // FIXME: This is all flawed, must be reworked thoroughly
-    // non encoded data must be converted to the given charset
-    QTextCodec *codec = QTextCodec::codecForName(hdr.charset.toLatin1());
+    QTextCodec *codec = QTextCodec::codecForName(hdr.attributes["charset"].toLatin1());
     if (codec != 0) {
-      outData = codec->fromUnicode(url_data);
+      outData = codec->toUnicode(url_data).toUtf8();
     } else {
-      // if there is no approprate codec, just use local encoding. This
-      // should work for >90% of all cases.
-      outData = url_data.toLocal8Bit();
+      outData = url_data;
     }/*end if*/
   }/*end if*/
 
@@ -312,9 +309,7 @@ void DataProtocol::get(const KUrl& url) {
 
 void DataProtocol::mimetype(const KUrl &url) {
   ref();
-  DataHeader hdr;
-  parseDataHeader(url,hdr);
-  mimeType(hdr.mime_type);
+  mimeType(parseDataHeader(url, true).mime_type);
   finished();
   deref();
 }

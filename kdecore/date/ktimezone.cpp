@@ -288,9 +288,9 @@ class KTimeZoneDataPrivate
         QList<KTimeZone::LeapSeconds> leapChanges;
         QList<int>                    utcOffsets;
         QList<QByteArray>             abbreviations;
-        int preUtcOffset;    // UTC offset to use before the first phase
+        KTimeZone::Phase              prePhase;    // phase to use before the first transition
 
-        KTimeZoneDataPrivate() : preUtcOffset(0) {}
+        KTimeZoneDataPrivate() {}
         // Find the last transition before a specified UTC or local date/time.
         int transitionIndex(const QDateTime &dt) const;
         bool transitionIndexes(const QDateTime &start, const QDateTime &end, int &ixstart, int &ixend) const;
@@ -501,7 +501,7 @@ int KTimeZoneBackend::offsetAtZoneTime(const KTimeZone* caller, const QDateTime 
             if (secondOffset)
                 *secondOffset = offset;
 #ifdef COMPILING_TESTS
-            qDebug("-> Using cache");   // test output requires qDebug instead of kDebug
+            kDebug(161) << "-> Using cache";   // enable the debug area to see this in the tests
 #endif
             return offset;
         }
@@ -509,7 +509,7 @@ int KTimeZoneBackend::offsetAtZoneTime(const KTimeZone* caller, const QDateTime 
 
     // The time doesn't fall within the cached transition, or there isn't a cached transition
 #ifdef COMPILING_TESTS
-    qDebug("-> No cache");   // test output requires qDebug instead of kDebug
+    kDebug(161) << "-> No cache";   // enable the debug area to see this in the tests
 #endif
     bool validTime;
     int secondIndex = -1;
@@ -542,7 +542,7 @@ int KTimeZoneBackend::offsetAtUtc(const KTimeZone* caller, const QDateTime &utcD
         {
             // The time falls within the cached transition, so return its UTC offset
 #ifdef COMPILING_TESTS
-            qDebug("Using cache");   // test output requires qDebug instead of kDebug
+            kDebug(161) << "Using cache";   // enable the debug area to see this in the tests
 #endif
             return transitions[index].phase().utcOffset();
         }
@@ -550,7 +550,7 @@ int KTimeZoneBackend::offsetAtUtc(const KTimeZone* caller, const QDateTime &utcD
 
     // The time doesn't fall within the cached transition, or there isn't a cached transition
 #ifdef COMPILING_TESTS
-    qDebug("No cache");   // test output requires qDebug instead of kDebug
+    kDebug(161) << "No cache";   // enable the debug area to see this in the tests
 #endif
     index = caller->transitionIndex(utcDateTime);
     d->cachedTransitionIndex = index;   // cache transition data
@@ -819,7 +819,7 @@ QDateTime KTimeZone::toZoneTime(const QDateTime &utcDateTime, bool *secondOccurr
 
         const KTimeZoneData *data = d->d->data;
         const int index = data->transitionIndex(utcDateTime);
-        const int secs = (index >= 0) ? data->transitions()[index].phase().utcOffset() : data->previousUtcOffset();
+        const int secs = (index >= 0) ? data->transitions().at(index).phase().utcOffset() : data->previousUtcOffset();
         QDateTime dt = utcDateTime.addSecs(secs);
         if (secondOccurrence)
         {
@@ -1124,7 +1124,7 @@ bool KTimeZoneDataPrivate::isSecondOccurrence(const QDateTime &utcLocalTime, int
     if (transitionIndex < 0)
         return false;
     const int offset = transitions[transitionIndex].phase().utcOffset();
-    const int prevoffset = (transitionIndex > 0) ? transitions[transitionIndex-1].phase().utcOffset() : preUtcOffset;
+    const int prevoffset = (transitionIndex > 0) ? transitions[transitionIndex-1].phase().utcOffset() : prePhase.utcOffset();
     const int phaseDiff = prevoffset - offset;
     if (phaseDiff <= 0)
         return false;
@@ -1147,7 +1147,7 @@ KTimeZoneData::KTimeZoneData(const KTimeZoneData &c)
     d->leapChanges   = c.d->leapChanges;
     d->utcOffsets    = c.d->utcOffsets;
     d->abbreviations = c.d->abbreviations;
-    d->preUtcOffset  = c.d->preUtcOffset;
+    d->prePhase      = c.d->prePhase;
 }
 
 KTimeZoneData::~KTimeZoneData()
@@ -1162,7 +1162,7 @@ KTimeZoneData &KTimeZoneData::operator=(const KTimeZoneData &c)
     d->leapChanges   = c.d->leapChanges;
     d->utcOffsets    = c.d->utcOffsets;
     d->abbreviations = c.d->abbreviations;
-    d->preUtcOffset  = c.d->preUtcOffset;
+    d->prePhase      = c.d->prePhase;
     return *this;
 }
 
@@ -1193,9 +1193,8 @@ QByteArray KTimeZoneData::abbreviation(const QDateTime &utcDateTime) const
     if (d->phases.isEmpty())
         return "UTC";
     const KTimeZone::Transition *tr = transition(utcDateTime);
-    if (!tr)
-        return QByteArray();
-    const QList<QByteArray> abbrevs = tr->phase().abbreviations();
+    const QList<QByteArray> abbrevs = tr ? tr->phase().abbreviations()
+                                         : d->prePhase.abbreviations();
     if (abbrevs.isEmpty())
         return QByteArray();
     return abbrevs[0];
@@ -1224,10 +1223,16 @@ QList<KTimeZone::Phase> KTimeZoneData::phases() const
     return d->phases;
 }
 
+void KTimeZoneData::setPhases(const QList<KTimeZone::Phase> &phases, const KTimeZone::Phase& previousPhase)
+{
+    d->phases   = phases;
+    d->prePhase = previousPhase;
+}
+
 void KTimeZoneData::setPhases(const QList<KTimeZone::Phase> &phases, int previousUtcOffset)
 {
-    d->phases = phases;
-    d->preUtcOffset = previousUtcOffset;
+    d->phases   = phases;
+    d->prePhase = KTimeZone::Phase(previousUtcOffset, QByteArray(), false);
 }
 
 bool KTimeZoneData::hasTransitions() const
@@ -1254,7 +1259,7 @@ void KTimeZoneData::setTransitions(const QList<KTimeZone::Transition> &transitio
 
 int KTimeZoneData::previousUtcOffset() const
 {
-    return d->preUtcOffset;
+    return d->prePhase.utcOffset();
 }
 
 const KTimeZone::Transition *KTimeZoneData::transition(const QDateTime &dt, const KTimeZone::Transition **secondTransition,
@@ -1293,7 +1298,7 @@ int KTimeZoneData::transitionIndex(const QDateTime &dt, int *secondIndex, bool *
         if (next < count)
         {
             KTimeZone::Phase nextPhase = d->transitions[next].phase();
-            const int offset = (index >= 0) ? d->transitions[index].phase().utcOffset() : d->preUtcOffset;
+            const int offset = (index >= 0) ? d->transitions[index].phase().utcOffset() : d->prePhase.utcOffset();
             const int phaseDiff = nextPhase.utcOffset() - offset;
             if (phaseDiff > 0)
             {

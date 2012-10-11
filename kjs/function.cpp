@@ -35,6 +35,7 @@
 #include "operations.h"
 #include "debugger.h"
 #include "PropertyNameArray.h"
+#include "commonunicode.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -357,7 +358,7 @@ JSObject *FunctionImp::construct(ExecState *exec, const List &args)
 IndexToNameMap::IndexToNameMap(FunctionImp *func, const List &args)
 {
   _map = new Identifier[args.size()];
-  this->size = args.size();
+  this->_size = args.size();
 
   size_t i = 0;
   ListIterator iterator = args.begin();
@@ -377,7 +378,7 @@ bool IndexToNameMap::isMapped(const Identifier &index) const
   if (!indexIsNumber)
     return false;
 
-  if (indexAsNumber >= size)
+  if (indexAsNumber >= _size)
     return false;
 
   if (_map[indexAsNumber].isNull())
@@ -391,9 +392,14 @@ void IndexToNameMap::unMap(const Identifier &index)
   bool indexIsNumber;
   int indexAsNumber = index.toStrictUInt32(&indexIsNumber);
 
-  assert(indexIsNumber && indexAsNumber < size);
+  assert(indexIsNumber && indexAsNumber < _size);
 
   _map[indexAsNumber] = CommonIdentifiers::shared()->nullIdentifier;;
+}
+
+int IndexToNameMap::size() const
+{
+    return _size;
 }
 
 Identifier& IndexToNameMap::operator[](int index)
@@ -406,7 +412,7 @@ Identifier& IndexToNameMap::operator[](const Identifier &index)
   bool indexIsNumber;
   int indexAsNumber = index.toStrictUInt32(&indexIsNumber);
 
-  assert(indexIsNumber && indexAsNumber < size);
+  assert(indexIsNumber && indexAsNumber < _size);
 
   return (*this)[indexAsNumber];
 }
@@ -473,6 +479,25 @@ bool Arguments::deleteProperty(ExecState *exec, const Identifier &propertyName)
   } else {
     return JSObject::deleteProperty(exec, propertyName);
   }
+}
+
+void Arguments::getOwnPropertyNames(ExecState* exec, PropertyNameArray& propertyNames, PropertyMap::PropertyMode mode)
+{
+    unsigned int length = indexToNameMap.size();
+    unsigned attr;
+    for (unsigned int i = 0; i < length; ++i) {
+        attr = 0;
+        Identifier ident = Identifier::from(i);
+
+        if (indexToNameMap.isMapped(ident) &&
+            _activationObject->getPropertyAttributes(indexToNameMap[ident], attr)) {
+            if (PropertyMap::checkEnumerable(attr, mode)) {
+                propertyNames.add(ident);
+            }
+        }
+    }
+
+    JSObject::getOwnPropertyNames(exec, propertyNames, mode);
 }
 
 // ------------------------------ ActivationImp --------------------------------
@@ -722,41 +747,6 @@ static JSValue *decode(ExecState *exec, const List &args, const char *do_not_une
   return jsString(s);
 }
 
-static bool isStrWhiteSpace(unsigned short c)
-{
-    switch (c) {
-        case 0x0009:
-        case 0x000A:
-        case 0x000B:
-        case 0x000C:
-        case 0x000D:
-        case 0x2028:
-        case 0x2029:
-        // Unicode category Zs
-        case 0x0020:  // SPACE
-        case 0x00A0:  // NO-BREAK SPACE
-        case 0x1680:  // OGHAM SPACE MARK
-        case 0x180E:  // MONGOLIAN VOWEL SEPARATOR
-        case 0x2000:  // EN QUAD
-        case 0x2001:  // EM QUAD
-        case 0x2002:  // EN SPACE
-        case 0x2003:  // EM SPACE
-        case 0x2004:  // THREE-PER-EM SPACE
-        case 0x2005:  // FOUR-PER-EM SPACE
-        case 0x2006:  // SIX-PER-EM SPACE
-        case 0x2007:  // FIGURE SPACE
-        case 0x2008:  // PUNCTUATION SPACE
-        case 0x2009:  // THIN SPACE
-        case 0x200A:  // HAIR SPACE
-        case 0x202F:  // NARROW NO-BREAK SPACE
-        case 0x205F:  // MEDIUM MATHEMATICAL SPACE
-        case 0x3000:  // IDEOGRAPHIC SPACE
-            return true;
-        default:
-            return false;
-    }
-}
-
 static int parseDigit(unsigned short c, int radix)
 {
     int digit = -1;
@@ -801,7 +791,7 @@ static double parseInt(const UString &s, int radix)
     int length = s.size();
     int p = 0;
 
-    while (p < length && isStrWhiteSpace(s[p].uc)) {
+    while (p < length && CommonUnicode::isStrWhiteSpace(s[p].uc)) {
         ++p;
     }
 
@@ -819,6 +809,7 @@ static double parseInt(const UString &s, int radix)
         radix = 16;
         p += 2;
     } else if (radix == 0) {
+        // ECMAscript test262 S15.1.2.2_A5.1_T1 says we should no longer accept octal. To fix remove next 3 lines.
         if (p < length && s[p] == '0')
             radix = 8;
         else
@@ -860,7 +851,7 @@ static double parseFloat(const UString &s)
     // Need to skip any whitespace and then one + or - sign.
     int length = s.size();
     int p = 0;
-    while (p < length && isStrWhiteSpace(s[p].uc)) {
+    while (p < length && CommonUnicode::isStrWhiteSpace(s[p].uc)) {
         ++p;
     }
     if (p < length && (s[p] == '+' || s[p] == '-')) {

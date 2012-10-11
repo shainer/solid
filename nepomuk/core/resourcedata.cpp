@@ -74,9 +74,6 @@ Nepomuk::ResourceData::ResourceData( const QUrl& uri, const QUrl& kickOffUri, co
 
     m_types << m_mainType;
 
-    if( m_rm->dataCacheFull() )
-        m_rm->cleanupCache();
-
     m_rm->dataCnt.ref();
 
     if( !uri.isEmpty() ) {
@@ -178,6 +175,13 @@ void Nepomuk::ResourceData::resetAll( bool isDelete )
         m_rm->m_initializedData.remove( m_uri );
         if( m_rm->m_watcher && m_addedToWatcher ) {
             // See load() for an explanation of the QMetaObject call
+
+            // stop the watcher since we do not want to watch all changes in case there is no ResourceData left
+            if(m_rm->m_watcher->resourceCount() == 1) {
+                QMetaObject::invokeMethod(m_rm->m_watcher, "stop", Qt::AutoConnection);
+            }
+
+            // remove this Resource from the list of watched resources
             QMetaObject::invokeMethod(m_rm->m_watcher, "removeResource", Qt::AutoConnection, Q_ARG(Nepomuk::Resource, Resource::fromResourceUri(m_uri)));
             m_addedToWatcher = false;
         }
@@ -409,10 +413,13 @@ bool Nepomuk::ResourceData::load()
             QObject::connect( m_rm->m_watcher, SIGNAL(propertyRemoved(Nepomuk::Resource, Nepomuk::Types::Property, QVariant)),
                               m_rm->m_manager, SLOT(slotPropertyRemoved(Nepomuk::Resource, Nepomuk::Types::Property, QVariant)) );
             m_rm->m_watcher->addResource( Nepomuk::Resource::fromResourceUri(m_uri) );
-            QMetaObject::invokeMethod(m_rm->m_watcher, "start", Qt::AutoConnection);
         }
         else {
             QMetaObject::invokeMethod(m_rm->m_watcher, "addResource", Qt::AutoConnection, Q_ARG(Nepomuk::Resource, Nepomuk::Resource::fromResourceUri(m_uri)) );
+        }
+        // (re-)start the watcher in case this resource is the only one in the list of watched
+        if(m_rm->m_watcher->resources().count() <= 1) {
+            QMetaObject::invokeMethod(m_rm->m_watcher, "start", Qt::AutoConnection);
         }
         m_addedToWatcher = true;
 
@@ -422,9 +429,8 @@ bool Nepomuk::ResourceData::load()
             // It would only pollute the user interface
             //
             Soprano::QueryResultIterator it = MAINMODEL->executeQuery(QString("select distinct ?p ?o where { "
-                                                                              "graph ?g { %1 ?p ?o . } . FILTER(?g!=<urn:crappyinference2:inferredtriples>) . "
-                                                                              "}").arg(Soprano::Node::resourceToN3(m_uri)),
-                                                                      Soprano::Query::QueryLanguageSparql);
+                                                                              "%1 ?p ?o . }").arg(Soprano::Node::resourceToN3(m_uri)),
+                                                                      Soprano::Query::QueryLanguageSparqlNoInference);
             while ( it.next() ) {
                 QUrl p = it["p"].uri();
                 Soprano::Node o = it["o"];
@@ -452,7 +458,7 @@ bool Nepomuk::ResourceData::load()
                 QueryResultIterator pimoIt = MAINMODEL->executeQuery( QString( "select ?r where { ?r <%1> <%2> . }")
                                                                       .arg( Vocabulary::PIMO::groundingOccurrence().toString() )
                                                                       .arg( QString::fromAscii( m_uri.toEncoded() ) ),
-                                                                      Soprano::Query::QueryLanguageSparql );
+                                                                      Soprano::Query::QueryLanguageSparqlNoInference );
                 if( pimoIt.next() ) {
                     m_pimoThing = new Thing( pimoIt.binding("r").uri() );
                 }

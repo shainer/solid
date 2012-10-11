@@ -186,12 +186,15 @@ void RenderImage::updatePixmap( const QRect& r, CachedImage *o)
     }
     else
     {
-        //### FIXME!
-        //int cHeight = contentHeight();
-        //int scaledHeight = intrinsicHeight() ? ((o->valid_rect().height()*cHeight)/intrinsicHeight()) : 0;
+        if (intrinsicHeight() == 0 || intrinsicWidth() == 0)
+            return;
+        int scaledHeight = intrinsicHeight() ? ((r.height()*contentHeight())/intrinsicHeight()) : 0;
+        int scaledWidth= intrinsicWidth() ? ((r.width()*contentWidth())/intrinsicWidth()) : 0;
+        int scaledX = intrinsicWidth() ? ((r.x()*contentWidth())/intrinsicWidth()) : 0;
+        int scaledY = intrinsicHeight() ? ((r.y()*contentHeight())/intrinsicHeight()) : 0;
 
-        repaintRectangle(r.x() + borderLeft() + paddingLeft(), r.y() + borderTop() + paddingTop(),
-                            r.width(), r.height());
+        repaintRectangle(scaledX + borderLeft() + paddingLeft(), scaledY + borderTop() + paddingTop(),
+                            scaledWidth, scaledHeight);
     }
 }
 
@@ -214,6 +217,9 @@ void RenderImage::paint(PaintInfo& paintInfo, int _tx, int _ty)
     if(shouldPaintBackgroundOrBorder())
         paintBoxDecorations(paintInfo, _tx, _ty);
 
+    if (!canvas()->printImages())
+        return;
+
     int cWidth = contentWidth();
     int cHeight = contentHeight();
     int leftBorder = borderLeft();
@@ -221,24 +227,23 @@ void RenderImage::paint(PaintInfo& paintInfo, int _tx, int _ty)
     int leftPad = paddingLeft();
     int topPad = paddingTop();
 
-    if (!canvas()->printImages())
-        return;
-
-    // paint frame around image as long as it is not completely loaded from web.
+    // paint frame around image and loading icon as long as it is not completely loaded from web.
     if (bUnfinishedImageFrame && paintInfo.phase == PaintActionForeground && cWidth > 2 && cHeight > 2 && !complete()) {
         static QPixmap *loadingIcon;
         QColor bg = khtml::retrieveBackgroundColor(this);
         QColor fg = khtml::hasSufficientContrast(Qt::gray, bg) ? Qt::gray :
                     (hasSufficientContrast(Qt::white, bg) ? Qt::white : Qt::black);
-	paintInfo.p->setPen(QPen(fg, 1));
-	paintInfo.p->setBrush( Qt::NoBrush );
-	paintInfo.p->drawRect(_tx, _ty, m_width - 1, m_height - 1);
+        paintInfo.p->setPen(QPen(fg, 1));
+        paintInfo.p->setBrush( Qt::NoBrush );
+        const int offsetX = _tx + leftBorder + leftPad;
+        const int offsetY = _ty + topBorder + topPad;
+        paintInfo.p->drawRect(offsetX, offsetY, cWidth - 1, cHeight - 1);
         if (!(m_width <= 5 || m_height <= 5)) {
             if (!loadingIcon) {
                 loadingIcon = new QPixmap();
                 loadingIcon->loadFromData(loading_icon_data, loading_icon_len);
             }
-            paintInfo.p->drawPixmap(_tx + 4, _ty + 4, *loadingIcon, 0, 0, m_width - 5, m_height - 5);
+            paintInfo.p->drawPixmap(offsetX + 4, offsetY + 4, *loadingIcon, 0, 0, cWidth - 5, cHeight - 5);
         }
 
     }
@@ -363,7 +368,6 @@ void RenderImage::layout()
     KHTMLAssert( minMaxKnown() );
 
     //short m_width = 0;
-    int m_height;
 
     // minimum height
     m_height = m_cachedImage && m_cachedImage->isErrorImage() ? intrinsicHeight() : 0;

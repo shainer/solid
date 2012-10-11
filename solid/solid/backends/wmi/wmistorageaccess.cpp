@@ -1,4 +1,5 @@
 /*
+    Copyright 2012 Patrick von Reth <vonreth@kde.org>
     Copyright 2006 Kevin Ottens <ervin@kde.org>
 
     This library is free software; you can redistribute it and/or
@@ -34,6 +35,9 @@ StorageAccess::StorageAccess(WmiDevice *device)
 {
     connect(device, SIGNAL(propertyChanged(QMap<QString,int>)),
              this, SLOT(slotPropertyChanged(QMap<QString,int>)));
+//    qDebug()<<"StorageAccess"<<m_device->type();
+
+    m_logicalDisk = WmiDevice::win32LogicalDiskByDiskPartitionID(m_device->property("DeviceID").toString());
 }
 
 StorageAccess::~StorageAccess()
@@ -44,53 +48,20 @@ StorageAccess::~StorageAccess()
 
 bool StorageAccess::isAccessible() const
 {
-    // if (m_device->property("info.interfaces").toStringList().contains("org.freedesktop.Wmi.Device.Volume.Crypto")) {
-
-        //Might be a bit slow, but I see no cleaner way to do this with WMI...
-        // QDBusInterface manager("org.freedesktop.Wmi",
-                               // "/org/freedesktop/Wmi/Manager",
-                               // "org.freedesktop.Wmi.Manager",
-                               // QDBusConnection::systemBus());
-
-        // QDBusReply<QStringList> reply = manager.call("FindDeviceStringMatch",
-                                                     // "volume.crypto_luks.clear.backing_volume",
-                                                     // m_device->udi());
-
-        // QStringList list = reply;
-
-        // return reply.isValid() && !list.isEmpty();
-
-    // } else {
-        return m_device->property("volume.is_mounted").toBool();
-    // }
+    return !m_logicalDisk.isNull();
 }
 
 QString StorageAccess::filePath() const
 {
-    return m_device->property("volume.mount_point").toString();
+    QString path = m_logicalDisk.getProperty("DeviceID").toString();
+    if(!path.isNull())
+        path.append("\\");
+    return path;
 }
 
 bool Solid::Backends::Wmi::StorageAccess::isIgnored() const
 {
-    if (m_device->property("volume.ignore").toBool()) {
-        return true;
-    }
-
-    /* Now be a bit more aggressive on what we want to ignore,
-     * the user generally need to check only what's removable or in /media
-     * the volumes mounted to make the system (/, /boot, /var, etc.)
-     * are useless to him.
-     */
-    WmiDevice drive(m_device->property("block.storage_device").toString());
-    QString mount_point = m_device->property("volume.mount_point").toString();
-    bool mounted = m_device->property("volume.is_mounted").toBool();
-    bool removable = drive.property("storage.removable").toBool();
-    bool hotpluggable = drive.property("storage.hotpluggable").toBool();
-
-
-    return !removable && !hotpluggable
-        && mounted && !mount_point.startsWith(QLatin1String("/media/"))
-        && !mount_point.startsWith(QLatin1String("/mnt/"));
+    return m_logicalDisk.isNull();
 }
 
 bool StorageAccess::setup()

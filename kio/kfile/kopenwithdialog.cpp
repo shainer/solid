@@ -579,6 +579,7 @@ void KOpenWithDialogPrivate::init(const QString &_text, const QString &_value)
     KLineEdit *lineEdit = new KLineEdit(q);
     lineEdit->setClearButtonShown(true);
     combo->setLineEdit(lineEdit);
+    combo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     combo->setDuplicatesEnabled( false );
     KConfigGroup cg( KGlobal::config(), QString::fromLatin1("Open-with settings") );
     int max = cg.readEntry( "Maximum history", 15 );
@@ -827,7 +828,7 @@ bool KOpenWithDialogPrivate::checkAccept()
             KService::Ptr serv = KService::serviceByDesktopName( serviceName );
             ok = !serv; // ok if no such service yet
             // also ok if we find the exact same service (well, "kwrite" == "kwrite %U")
-            if (serv) {
+            if (serv && !serv->noDisplay() /* #297720 */) {
                 if (serv->isApplication()) {
                     /*kDebug(250) << "typedExec=" << typedExec
                       << "serv->exec=" << serv->exec()

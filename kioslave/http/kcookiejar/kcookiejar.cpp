@@ -69,35 +69,66 @@
 #define QL1C(x)   QLatin1Char(x)
 
 
-static KDateTime parseDate(const QString& value)
+static QString removeWeekday(const QString& value)
 {
-    KTimeZones *zones = KSystemTimeZones::timeZones();
-    // Check for the most common cookie expire date format: Thu, 01-Jan-1970 00:00:00 GMT
-    KDateTime dt = KDateTime::fromString(value, QL1S("%:A,%t%d-%:B-%Y%t%H:%M:%S%t%Z"), zones);
-    if (dt.isValid())
-        return dt;
+    const int index = value.indexOf(QL1C(' '));
+    if (index > -1) {
+        int pos = 0;
+        const QString weekday = value.left(index);
+        for (int i = 1; i < 8; ++i) {
+            if (weekday.startsWith(QDate::shortDayName(i), Qt::CaseInsensitive) ||
+                weekday.startsWith(QDate::longDayName(i), Qt::CaseInsensitive)) {
+                pos = index + 1;
+                break;
+            }
+        }
+        if (pos > 0) {
+            return value.mid(pos);
+        }
+    }
+    return value;
+}
 
-    // Check for incorrect formats (amazon.com): Thu Jan 01 1970 00:00:00 GMT
-    dt = KDateTime::fromString(value, QL1S("%:A%t%:B%t%d%t%Y%t%H:%M:%S%t%Z"), zones);
-    if (dt.isValid())
-        return dt;
+static QDateTime parseDate(const QString& _value)
+{
+    // Handle sites sending invalid weekday as part of the date. #298660
+    const QString value (removeWeekday(_value));
 
-    // Check for a variation of the above format: Thu Jan 01 00:00:00 1970 GMT (BR# 145244)
-    dt = KDateTime::fromString(value, QL1S("%:A%t%:B%t%d%t%H:%M:%S%t%Y%t%Z"), zones);
-    if (dt.isValid())
-        return dt;
+    // Check if expiration date matches RFC dates as specified under
+    // RFC 2616 sec 3.3.1 & RFC 6265 sec 4.1.1
+    KDateTime dt = KDateTime::fromString(value, KDateTime::RFCDate);
 
-    // Finally we try the RFC date formats as last resort
-    return KDateTime::fromString(value, KDateTime::RFCDate);
+    // In addition to the RFC date formats we support the ANSI C asctime format
+    // per RFC 2616 sec 3.3.1 and a variation of that detected @ amazon.com
+    if (!dt.isValid()) {
+        static const char* date_formats[] = {
+            "%:B%t%d%t%H:%M:%S%t%Y%t%Z", /* ANSI C's asctime() format (#145244): Jan 01 00:00:00 1970 GMT */
+            "%:B%t%d%t%Y%t%H:%M:%S%t%Z", /* A variation on the above format seen @ amazon.com: Jan 01 1970 00:00:00 GMT */
+            0
+        };
+
+        for (int i = 0; date_formats[i]; ++i) {
+            qDebug() << "Checking" << value << "vs" << date_formats[i];
+            dt = KDateTime::fromString(value, QL1S(date_formats[i]));
+            if (dt.isValid()) {
+                qDebug() << "Matched" << date_formats[i];
+                break;
+            }
+        }
+    }
+
+    return dt.toUtc().dateTime();  // Per RFC 2616 sec 3.3.1 always convert to UTC.
+}
+
+static qint64 toEpochSecs(const QDateTime& dt)
+{
+    return (dt.toMSecsSinceEpoch()/1000); // convert to seconds...
 }
 
 static qint64 epoch()
 {
-    KDateTime epoch;
-    epoch.setTime_t(0);
-    return epoch.secsTo_long(KDateTime::currentUtcDateTime());
+    return toEpochSecs(QDateTime::currentDateTimeUtc());
 }
-
 
 QString KCookieJar::adviceToStr(KCookieAdvice _advice)
 {
@@ -372,10 +403,10 @@ QString KCookieJar::findCookies(const QString &_url, bool useDOMFormat, long win
 
           if( cookie.isSecure() && !secureRequest )
              continue;
-          
+
           if( cookie.isHttpOnly() && useDOMFormat )
              continue;
-          
+
           // Do not send expired cookies.
           if ( cookie.isExpired())
           {
@@ -395,7 +426,7 @@ QString KCookieJar::findCookies(const QString &_url, bool useDOMFormat, long win
 
           allCookies.append(cookie);
        }
-       
+
        if (it == itEnd)
           break; // Finished.
     }
@@ -410,10 +441,10 @@ QString KCookieJar::findCookies(const QString &_url, bool useDOMFormat, long win
     {
         if (!useDOMFormat)
             cookieStr = QL1S("Cookie: ");
-        
+
         if (protVersion > 0)
             cookieStr = cookieStr + QL1S("$Version=") + QString::number(protVersion) + QL1S("; ");
-          
+
         Q_FOREACH(const KHttpCookie& cookie, allCookies)
             cookieStr = cookieStr + cookie.cookieStr(useDOMFormat) + QL1S("; ");
 
@@ -537,7 +568,7 @@ QString KCookieJar::stripDomain(const KHttpCookie& cookie)
     if (cookie.domain().isEmpty())
        stripDomain( cookie.host(), domain);
     else
-       stripDomain( cookie.domain(), domain);
+       domain = cookie.domain();
     return domain;
 }
 
@@ -661,9 +692,6 @@ KHttpCookieList KCookieJar::makeCookies(const QString &_url,
     if (index > 0)
        defaultPath = path.left(index);
 
-    KDateTime epoch;
-    epoch.setTime_t(0);
-
     // Check for cross-domain flag from kio_http
     if (qstrncmp(cookieStr, "Cross-Domain\n", 13) == 0)
     {
@@ -753,14 +781,14 @@ KHttpCookieList KCookieJar::makeCookies(const QString &_url,
                 if (max_age == 0)
                     lastCookie.mExpireDate = 1;
                 else
-                    lastCookie.mExpireDate = epoch.secsTo_long(KDateTime::currentUtcDateTime().addSecs(max_age));
+                    lastCookie.mExpireDate = toEpochSecs(QDateTime::currentDateTimeUtc().addSecs(max_age));
             }
             else if (Name.compare(QL1S("expires"), Qt::CaseInsensitive) == 0)
             {
-                const KDateTime dt = parseDate(Value);
+                const QDateTime dt = parseDate(Value);
 
                 if (dt.isValid()) {
-                    lastCookie.mExpireDate = epoch.secsTo_long(dt);
+                    lastCookie.mExpireDate = toEpochSecs(dt);
                     if (lastCookie.mExpireDate == 0)
                         lastCookie.mExpireDate = 1;
                 }
@@ -789,11 +817,11 @@ KHttpCookieList KCookieJar::makeCookies(const QString &_url,
             }
             else if (isRFC2965 && (Name.compare(QL1S("port"), Qt::CaseInsensitive) == 0 ||
                      (Name.isEmpty() && Value.compare(QL1S("port"), Qt::CaseInsensitive) == 0)))
-            {              
+            {
                 // Based on the port selection rule of RFC 2965 section 3.3.4...
                 if (Name.isEmpty())
                 {
-                    // We intentionally append a -1 first in orer to distinguish
+                    // We intentionally append a -1 first in order to distinguish
                     // between only a 'Port' vs a 'Port="80 443"' in the sent cookie.
                     lastCookie.mPorts.append(-1);
                     const bool secureRequest = (_url.startsWith(QL1S("https://"), Qt::CaseInsensitive) ||
@@ -1158,7 +1186,7 @@ void KCookieJar::eatSessionCookies( long windowId )
 {
     if (!windowId)
         return;
-    
+
     Q_FOREACH(const QString& domain, m_domainList)
         eatSessionCookies( domain, windowId, false );
 }
@@ -1252,7 +1280,7 @@ bool KCookieJar::saveCookies(const QString &_filename)
         KHttpCookieList *cookieList = m_cookieDomains.value(domain);
         if (!cookieList)
             continue;
-        
+
         QMutableListIterator<KHttpCookie> cookieIterator(*cookieList);
         while (cookieIterator.hasNext()) {
             const KHttpCookie& cookie = cookieIterator.next();
@@ -1513,7 +1541,7 @@ void KCookieJar::loadConfig(KConfig *_config, bool reparse )
         const int sepPos = value.lastIndexOf(QL1C(':'));
         if (sepPos <= 0)
           continue;
-        
+
         const QString domain(value.left(sepPos));
         KCookieAdvice advice = strToAdvice( value.mid(sepPos + 1) );
         setDomainAdvice(domain, advice);

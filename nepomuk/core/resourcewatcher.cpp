@@ -22,8 +22,9 @@
 #include "resourcewatcher.h"
 #include "resourcewatcherconnectioninterface.h"
 #include "resourcewatchermanagerinterface.h"
+#include "resourcemanager.h"
 
-#include <QtDBus/QDBusObjectPath>
+#include <QtDBus>
 
 #include "resource.h"
 
@@ -60,8 +61,6 @@ public:
 
     org::kde::nepomuk::ResourceWatcherConnection * m_connectionInterface;
     org::kde::nepomuk::ResourceWatcher * m_watchManagerInterface;
-
-    QDBusServiceWatcher* m_rwServiceWatcher;
 };
 
 Nepomuk::ResourceWatcher::ResourceWatcher(QObject* parent)
@@ -73,7 +72,6 @@ Nepomuk::ResourceWatcher::ResourceWatcher(QObject* parent)
                                                       "/resourcewatcher",
                                                       QDBusConnection::sessionBus() );
     d->m_connectionInterface = 0;
-    d->m_rwServiceWatcher = 0;
 }
 
 Nepomuk::ResourceWatcher::~ResourceWatcher()
@@ -98,9 +96,7 @@ bool Nepomuk::ResourceWatcher::start()
     // We create this watcher even if we fail to connect below. Thus, once the rw service comes up we
     // can re-attach.
     //
-    d->m_rwServiceWatcher = new QDBusServiceWatcher(QLatin1String("org.kde.nepomuk.DataManagement"),
-                                                    QDBusConnection::sessionBus());
-    connect(d->m_rwServiceWatcher, SIGNAL(serviceRegistered(QString)), this, SLOT(start()));
+    connect(ResourceManager::instance(), SIGNAL(nepomukSystemStarted()), this, SLOT(start()));
 
     //
     // Create the dbus object to watch
@@ -141,8 +137,7 @@ void Nepomuk::ResourceWatcher::stop()
         d->m_connectionInterface = 0;
     }
 
-    delete d->m_rwServiceWatcher;
-    d->m_rwServiceWatcher = 0;
+    disconnect(ResourceManager::instance(), SIGNAL(nepomukSystemStarted()), this, SLOT(start()));
 }
 
 void Nepomuk::ResourceWatcher::addProperty(const Nepomuk::Types::Property& property)
@@ -215,6 +210,21 @@ QList< Nepomuk::Types::Class > Nepomuk::ResourceWatcher::types() const
     foreach(const QUrl& uri, d->m_types)
         types << Types::Class(uri);
     return types;
+}
+
+int Nepomuk::ResourceWatcher::propertyCount() const
+{
+    return d->m_properties.size();
+}
+
+int Nepomuk::ResourceWatcher::resourceCount() const
+{
+    return d->m_resources.size();
+}
+
+int Nepomuk::ResourceWatcher::typeCount() const
+{
+    return d->m_types.size();
 }
 
 void Nepomuk::ResourceWatcher::setProperties(const QList< Nepomuk::Types::Property >& properties_)
