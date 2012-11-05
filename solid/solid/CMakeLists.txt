@@ -317,6 +317,7 @@ if(NOT WIN32 AND NOT APPLE)
            set(solid_LIB_SRCS ${solid_LIB_SRCS}
            backends/udisks/udisksmanager.cpp
            backends/udisks/udisksdevice.cpp
+           backends/udisks/udisksfilesystem.cpp
            backends/udisks/udisksblock.cpp
            backends/udisks/udisksstoragevolume.cpp
            backends/udisks/udisksdeviceinterface.cpp
@@ -508,6 +509,14 @@ install( FILES partitioner/utils/partitiontableutils.h
                partitioner/utils/utils.h
                partitioner/utils/filesystemutils.h
          DESTINATION ${INCLUDE_INSTALL_DIR}/solid/partitioner/utils COMPONENT Devel)
+install(FILES backends/udisks/udisksstorageaccess.h
+              backends/udisks/udisksdeviceinterface.h
+              backends/udisks/udisksdevice.h
+        DESTINATION ${INCLUDE_INSTALL_DIR}/backends/udisks COMPONENT Devel)
+install(FILES ifaces/storageaccess.h
+              ifaces/deviceinterface.h
+              ifaces/device.h
+        DESTINATION ${INCLUDE_INSTALL_DIR}/ifaces COMPONENT Devel)
 
 ########### parser build ###############
 

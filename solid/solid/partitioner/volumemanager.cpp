@@ -140,22 +140,7 @@ VolumeManager::VolumeManager()
     QObject::connect(d->deviceManager, SIGNAL(deviceAdded(QString)), SLOT(doDeviceAdded(QString)));
     QObject::connect(d->deviceManager, SIGNAL(deviceRemoved(QString)), SLOT(doDeviceRemoved(QString)));
     
-    /*
-     * Acquire a list of all the partitions to notify whether one of them is mounted or umounted.
-     */
-    QList< Partition* > partitions;
-    foreach (const VolumeTree& diskTree, d->volumeTreeMap.deviceTrees()) {
-        partitions += diskTree.partitions();
-        partitions += diskTree.logicalPartitions();
-    }
-    
-    foreach (Partition* partition, partitions) {
-        if (partition->access()) {
-            QObject::connect(partition->access(),
-                            SIGNAL(accessibilityChanged(bool, const QString &)),
-                            SIGNAL(accessibilityChanged(bool, const QString &)));
-        }
-    }
+    connectAllPartitionAccessibility();
 }
 
 VolumeManager::~VolumeManager()
@@ -178,7 +163,7 @@ bool VolumeManager::registerAction(Actions::Action* action)
 {
     Q_ASSERT(action);
     d->error.setType(PartitioningError::None); /* erase any previous error */
-    
+        
     /* A duplicate isn't accepted */
     if (d->actionstack.contains(action)) {
         d->error.setType(PartitioningError::DuplicateActionError);
@@ -325,6 +310,8 @@ bool VolumeManager::apply()
         emit executionError( d->error.description() );
         return false;
     }
+
+    connectAllPartitionAccessibility();
     
     emit executionFinished();
     d->acceptEvents = true;
@@ -344,6 +331,30 @@ PartitioningError VolumeManager::error() const
 QList< Action* > VolumeManager::registeredActions() const
 {
     return d->actionstack.list();
+}
+
+/*
+ * Connect the accessibilityChanged signals coming from all the
+ * current known partitions to one signal emitted from this manager.
+ * 
+ * This way the application can be easily notified of a change in any
+ * of the accessibility statuses.
+ */
+void VolumeManager::connectAllPartitionAccessibility()
+{
+    QList< Partition* > partitions;
+    foreach (const VolumeTree& diskTree, d->volumeTreeMap.deviceTrees()) {
+        partitions += diskTree.partitions();
+        partitions += diskTree.logicalPartitions();
+    }
+    
+    foreach (Partition* partition, partitions) {
+        if (partition->access()) {
+            QObject::connect(partition->access(),
+                            SIGNAL(accessibilityChanged(bool, const QString &)),
+                            SIGNAL(accessibilityChanged(bool, const QString &)));
+        }
+    }
 }
 
 bool VolumeManager::Private::applyAction(Action* action, bool undoOrRedo)

@@ -22,7 +22,6 @@
 #include <solid/partitioner/utils/filesystemutils.h>
 #include <solid/partitioner/resizehelper.h>
 
-#include <solid/storageaccess.h>
 #include <QtCore/QEventLoop>
 
 namespace Solid
@@ -34,6 +33,7 @@ namespace Devices
 {
 
 using namespace Utils;
+using namespace Backends::UDisks;
 
 class Partition::Private
 {
@@ -52,7 +52,6 @@ public:
         , partitionTypeString(v->partitionType())
         , scheme(v->partitionTableScheme())
         , flags(v->flags())
-        , mounted(false)
     {
         QString fsName = FilesystemUtils::instance()->filesystemNameFromId( v->fsType() );
         filesystem = Filesystem(fsName);
@@ -74,8 +73,6 @@ public:
         , partitionType(action->partitionType())
         , scheme(s)
         , flags(action->flags())
-        , mounted(false)
-        , mountFile( QString() )
     {
         /*
          * For a partition created by the application, we know the filesystem and if it's extended, primary, etc.,
@@ -101,7 +98,7 @@ public:
         partitionTypeString = Utils::PartitionTableUtils::instance()->typeString(scheme, type);
     }
     
-    StorageAccess* access;
+    UDisksStorageAccess* access;
     
     bool ignored;
     bool isFsExistent;
@@ -116,16 +113,14 @@ public:
     QString partitionTypeString;
     QString scheme;
     QStringList flags;
-    
-    bool mounted;
-    QString mountFile;
 };
     
 Partition::Partition(Device& dev)
     : d( new Private( dev.as<StorageVolume>() ) )
 {
     if (dev.is<StorageAccess>()) {
-        setAccess( dev.as<StorageAccess>() );
+        UDisksDevice* udisksDevice = new UDisksDevice( dev.udi() );
+        setAccess( new UDisksStorageAccess(udisksDevice) );
     }
     
     DeviceModified::setName( dev.udi() );
@@ -251,15 +246,23 @@ qulonglong Partition::rightBoundary() const
 
 bool Partition::isMounted() const
 {
-    return d->mounted;
+    if (!d->access) {
+        return false;
+    }
+    
+    return d->access->isAccessible();
 }
 
 QString Partition::mountFile() const
 {
-    return d->mountFile;
+    if (!d->access) {
+        return QString();
+    }
+    
+    return d->access->filePath();
 }
 
-StorageAccess* Partition::access() const
+UDisksStorageAccess* Partition::access() const
 {
     return d->access;
 }
@@ -320,18 +323,9 @@ void Partition::setFlags(const QStringList& flags)
     d->flags = flags;
 }
 
-void Partition::setAccess(StorageAccess* access)
+void Partition::setAccess(UDisksStorageAccess* access)
 {
     d->access = access;
-    
-    if (access) {
-        d->mounted = access->isAccessible();
-        d->mountFile = access->filePath();
-        
-        QObject::connect(access,
-                         SIGNAL(accessibilityChanged(bool, const QString &)),
-                         SLOT(doAccessibilityChanged(bool, const QString &)));
-    }
 }
 
 void Partition::setMinimumSize(qulonglong minSize)
@@ -381,7 +375,6 @@ void Partition::computeMinimumSize()
     }
 
     loop.exec(); /* wait until the action has terminated */
-    disconnect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
 }
 
 void Partition::minimumSizeReady(ActionReply reply)
@@ -397,13 +390,6 @@ void Partition::minimumSizeReady(ActionReply reply)
     } else {
         d->minimumSize = d->size;
     }
-}
-
-void Partition::doAccessibilityChanged(bool accessible, const QString& udi)
-{
-    Q_UNUSED(udi)
-    d->mounted = accessible;
-    d->mountFile = d->access->filePath();
 }
 
 }

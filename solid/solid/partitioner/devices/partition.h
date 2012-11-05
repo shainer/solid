@@ -27,7 +27,7 @@
 #include <solid/storagevolume.h>
 #include <kauthactionreply.h>
 #include <kauthaction.h>
-#include <solid/storageaccess.h>
+#include <backends/udisks/udisksstorageaccess.h>
 
 namespace Solid
 {
@@ -169,7 +169,7 @@ namespace Solid
                 /**
                  * @returns the StorageAccess object, which can be used to mount or unmount.
                  */
-                virtual StorageAccess* access() const;
+                virtual Backends::UDisks::UDisksStorageAccess* access() const;
                 
                 /**
                  * Sets whether this partition should be displayed by the system.
@@ -249,7 +249,7 @@ namespace Solid
                  * 
                  * @param access the Solid::StorageAccess interface.
                  */
-                virtual void setAccess(StorageAccess *);
+                virtual void setAccess(Backends::UDisks::UDisksStorageAccess *);
                 
                 /**
                  * Calls the resize helper to retrieve the partition's minimum size.
@@ -271,7 +271,6 @@ namespace Solid
                 Private* d;
                 
             private slots:
-                void doAccessibilityChanged(bool accessible, const QString &udi);
                 void minimumSizeReady(ActionReply);
             };
             

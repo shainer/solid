@@ -189,6 +189,8 @@ namespace Solid
         private:
             VolumeManager();
             
+            void connectAllPartitionAccessibility();
+            
             class Private;
             Private* d;
         };
