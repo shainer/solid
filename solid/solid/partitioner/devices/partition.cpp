@@ -54,7 +54,6 @@ void UpdaterLoop::quit(ActionReply reply)
         qlonglong minSize( reply.data().value("minimumPartitionSize").toLongLong() );
         parent->setMinimumSize( (minSize != -1) ? minSize : parent->size() );
     }
-
     QEventLoop::quit();
 }
     
