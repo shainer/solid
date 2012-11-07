@@ -48,7 +48,7 @@ macro(PYTHON_INSTALL SOURCE_FILE DESTINATION_DIR)
     set(_py_install_dir "${DESTINATION_DIR}")
   endif()
 
-  FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_basepath})
+    FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_basepath})
 
   # Setting because it will be displayed later, in compile_python_files
   set(_message "Byte-compiling ${_bin_py} to ${_bin_pyc}")
