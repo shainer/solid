@@ -686,32 +686,38 @@ QString UDisksDevice::parentUdi() const
     }
 }
 
-void UDisksDevice::checkCache(const QString &key) const
+void UDisksDevice::checkCache(const QString &key, CacheBehaviour behaviour) const
 {
-    if (m_cache.isEmpty()) // recreate the cache
+    if (m_cache.isEmpty()) { // recreate the cache
         allProperties();
-
-    if (m_cache.contains(key))
-        return;
-
-    QVariant reply = m_device->property(key.toUtf8());
-
-    if (reply.isValid()) {
-        m_cache[key] = reply;
-    } else {
-        m_cache[key] = QVariant();
     }
+
+    /*
+     * See the prop declaration for an explanation about what behaviour stands for
+     */
+    if (behaviour == ReadCache && m_cache.contains(key)) {
+        return;
+    }
+
+    QVariant reply( m_device->property(key.toUtf8()) );
+
+    if (!reply.isValid()) {
+        m_cache[key] = QVariant();
+        return;
+    }
+
+    m_cache[key] = reply;
 }
 
-QVariant UDisksDevice::prop(const QString &key) const
+QVariant UDisksDevice::prop(const QString &key, CacheBehaviour behaviour) const
 {
-    checkCache(key);
+    checkCache(key, behaviour);
     return m_cache.value(key);
 }
 
 bool UDisksDevice::propertyExists(const QString &key) const
 {
-    checkCache(key);
+    checkCache(key, ReadCache);
     return m_cache.contains(key);
 }
 

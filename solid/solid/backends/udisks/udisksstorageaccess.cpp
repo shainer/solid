@@ -64,37 +64,38 @@ bool UDisksStorageAccess::isAccessible() const
 {
     if (isLuksDevice()) { // check if the cleartext slave is mounted
         UDisksDevice holderDevice(m_device->prop("LuksHolder").value<QDBusObjectPath>().path());
-        return holderDevice.prop("DeviceIsMounted").toBool();
+        return holderDevice.prop("DeviceIsMounted", UDisksDevice::BypassCache).toBool();
     }
 
-    return m_device->prop("DeviceIsMounted").toBool();
+    return m_device->prop("DeviceIsMounted", UDisksDevice::BypassCache).toBool();
 }
 
 QString UDisksStorageAccess::filePath() const
 {
-    if (!isAccessible())
+    if (!isAccessible()) {
         return QString();
+    }
 
     QStringList mntPoints;
 
     if (isLuksDevice()) {  // encrypted (and unlocked) device
         QString path = m_device->prop("LuksHolder").value<QDBusObjectPath>().path();
-        if (path.isEmpty() || path == "/")
+
+        if (path.isEmpty() || path == "/") {
             return QString();
+        }
+
         UDisksDevice holderDevice(path);
-        mntPoints = holderDevice.prop("DeviceMountPaths").toStringList();
-        if (!mntPoints.isEmpty())
-            return mntPoints.first(); // FIXME Solid doesn't support multiple mount points
-        else
-            return QString();
+        mntPoints = holderDevice.prop("DeviceMountPaths", UDisksDevice::BypassCache).toStringList();
+    } else {
+        mntPoints = m_device->prop("DeviceMountPaths", UDisksDevice::BypassCache).toStringList();
     }
 
-    mntPoints = m_device->prop("DeviceMountPaths").toStringList();
-
-    if (!mntPoints.isEmpty())
-        return mntPoints.first(); // FIXME Solid doesn't support multiple mount points
-    else
+    if (mntPoints.isEmpty()) {
         return QString();
+    }
+
+    return mntPoints.first(); // FIXME Solid doesn't support multiple mount points
 }
 
 bool UDisksStorageAccess::isIgnored() const

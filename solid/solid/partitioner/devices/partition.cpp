@@ -24,17 +24,43 @@
 
 #include <QtCore/QEventLoop>
 
+using namespace KAuth;
+
 namespace Solid
 {
 namespace Partitioner
 {
-
 namespace Devices
 {
 
+UpdaterLoop::UpdaterLoop(Solid::Partitioner::Devices::Partition* const parent)
+    : QEventLoop()
+    , parent( parent )
+{}
+
+void UpdaterLoop::quit(ActionReply reply)
+{
+    /*
+     * Takes the return value from KAuth's invocation and sets the minimum size of
+     * the partition.
+     */
+    if (!reply.succeeded()) {
+        parent->setMinimumSize( parent->size() ); /* there was some error, the user cannot resize */
+        QEventLoop::quit();
+        return;
+    }
+
+    if (reply.data().contains("minimumPartitionSize")) {
+        qlonglong minSize( reply.data().value("minimumPartitionSize").toLongLong() );
+        parent->setMinimumSize( (minSize != -1) ? minSize : parent->size() );
+    }
+
+    QEventLoop::quit();
+}
+    
 using namespace Utils;
 using namespace Backends::UDisks;
-
+    
 class Partition::Private
 {
 public:
@@ -122,7 +148,7 @@ Partition::Partition(Device& dev)
         UDisksDevice* udisksDevice = new UDisksDevice( dev.udi() );
         setAccess( new UDisksStorageAccess(udisksDevice) );
     }
-    
+
     DeviceModified::setName( dev.udi() );
     DeviceModified::setDescription( dev.udi() );
     DeviceModified::setParentName( dev.parentUdi() );
@@ -258,7 +284,7 @@ QString Partition::mountFile() const
     if (!d->access) {
         return QString();
     }
-    
+
     return d->access->filePath();
 }
 
@@ -364,32 +390,16 @@ void Partition::computeMinimumSize()
     asyncAction.addArgument("path", QString::fromAscii( getenv("PATH") ));
     
     asyncAction.setExecutesAsync(true); /* it must be asynchronous to avoid timeouts */
-    QEventLoop loop;
-    
-    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), this, SLOT(minimumSizeReady(ActionReply)));
-    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit()));
-    ActionReply earlyReply = asyncAction.execute("org.solid.partitioner.resize");
+    UpdaterLoop loop( this );
+        
+    connect(asyncAction.watcher(), SIGNAL(actionPerformed(ActionReply)), &loop, SLOT(quit(ActionReply)));
+    ActionReply earlyReply( asyncAction.execute("org.solid.partitioner.resize") );
     
     if (earlyReply.failed()) {
         return;
     }
 
     loop.exec(); /* wait until the action has terminated */
-}
-
-void Partition::minimumSizeReady(ActionReply reply)
-{    
-    if (reply.succeeded() && reply.data().contains("minimumPartitionSize")) {
-        qlonglong minSize = reply.data().value("minimumPartitionSize").toLongLong();
-        
-        if (minSize != -1) {
-            d->minimumSize = minSize;
-        } else {
-            d->minimumSize = d->size; /* if resizing isn't supported, these two are the same */
-        }
-    } else {
-        d->minimumSize = d->size;
-    }
 }
 
 }

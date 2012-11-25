@@ -29,6 +29,8 @@
 #include <kauthaction.h>
 #include <backends/udisks/udisksstorageaccess.h>
 
+#include <QtCore/QEventLoop>
+
 namespace Solid
 {
     namespace Partitioner
@@ -36,7 +38,7 @@ namespace Solid
         namespace Devices
         {
             using namespace KAuth;
-            
+                        
             /**
              * @class Partition
              * @extends DeviceModified
@@ -44,9 +46,9 @@ namespace Solid
              * This class represents a partition for the partitioning module.
              */
             class SOLID_EXPORT Partition : public QObject, public DeviceModified
-            {                
+            {
                 Q_OBJECT
-                
+
             public:                
                 
                 /**
@@ -269,11 +271,26 @@ namespace Solid
             private:
                 class Private;
                 Private* d;
-                
-            private slots:
-                void minimumSizeReady(ActionReply);
             };
             
+            /*
+             * This is a wrapper class used to collect KAuth's reply.
+             * Unfortunately there is some bug with the signal that should tell us an asynchronous helper has
+             * finished its execution, so this is a trick to make everything work.
+             */
+            class UpdaterLoop : public QEventLoop
+            {
+                Q_OBJECT
+
+            private:
+                Solid::Partitioner::Devices::Partition* const parent;
+
+            public:
+                explicit UpdaterLoop(Solid::Partitioner::Devices::Partition* const parent);
+
+            public slots:
+                void quit(ActionReply reply);
+            };
         }
     }
 }

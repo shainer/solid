@@ -46,6 +46,11 @@ class UDisksDevice : public Solid::Ifaces::Device
 {
     Q_OBJECT
 public:
+    typedef enum {
+        ReadCache,
+        BypassCache,
+    } CacheBehaviour;
+    
     UDisksDevice(const QString &udi);
     virtual ~UDisksDevice();
 
@@ -59,7 +64,13 @@ public:
     virtual QString udi() const;
     virtual QString parentUdi() const;
 
-    QVariant prop(const QString &key) const;
+    /*
+     * If behaviour is set to "BypassCache", the correspondent property is never read from the cache,
+     * but taken directly from UDisks each time. This is needed for the properties concerning accessibility:
+     * for those, the Changed signal always arrives too late, thus the cache isn't updated when we go reading the
+     * new accessibility status of a device.
+     */
+    QVariant prop(const QString &key, CacheBehaviour behaviour = ReadCache) const;
     bool propertyExists(const QString &key) const;
     QMap<QString, QVariant> allProperties() const;
 
@@ -109,7 +120,7 @@ private:
     mutable QVariantMap m_cache;
     QString errorDescription;
 
-    void checkCache(const QString &key) const;
+    void checkCache(const QString &key, CacheBehaviour behaviour) const;
 };
 
 }
