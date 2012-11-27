@@ -440,6 +440,7 @@ target_link_libraries(solid ${QT_QTCORE_LIBRARY}
                             ${QT_QTXML_LIBRARY}
                             ${QT_QTGUI_LIBRARY}
                             ${solid_OPTIONAL_LIBS}
+                            ${KDE4_KDECORE_LIBS}
                             ${CMAKE_INSTALL_PREFIX}/lib/libparted.so # FIXME: do this properly!
                             ${CMAKE_INSTALL_PREFIX}/lib/libparted-fs-resize.so)
 target_link_libraries(solid LINK_INTERFACE_LIBRARIES ${QT_CORE_LIBRARY} )
