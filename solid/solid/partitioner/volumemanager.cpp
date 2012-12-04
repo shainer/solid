@@ -32,7 +32,6 @@
 #include <solid/partitioner/partitioningerror.h>
 #include <solid/partitioner/utils/utils.h>
 #include <solid/partitioner/utils/filesystemutils.h>
-#include <solid/partitioner/utils/deviceevent.h>
 #include <solid/partitioner/volumetreemap_p.h>
 #include <solid/device.h>
 #include <solid/block.h>

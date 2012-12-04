@@ -26,6 +26,7 @@ macro(PYTHON_INSTALL SOURCE_FILE DESTINATION_DIR)
   install(FILES ${SOURCE_FILE} DESTINATION ${DESTINATION_DIR})
 
   # Byte compile and install the .pyc file.
+if ("$ENV{PYTHONDONTWRITEBYTECODE}" STREQUAL "")
   get_filename_component(_absfilename ${SOURCE_FILE} ABSOLUTE)
   get_filename_component(_filename ${SOURCE_FILE} NAME)
   get_filename_component(_filenamebase ${SOURCE_FILE} NAME_WE)
@@ -74,5 +75,6 @@ macro(PYTHON_INSTALL SOURCE_FILE DESTINATION_DIR)
   install(FILES ${_bin_pyc} DESTINATION "${_py_install_dir}")
   unset(_py_install_dir)
   unset(_message)
+endif ("$ENV{PYTHONDONTWRITEBYTECODE}" STREQUAL "")
 
 endmacro(PYTHON_INSTALL)
