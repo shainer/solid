@@ -34,12 +34,14 @@ class DeviceNotifier;
 class DevicesQueryPrivate;
 
 /**
- * A class that watches the devices known to the solid system.
+ * A class that gives access to devices known to the
+ * Solid system.
  *
- * It behaves similarly to Solid::DeviceNotifier, but
- * adds some convenience methods which allow it to
- * watch only the devices matching a specified query
- * (formatted for Solid::Predicate).
+ * It is implemented as a model and allows for easy
+ * display of devices in a ListView, for example
+ * in the Battery Monitor. Itallows to only expose
+ * devices matching a specified query (formatted for
+ * Solid::Predicate).
  *
  * It is intended to be used from QML like this:
  *
@@ -63,9 +65,7 @@ class DevicesQueryPrivate;
  *    }
  *
  *    Text {
- *        text: "NFS url: " + networkShares.device(
- *            networkShares.devices[0], "NetworkShare"
- *        ).url
+ *        text: "NFS url: " + networkShares.get(0).url
  *    }
  * </code>
  */
@@ -76,11 +76,9 @@ class DeclarativeDevices: public QAbstractListModel
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
     Q_PROPERTY(int count READ rowCount NOTIFY rowCountChanged)
     Q_PROPERTY(bool empty READ isEmpty NOTIFY emptyChanged)
-    //Q_PROPERTY(QStringList devices READ devices NOTIFY devicesChanged)
 
 public:
     enum ModelRoles {
-        Meow = Qt::DisplayRole,
         DeviceRole = Qt::UserRole + 1
     };
 
@@ -110,13 +108,6 @@ Q_SIGNALS:
     void rowCountChanged(int count) const;
 
     /**
-     * Emitted when the list of devices that
-     * match the specified query has changed
-     * @param devices list of UDIs
-     */
-    /*void devicesChanged(const QStringList &devices) const;*/
-
-    /**
      * Emitted when the query has changed
      * @param query new query
      */
@@ -135,14 +126,6 @@ public:
      * @return device count
      */
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
-
-    /**
-     * @brief data
-     * @param index
-     * @param role
-     * @return
-     */
-    QVariant data(const QModelIndex &index, int role) const;
 
     /**
      * Retrieves whether there are devices matching
@@ -174,22 +157,34 @@ public Q_SLOTS:
     /**
      * Retrieves a device from the model
      *
-     * @param index the index of the item to get
+     * @param index the index of the item
      * @return the device at the given index
      */
     QObject *get(const int index) const;
 
-    /**
-     * Retrieves an interface object to the specified device
-     * @param udi udi of the desired device
-     * @param type how to interpret the device
-     * @see Solid::Device::asDeviceInterface
-     */
-    //QObject *device(const QString &udi, const QString &type);
-
 private Q_SLOTS:
+    /**
+     * A device was added
+     *
+     * @param device the pointer to the device
+     */
     void addDevice(const QObject *device);
-    void removeDevice(const QString &udi, const int index);
+    /**
+     * A device was removed
+     *
+     * This is to eventually tell interested parties
+     * about the UDI of the device removed
+     * @param udi udi of the device
+     */
+    void removeDevice(const QString &udi);
+
+    /**
+     * A device object was destroyed
+     *
+     * This is used internally to remove the affected
+     * index from the model
+     */
+    void removeDeviceFromModel(const int index);
 
     /**
      * Initializes the backend object
@@ -206,6 +201,8 @@ protected:
 
 private:
     Q_DISABLE_COPY(DeclarativeDevices)
+
+    QVariant data(const QModelIndex &index, int role) const;
 
     QString m_query;
 

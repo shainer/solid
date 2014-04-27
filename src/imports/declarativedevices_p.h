@@ -76,11 +76,14 @@ public:
 
 Q_SIGNALS:
     void deviceAdded(const QObject *device);
-    void deviceRemoved(const QString &udi, const int index);
+    void deviceRemoved(const QString &udi);
+    void deviceRemovedFromModel(const int index);
 
 public Q_SLOTS:
     void addDevice(const QString &udi);
     void removeDevice(const QString &udi);
+
+    void deviceDestroyed(QObject *obj);
 
 private:
     DevicesQueryPrivate(const QString &query);

@@ -19,8 +19,6 @@
 #include "declarativedevices.h"
 #include "declarativedevices_p.h"
 
-#include <QDebug>
-
 #include <solid/device.h>
 #include <solid/deviceinterface.h>
 #include <solid/devicenotifier.h>
@@ -68,6 +66,7 @@ DevicesQueryPrivate::DevicesQueryPrivate(const QString &query)
         QObject *deviceInterface = deviceInterfaceFromUdi(device.udi());
         if (deviceInterface) {
             matchingDevices << deviceInterface;
+            connect(deviceInterface, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
         }
     }
 }
@@ -108,7 +107,7 @@ void DevicesQueryPrivate::addDevice(const QString &udi)
         QObject *device = deviceInterfaceFromUdi(udi);
         if (device) {
             matchingDevices << device;
-            connect(device, &QObject::destroyed, this, &DevicesQueryPrivate::removeDevice);
+            connect(device, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
             emit deviceAdded(device);
         }
     }
@@ -116,36 +115,17 @@ void DevicesQueryPrivate::addDevice(const QString &udi)
 
 void DevicesQueryPrivate::removeDevice(const QString &udi)
 {
-    qDebug() << "REMOVE DEVICE";
-    /*
-    sender();
-    matchingDevices.removeAll(ponter)
-    if (predicate.isValid()) {
-        for(int i = 0; i < matchingDevices.count(); ++i) {
-            qDebug() << i << matchingDevices.count();
-            if (!matchingDevices.at(i)) {
-                qDebug() << "this isnt there anymore";
-                continue;
-            }
-            qDebug() << "IS there?" << matchingDevices.at(i);
-
-            qDebug() << "Blah" << matchingDevices.at(i)->property("vendor");
-            qDebug() << "Found" << matchingDevices.at(i)->property("udi");
-            /*continue;
-            if (matchingDevices.at(i) && matchingDevices.at(i)->property("udi") == udi) {
-                qDebug() << "REMOVING THIS ONE";
-                matchingDevices.removeAt(i);
-                //emit deviceRemoved(udi, i);
-                //matchingDevices.at(i)->deleteLater();
-                break;
-            }*/
-/*        }
-    }*/
+    emit deviceRemoved(udi);
 }
 
-void DevicesQueryPrivate::removeDevice(QObject *device)
+void DevicesQueryPrivate::deviceDestroyed(QObject *obj)
 {
-
+    const int index = matchingDevices.indexOf(obj);
+    if (index == -1) {
+        return;
+    }
+    matchingDevices.removeAll(obj);
+    emit deviceRemovedFromModel(index);
 }
 
 QList<QObject *> DevicesQueryPrivate::devices() const
@@ -165,20 +145,18 @@ void DeclarativeDevices::initialize() const
             this, &DeclarativeDevices::addDevice);
     connect(m_backend.data(), &DevicesQueryPrivate::deviceRemoved,
             this, &DeclarativeDevices::removeDevice);
+    connect(m_backend.data(), &DevicesQueryPrivate::deviceRemovedFromModel,
+            this, &DeclarativeDevices::removeDeviceFromModel);
 
     const int matchesCount = m_backend->devices().count();
-    qDebug() << "Init found" << matchesCount << "matches";
 
     if (matchesCount != 0) {
         emit emptyChanged(false);
-        //emit Changed(matchesCount);
-        //emit devicesChanged(m_backend->devices());
     }
 }
 
 void DeclarativeDevices::reset()
 {
-    qDebug() << "I AM ABOUT TO RESET MZ POINTERS AND CRASH";
     if (!m_backend) {
         return;
     }
@@ -188,7 +166,6 @@ void DeclarativeDevices::reset()
 
     emit emptyChanged(true);
     emit rowCountChanged(0);
-    //emit devicesChanged(QStringList());
 }
 
 void DeclarativeDevices::addDevice(const QObject *device)
@@ -203,15 +180,14 @@ void DeclarativeDevices::addDevice(const QObject *device)
         emit emptyChanged(false);
     }
 
-    const int insertItemIndex = qMax(0, rowCount() - 1);
-    beginInsertRows(QModelIndex(), insertItemIndex, insertItemIndex);
+    beginInsertRows(QModelIndex(), rowCount() - 1, rowCount() - 1);
     endInsertRows();
 
     emit rowCountChanged(count);
     emit deviceAdded(device);
 }
 
-void DeclarativeDevices::removeDevice(const QString &udi, const int index)
+void DeclarativeDevices::removeDevice(const QString &udi)
 {
     if (!m_backend) {
         return;
@@ -223,11 +199,14 @@ void DeclarativeDevices::removeDevice(const QString &udi, const int index)
         emit emptyChanged(true);
     }
 
-    beginRemoveRows(QModelIndex(), index, index);
-    endRemoveRows();
-
     emit rowCountChanged(count);
     emit deviceRemoved(udi);
+}
+
+void DeclarativeDevices::removeDeviceFromModel(const int index)
+{
+    beginRemoveRows(QModelIndex(), index, index);
+    endRemoveRows();
 }
 
 DeclarativeDevices::DeclarativeDevices(QAbstractListModel *parent)
@@ -247,41 +226,19 @@ bool DeclarativeDevices::isEmpty() const
 
 int DeclarativeDevices::rowCount(const QModelIndex &parent) const
 {
-    //qDebug() << "row count" << this;
+    Q_UNUSED(parent);
 
     initialize();
-    /*qDebug() << "Row count requested";
-    qDebug() << m_backend;
-    qDebug() << m_backend->devices();*/
-    /*qDebug() << devices();
-    qDebug() << devices().count();*/
-
-    //qDebug() << "Counting rows";
-    //qDebug() << m_backend->devices();
-
-    Q_UNUSED(parent);
     return m_backend->devices().count();
 }
 
 QVariant DeclarativeDevices::data(const QModelIndex &index, int role) const
 {
-    //qDebug() << "Accessing data of row " << index.row();
     if (index.row() < 0 || index.row() >= rowCount()) {
-        qDebug() << "Out of bounds";
         return QVariant();
     }
 
-    if (role == Qt::DisplayRole) {
-        return QString("display role"); // FIXME
-    } else if (role == DeviceRole) {
-       /*qDebug() << "Returning qvariant from value";
-        qDebug() << "And its";
-        qDebug() << m_backend;
-        qDebug() << m_backend.data();
-        qDebug() << m_backend.data()->devices();
-        qDebug() << m_backend->devices();
-        qDebug() << m_backend->devices().at(0);
-        qDebug() << m_backend->devices().at(index.row());*/
+    if (role == DeviceRole) {
         return QVariant::fromValue(m_backend->devices().at(index.row()));
     }
     return QVariant();
@@ -290,17 +247,6 @@ QVariant DeclarativeDevices::data(const QModelIndex &index, int role) const
 QObject *DeclarativeDevices::get(const int index) const
 {
     return m_backend->devices().at(index);
-
-    /*if (index < 0 || index >= rowCount()) {
-        qDebug() << "Out of bounds";
-        return QVariant();
-    }*/
-    /*qDebug() << "Everything good";
-    QVariant device = data(createIndex(index, 0), DeviceRole);;*/
-    //qDebug() << index << device << device.value<QObject *>()->property("vendor");
-
-    //return QVariant::fromValue(QString("meow"));
-    //return data(createIndex(index, 0), DeviceRole);
 }
 
 QList<QObject *> DeclarativeDevices::devices() const
@@ -334,11 +280,5 @@ QHash<int, QByteArray> DeclarativeDevices::roleNames() const
     roles[DeviceRole] = "device";
     return roles;
 }
-
-/*QObject *DeclarativeDevices::device(const QString &udi, const QString &_type)
-{
-    Solid::DeviceInterface::Type type = Solid::DeviceInterface::stringToType(_type);
-    return Solid::Device(udi).asDeviceInterface(type);
-}*/
 
 } // namespace Solid
