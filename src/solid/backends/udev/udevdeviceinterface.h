@@ -41,6 +41,14 @@ public:
     DeviceInterface(UDevDevice *device);
     virtual ~DeviceInterface();
 
+    QString udi() const;
+    QString parentUdi() const;
+    QString vendor() const;
+    QString product() const;
+    QString icon() const;
+    QStringList emblems() const;
+    QString description() const;
+
 protected:
     UDevDevice *m_device;
 };

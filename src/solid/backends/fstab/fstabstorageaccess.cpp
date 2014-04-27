@@ -32,7 +32,7 @@
 using namespace Solid::Backends::Fstab;
 
 FstabStorageAccess::FstabStorageAccess(Solid::Backends::Fstab::FstabDevice *device) :
-    QObject(device),
+    BackendDeviceInterface(device, device), // parent of QObject was parent?
     m_fstabDevice(device)
 {
     QStringList currentMountPoints = FstabHandling::currentMountPoints(device->device());

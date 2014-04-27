@@ -21,6 +21,8 @@
 #include "deviceinterface.h"
 #include "deviceinterface_p.h"
 
+#include "soliddefs_p.h"
+
 #include <solid/ifaces/deviceinterface.h>
 
 #include <QtCore/QMetaEnum>
@@ -94,6 +96,49 @@ QString Solid::DeviceInterface::typeDescription(Type type)
     return QString();
 }
 
+QString Solid::DeviceInterface::udi() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QString(), udi());
+}
+
+QString Solid::DeviceInterface::parentUdi() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QString(), parentUdi());
+}
+
+QString Solid::DeviceInterface::vendor() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QString(), vendor());
+}
+
+QString Solid::DeviceInterface::product() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QString(), product());
+}
+
+QString Solid::DeviceInterface::icon() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QString(), icon());
+}
+
+QStringList Solid::DeviceInterface::emblems() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QStringList(), emblems());
+}
+
+QString Solid::DeviceInterface::description() const
+{
+    Q_D(const DeviceInterface);
+    return_SOLID_CALL(Ifaces::DeviceInterface *, d->backendObject(), QString(), description());
+}
+
+
 Solid::DeviceInterfacePrivate::DeviceInterfacePrivate()
     : m_devicePrivate(0)
 {
@@ -124,4 +169,3 @@ void Solid::DeviceInterfacePrivate::setDevicePrivate(DevicePrivate *devicePrivat
 {
     m_devicePrivate = devicePrivate;
 }
-

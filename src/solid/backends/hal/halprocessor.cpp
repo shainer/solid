@@ -26,7 +26,7 @@
 using namespace Solid::Backends::Hal;
 
 Processor::Processor(HalDevice *device)
-    : DeviceInterface(device)
+    : BackendDeviceInterface(device)
 {
 
 }
@@ -38,18 +38,18 @@ Processor::~Processor()
 
 int Processor::number() const
 {
-    return m_device->prop("processor.number").toInt();
+    return static_cast<HalDevice *>(m_device)->prop("processor.number").toInt();
 }
 
 int Processor::maxSpeed() const
 {
     // the property is not mandatory in HAL
-    return m_device->prop("processor.maximum_speed").toInt();
+    return static_cast<HalDevice *>(m_device)->prop("processor.maximum_speed").toInt();
 }
 
 bool Processor::canChangeFrequency() const
 {
-    return m_device->prop("processor.can_throttle").toBool();
+    return static_cast<HalDevice *>(m_device)->prop("processor.can_throttle").toBool();
 }
 
 Solid::Processor::InstructionSets Processor::instructionSets() const

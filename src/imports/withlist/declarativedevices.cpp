@@ -15,8 +15,9 @@
  *   License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "devices.h"
-#include "devices_p.h"
+#include "declarativedevices.h"
+#include "declarativedevices_p.h"
+//#include "declarativedevice.h"
 
 #include <QDebug>
 
@@ -64,7 +65,8 @@ DevicesQueryPrivate::DevicesQueryPrivate(const QString &query)
     }
 
     Q_FOREACH (const Solid::Device &device, Solid::Device::listFromQuery(predicate)) {
-        matchingDevices << device.udi();
+        matchingDeviceUdis << device.udi();
+        matchingDevices << device;
     }
 }
 
@@ -94,7 +96,7 @@ const QStringList &DevicesQueryPrivate::devices() const
     return matchingDevices;
 }
 
-void Devices::initialize() const
+void DeclarativeDevices::initialize() const
 {
     if (m_backend) {
         return;
@@ -103,11 +105,11 @@ void Devices::initialize() const
     m_backend = DevicesQueryPrivate::forQuery(m_query);
 
     connect(m_backend.data(), &DevicesQueryPrivate::deviceAdded,
-            this, &Devices::addDevice);
+            this, &DeclarativeDevices::addDevice);
     connect(m_backend.data(), &DevicesQueryPrivate::deviceAdded,
-            this, &Devices::addDevice);
+            this, &DeclarativeDevices::addDevice);
     connect(m_backend.data(), &DevicesQueryPrivate::deviceRemoved,
-            this, &Devices::removeDevice);
+            this, &DeclarativeDevices::removeDevice);
 
     const int matchesCount = m_backend->devices().count();
 
@@ -118,7 +120,7 @@ void Devices::initialize() const
     }
 }
 
-void Devices::reset()
+void DeclarativeDevices::reset()
 {
     if (!m_backend) {
         return;
@@ -132,7 +134,7 @@ void Devices::reset()
     emit devicesChanged(QStringList());
 }
 
-void Devices::addDevice(const QString &udi)
+void DeclarativeDevices::addDevice(const QString &udi)
 {
     if (!m_backend) {
         return;
@@ -149,7 +151,7 @@ void Devices::addDevice(const QString &udi)
     emit deviceAdded(udi);
 }
 
-void Devices::removeDevice(const QString &udi)
+void DeclarativeDevices::removeDevice(const QString &udi)
 {
     if (!m_backend) {
         return;
@@ -166,39 +168,39 @@ void Devices::removeDevice(const QString &udi)
     emit deviceRemoved(udi);
 }
 
-Devices::Devices(QObject *parent)
+DeclarativeDevices::DeclarativeDevices(QObject *parent)
     : QObject(parent)
 {
 }
 
-Devices::~Devices()
+DeclarativeDevices::~DeclarativeDevices()
 {
 }
 
-bool Devices::isEmpty() const
+bool DeclarativeDevices::isEmpty() const
 {
     initialize();
     return count() == 0;
 }
 
-int Devices::count() const
+int DeclarativeDevices::count() const
 {
     initialize();
     return devices().count();
 }
 
-QStringList Devices::devices() const
+QStringList DeclarativeDevices::devices() const
 {
     initialize();
     return m_backend->devices();
 }
 
-QString Devices::query() const
+QString DeclarativeDevices::query() const
 {
     return m_backend->query;
 }
 
-void Devices::setQuery(const QString &query)
+void DeclarativeDevices::setQuery(const QString &query)
 {
     if (m_query == query) {
         return;
@@ -212,11 +214,13 @@ void Devices::setQuery(const QString &query)
     emit queryChanged(query);
 }
 
-QObject *Devices::device(const QString &udi, const QString &_type)
+QObject *DeclarativeDevices::device(const QString &udi, const QString &_type)
 {
     Solid::DeviceInterface::Type type = Solid::DeviceInterface::stringToType(_type);
 
+    //Solid::DeviceInterface *iface = Solid::Device(udi).asDeviceInterface(type);
     return Solid::Device(udi).asDeviceInterface(type);
+    //return new DeclarativeDevice(iface, this);
 }
-} // namespace Solid
 
+} // namespace Solid

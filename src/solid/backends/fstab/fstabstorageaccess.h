@@ -23,6 +23,8 @@
 
 #include <solid/ifaces/storageaccess.h>
 
+#include <solid/ifaces/backenddeviceinterface.h>
+
 #include <QtCore/QObject>
 #include <QtCore/QProcess>
 
@@ -33,7 +35,7 @@ namespace Backends
 namespace Fstab
 {
 class FstabDevice;
-class FstabStorageAccess : public QObject, public Solid::Ifaces::StorageAccess
+class FstabStorageAccess : public BackendDeviceInterface, public Solid::Ifaces::StorageAccess
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::StorageAccess)

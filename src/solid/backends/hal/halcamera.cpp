@@ -23,7 +23,7 @@
 using namespace Solid::Backends::Hal;
 
 Camera::Camera(HalDevice *device)
-    : DeviceInterface(device)
+    : BackendDeviceInterface(device)
 {
 
 }
@@ -37,7 +37,7 @@ QStringList Camera::supportedProtocols() const
 {
     QStringList protocols;
 
-    QString method = m_device->prop("camera.access_method").toString();
+    QString method = static_cast<HalDevice *>(m_device)->prop("camera.access_method").toString();
 
     protocols << method;
 
@@ -48,7 +48,7 @@ QStringList Camera::supportedDrivers(QString /*protocol*/) const
 {
     QStringList res;
 
-    if (m_device->prop("camera.libgphoto2.support").toBool()) {
+    if (static_cast<HalDevice *>(m_device)->prop("camera.libgphoto2.support").toBool()) {
         res << "gphoto";
     }
 
@@ -58,12 +58,12 @@ QStringList Camera::supportedDrivers(QString /*protocol*/) const
 QVariant Solid::Backends::Hal::Camera::driverHandle(const QString &driver) const
 {
     if (driver == "gphoto"
-            && m_device->prop("info.subsystem").toString() == "usb") {
+            && static_cast<HalDevice *>(m_device)->prop("info.subsystem").toString() == "usb") {
         QVariantList list;
 
         list << "usb"
-             << m_device->prop("usb.vendor_id")
-             << m_device->prop("usb.product_id");
+             << static_cast<HalDevice *>(m_device)->prop("usb.vendor_id")
+             << static_cast<HalDevice *>(m_device)->prop("usb.product_id");
 
         return list;
     }

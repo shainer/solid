@@ -23,7 +23,9 @@
 
 #include <solid/ifaces/block.h>
 
-#include "udevdeviceinterface.h"
+#include <solid/ifaces/backenddeviceinterface.h>
+
+#include "udevdevice.h"
 
 namespace Solid
 {
@@ -31,7 +33,7 @@ namespace Backends
 {
 namespace UDev
 {
-class Block : public DeviceInterface, virtual public Solid::Ifaces::Block
+class Block : public BackendDeviceInterface, virtual public Solid::Ifaces::Block
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Block)

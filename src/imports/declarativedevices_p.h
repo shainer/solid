@@ -1,5 +1,6 @@
 /*
  *   Copyright (C) 2013 Ivan Cukic <ivan.cukic(at)kde.org>
+ *   Copyright (C) 2014 Kai Uwe Broulik <kde@privat.broulik.de>
  *
  *   This library is free software; you can redistribute it and/or
  *   modify it under the terms of the GNU Lesser General Public
@@ -18,8 +19,9 @@
 #ifndef SOLID_DECALARATIVE_DEVICE_NOTIFIER_P_H
 #define SOLID_DECALARATIVE_DEVICE_NOTIFIER_P_H
 
-#include "devices.h"
+#include "declarativedevices.h"
 
+#include <QList>
 #include <QSharedPointer>
 #include <QWeakPointer>
 
@@ -57,7 +59,7 @@ public:
     /**
      * Returns a list of devices that match the query
      */
-    const QStringList &devices() const;
+    QList<QObject *> devices() const;
 
     /**
      * A query which is used to create the predicate.
@@ -73,8 +75,8 @@ public:
     const Solid::Predicate predicate;
 
 Q_SIGNALS:
-    void deviceAdded(const QString &udi);
-    void deviceRemoved(const QString &udi);
+    void deviceAdded(const QObject *device);
+    void deviceRemoved(const QString &udi, const int index);
 
 public Q_SLOTS:
     void addDevice(const QString &udi);
@@ -83,10 +85,12 @@ public Q_SLOTS:
 private:
     DevicesQueryPrivate(const QString &query);
 
+    QObject *deviceInterfaceFromUdi(const QString &udi);
+
     // TODO: This could be static or something
     Solid::DeviceNotifier *const notifier;
 
-    QStringList matchingDevices;
+    QList<QObject *> matchingDevices;
 
     // Maps queries to the handler objects
     static QHash<QString, QWeakPointer<DevicesQueryPrivate> > handlers;

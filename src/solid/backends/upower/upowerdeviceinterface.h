@@ -40,9 +40,18 @@ class DeviceInterface : public QObject, virtual public Solid::Ifaces::DeviceInte
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::DeviceInterface)
+
 public:
     DeviceInterface(UPowerDevice *device);
     virtual ~DeviceInterface();
+
+    QString udi() const;
+    QString parentUdi() const;
+    QString vendor() const;
+    QString product() const;
+    QString icon() const;
+    QStringList emblems() const;
+    QString description() const;
 
 protected:
     QPointer<UPowerDevice> m_device;
@@ -126,6 +135,7 @@ public:
             return Solid::DeviceInterface::Unknown;
         }
     }
+
 };
 
 }

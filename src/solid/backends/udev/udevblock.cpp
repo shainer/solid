@@ -23,7 +23,7 @@
 using namespace Solid::Backends::UDev;
 
 Block::Block(UDevDevice *device)
-    : DeviceInterface(device)
+    : BackendDeviceInterface(device)
 {
 }
 

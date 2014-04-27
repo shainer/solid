@@ -1,5 +1,6 @@
 /*
     Copyright 2006 Kevin Ottens <ervin@kde.org>
+    Copyright 2014 Kai Uwe Broulik <kde@privat.broulik.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,7 @@
 #define SOLID_BACKENDS_HAL_BATTERY_H
 
 #include <solid/ifaces/battery.h>
+#include <solid/ifaces/backenddeviceinterface.h>
 #include "haldeviceinterface.h"
 
 namespace Solid
@@ -30,7 +32,7 @@ namespace Backends
 {
 namespace Hal
 {
-class Battery : public DeviceInterface, virtual public Solid::Ifaces::Battery
+class Battery : public BackendDeviceInterface, virtual public Solid::Ifaces::Battery
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Battery)
@@ -39,7 +41,7 @@ public:
     Battery(HalDevice *device);
     virtual ~Battery();
 
-    virtual bool isPlugged() const;
+    virtual bool isPresent() const;
     virtual Solid::Battery::BatteryType type() const;
 
     virtual int chargePercent() const;
@@ -47,7 +49,10 @@ public:
 
     virtual bool isRechargeable() const;
     virtual bool isPowerSupply() const;
+
     virtual Solid::Battery::ChargeState chargeState() const;
+    virtual qlonglong timeToEmpty() const;
+    virtual qlonglong timeToFull() const;
 
     virtual Solid::Battery::Technology technology() const;
 
@@ -56,15 +61,28 @@ public:
     virtual double energyRate() const;
 
     virtual double voltage() const;
+    virtual double temperature() const;
+
+    virtual bool isRecalled() const;
+    virtual QString recallVendor() const;
+    virtual QString recallUrl() const;
+
+    virtual QString serial() const;
+
+    virtual QString prettyIcon() const;
 
 Q_SIGNALS:
+    void presentStateChanged(bool newState, const QString &udi);
     void chargePercentChanged(int value, const QString &udi);
     void capacityChanged(int value, const QString &udi);
+    void powerSupplyStateChanged(bool newState, const QString &udi); // dummy
     void chargeStateChanged(int newState, const QString &udi);
-    void plugStateChanged(bool newState, const QString &udi);
+    void timeToEmptyChanged(qlonglong time, const QString &udi);
+    void timeToFullChanged(qlonglong time, const QString &udi);
     void energyChanged(double energy, const QString &udi);
     void energyRateChanged(double energyRate, const QString &udi);
-    void powerSupplyStateChanged(bool newState, const QString &udi); // dummy
+    void voltageChanged(double voltage, const QString &udi);
+    void temperatureChanged(double temperature, const QString &udi); // dummy
 
 private Q_SLOTS:
     void slotPropertyChanged(const QMap<QString, int> &changes);

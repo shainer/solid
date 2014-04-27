@@ -29,7 +29,7 @@
 using namespace Solid::Backends::UDev;
 
 Processor::Processor(UDevDevice *device)
-    : DeviceInterface(device),
+    : BackendDeviceInterface(device),
       m_canChangeFrequency(NotChecked),
       m_maxSpeed(-1)
 {
@@ -47,13 +47,13 @@ int Processor::number() const
     // supports more processors/cores than are installed, and so udev reports
     // 4 cores when there are 2, say.  Will the processor numbers (in
     // /proc/cpuinfo, in particular) always match the sysfs device numbers?
-    return m_device->deviceNumber();
+    return static_cast<UDevDevice *>(m_device)->deviceNumber();
 }
 
 int Processor::maxSpeed() const
 {
     if (m_maxSpeed == -1) {
-        QFile cpuMaxFreqFile(m_device->deviceName() + prefix() + "/cpufreq/cpuinfo_max_freq");
+        QFile cpuMaxFreqFile(static_cast<UDevDevice *>(m_device)->deviceName() + prefix() + "/cpufreq/cpuinfo_max_freq");
         if (cpuMaxFreqFile.open(QIODevice::ReadOnly)) {
             QString value = cpuMaxFreqFile.readAll().trimmed();
             // cpuinfo_max_freq is in kHz
@@ -75,8 +75,8 @@ bool Processor::canChangeFrequency() const
 
         m_canChangeFrequency = CannotChangeFreq;
 
-        QFile cpuMinFreqFile(m_device->deviceName() + prefix() + "/cpufreq/cpuinfo_min_freq");
-        QFile cpuMaxFreqFile(m_device->deviceName() + prefix() + "/cpufreq/cpuinfo_max_freq");
+        QFile cpuMinFreqFile(static_cast<UDevDevice *>(m_device)->deviceName() + prefix() + "/cpufreq/cpuinfo_min_freq");
+        QFile cpuMaxFreqFile(static_cast<UDevDevice *>(m_device)->deviceName() + prefix() + "/cpufreq/cpuinfo_max_freq");
         if (cpuMinFreqFile.open(QIODevice::ReadOnly) && cpuMaxFreqFile.open(QIODevice::ReadOnly)) {
             qlonglong minFreq = cpuMinFreqFile.readAll().trimmed().toLongLong();
             qlonglong maxFreq = cpuMaxFreqFile.readAll().trimmed().toLongLong();
@@ -99,7 +99,7 @@ Solid::Processor::InstructionSets Processor::instructionSets() const
 QString Processor::prefix() const
 {
     QLatin1String sysPrefix("/sysdev");
-    if (QFile::exists(m_device->deviceName() + sysPrefix)) {
+    if (QFile::exists(static_cast<UDevDevice *>(m_device)->deviceName() + sysPrefix)) {
         return sysPrefix;
     }
 

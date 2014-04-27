@@ -22,6 +22,7 @@
 #define SOLID_BACKENDS_HAL_BLOCK_H
 
 #include <solid/ifaces/block.h>
+#include <solid/ifaces/backenddeviceinterface.h>
 #include "haldeviceinterface.h"
 
 namespace Solid
@@ -30,7 +31,7 @@ namespace Backends
 {
 namespace Hal
 {
-class Block : public DeviceInterface, virtual public Solid::Ifaces::Block
+class Block : public BackendDeviceInterface, virtual public Solid::Ifaces::Block
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Block)

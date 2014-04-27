@@ -23,6 +23,7 @@
 #define SOLID_BACKENDS_HAL_PORTABLEMEDIAPLAYER_H
 
 #include <solid/ifaces/portablemediaplayer.h>
+#include <solid/ifaces/backenddeviceinterface.h>
 #include "haldeviceinterface.h"
 
 #include <QtCore/QStringList>
@@ -35,7 +36,7 @@ namespace Hal
 {
 class HalDevice;
 
-class PortableMediaPlayer : public DeviceInterface, virtual public Solid::Ifaces::PortableMediaPlayer
+class PortableMediaPlayer : public BackendDeviceInterface, virtual public Solid::Ifaces::PortableMediaPlayer
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::PortableMediaPlayer)

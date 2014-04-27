@@ -44,6 +44,14 @@ class SOLID_EXPORT DeviceInterface : public QObject
     Q_ENUMS(Type)
     Q_DECLARE_PRIVATE(DeviceInterface)
 
+    Q_PROPERTY(QString udi READ udi CONSTANT)
+    Q_PROPERTY(QString parentUdi READ parentUdi CONSTANT)
+    Q_PROPERTY(QString vendor READ vendor CONSTANT)
+    Q_PROPERTY(QString product READ product CONSTANT)
+    Q_PROPERTY(QString icon READ icon CONSTANT)
+    Q_PROPERTY(QStringList emblems READ emblems CONSTANT)
+    Q_PROPERTY(QString description READ description CONSTANT)
+
 public:
     /**
      * This enum type defines the type of device interface that a Device can have.
@@ -98,6 +106,72 @@ public:
      * @since 4.4
      */
     static QString typeDescription(Type type);
+
+    /**
+     * Retrieves the Universal Device Identifier (UDI).
+     *
+     * \warning Don't use the UDI for anything except communication with Solid. Also don't store
+     * UDIs as there's no guarantee that the UDI stays the same when the hardware setup changed.
+     * The UDI is a unique identifier that is local to the computer in question and for the
+     * current boot session. The UDIs may change after a reboot.
+     * Similar hardware in other computers may have different values; different
+     * hardware could have the same UDI.
+     *
+     * @since 5.0
+     * @return the udi of the device
+     */
+    QString udi() const;
+
+    /**
+     * Retrieves the Universal Device Identifier (UDI)
+     * of the Device's parent.
+     *
+     * @return the udi of the device's parent
+     * @since 5.0
+     */
+    QString parentUdi() const;
+
+    /**
+     * Retrieves the name of the device vendor.
+     *
+     * @return the vendor name
+     * @since 5.0
+     */
+    QString vendor() const;
+
+    /**
+     * Retrieves the name of the product corresponding to this device.
+     *
+     * @return the product name
+     * @since 5.0
+     */
+    QString product() const;
+
+    /**
+     * Retrieves the name of the icon representing this device.
+     * The naming follows the freedesktop.org specification.
+     *
+     * @return the icon name
+     * @since 5.0
+     */
+    QString icon() const;
+
+    /**
+     * Retrieves the names of the emblems representing the state of this device.
+     * The naming follows the freedesktop.org specification.
+     *
+     * @return the emblem names
+     * @since 5.0
+     */
+    QStringList emblems() const;
+
+    /**
+     * Retrieves the description of device.
+     *
+     * @return the description
+     * @since 5.0
+     */
+    QString description() const;
 
 protected:
     /**

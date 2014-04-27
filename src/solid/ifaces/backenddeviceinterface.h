@@ -1,5 +1,5 @@
 /*
-    Copyright 2006 Michaël Larouche <michael.larouche@kdemail.net>
+    Copyright 2014 Kai Uwe Broulik <kde@privat.broulik.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -17,27 +17,25 @@
     You should have received a copy of the GNU Lesser General Public
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef SOLID_BACKENDS_FAKEHW_FAKEDEVICEINTERFACE_H
-#define SOLID_BACKENDS_FAKEHW_FAKEDEVICEINTERFACE_H
+
+#ifndef SOLID_BACKENDDEVICEINTERFACE_H
+#define SOLID_BACKENDDEVICEINTERFACE_H
+
+#include <solid/ifaces/deviceinterface.h>
+#include <solid/ifaces/device.h>
 
 #include <QtCore/QObject>
-#include <solid/ifaces/deviceinterface.h>
-
-#include "fakedevice.h"
+#include <QtCore/QStringList>
 
 namespace Solid
 {
-namespace Backends
-{
-namespace Fake
-{
-class FakeDeviceInterface : public QObject, virtual public Solid::Ifaces::DeviceInterface
+class BackendDeviceInterface : public QObject, virtual public Solid::Ifaces::DeviceInterface
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::DeviceInterface)
 public:
-    explicit FakeDeviceInterface(FakeDevice *device);
-    ~FakeDeviceInterface();
+    BackendDeviceInterface(Solid::Ifaces::Device *device, QObject *parent = 0);
+    virtual ~BackendDeviceInterface();
 
     QString udi() const;
     QString parentUdi() const;
@@ -48,20 +46,8 @@ public:
     QString description() const;
 
 protected:
-    FakeDevice *fakeDevice() const
-    {
-        return m_device;
-    }
-    FakeDevice *fakeDevice()
-    {
-        return m_device;
-    }
-
-private:
-    FakeDevice *m_device;
+    Solid::Ifaces::Device *m_device;
 };
 }
-}
-}
 
-#endif // SOLID_BACKENDS_FAKEHW_FAKEDEVICEINTERFACE_H
+#endif // SOLID_BACKENDDEVICEINTERFACE_H

@@ -19,6 +19,8 @@
 #define SOLID_DECALARATIVE_DEVICES_H
 
 #include <QObject>
+#include <QList>
+
 #include <solid/predicate.h>
 #include <solid/deviceinterface.h>
 
@@ -66,18 +68,19 @@ class DevicesQueryPrivate;
  *    }
  * </code>
  */
-class Devices: public QObject
+class DeclarativeDevices: public QObject
 {
     Q_OBJECT
 
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool empty READ isEmpty NOTIFY emptyChanged)
-    Q_PROPERTY(QStringList devices READ devices NOTIFY devicesChanged)
+    Q_PROPERTY(QStringList deviceList READ deviceList NOTIFY deviceListChanged)
+    Q_PROPERTY(QList<QObject *> devices READ devices NOTIFY devicesChanged)
 
 public:
-    explicit Devices(QObject *parent = Q_NULLPTR);
-    ~Devices();
+    explicit DeclarativeDevices(QObject *parent = Q_NULLPTR);
+    ~DeclarativeDevices();
 
 Q_SIGNALS:
     /**
@@ -102,11 +105,18 @@ Q_SIGNALS:
     void countChanged(int count) const;
 
     /**
-     * Emitted when the list of devices that
+     * Emitted when the list of device UDIs that
      * match the specified query has changed
      * @param devices list of UDIs
      */
-    void devicesChanged(const QStringList &devices) const;
+    void deviceListChanged(const QStringList &deviceList) const;
+
+    /**
+     * Emitted when the list of devices that
+     * match the specified query has changed
+     * @param devices list
+     */
+    void devicesChanged(const QList<QObject *> &devices) const;
 
     /**
      * Emitted when the query has changed
@@ -139,7 +149,13 @@ public:
      * Retrieves the list of UDIs of the devices that
      * match the specified query
      */
-    QStringList devices() const;
+    QStringList deviceList() const;
+
+    /**
+     * Retrieves the list of devices that match the
+     * specified query
+     */
+    QList<QObject *> devices() const;
 
     /**
      * Query to check the devices against. It needs

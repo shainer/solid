@@ -30,3 +30,37 @@ FakeDeviceInterface::~FakeDeviceInterface()
 {
 }
 
+QString FakeDeviceInterface::udi() const
+{
+    return m_device->udi();
+}
+
+QString FakeDeviceInterface::parentUdi() const
+{
+    return m_device->parentUdi();
+}
+
+QString FakeDeviceInterface::vendor() const
+{
+    return m_device->vendor();
+}
+
+QString FakeDeviceInterface::product() const
+{
+    return m_device->product();
+}
+
+QString FakeDeviceInterface::icon() const
+{
+    return m_device->icon();
+}
+
+QStringList FakeDeviceInterface::emblems() const
+{
+    return m_device->emblems();
+}
+
+QString FakeDeviceInterface::description() const
+{
+    return m_device->description();
+}

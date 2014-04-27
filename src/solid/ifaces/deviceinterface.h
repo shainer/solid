@@ -42,6 +42,15 @@ public:
      * Destroys a DeviceInterface object.
      */
     virtual ~DeviceInterface();
+
+    virtual QString udi() const = 0;
+    virtual QString parentUdi() const = 0;
+    virtual QString vendor() const = 0;
+    virtual QString product() const = 0;
+    virtual QString icon() const = 0;
+    virtual QStringList emblems() const = 0;
+    virtual QString description() const = 0;
+
 };
 }
 }

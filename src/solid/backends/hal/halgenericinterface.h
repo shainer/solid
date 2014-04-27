@@ -22,6 +22,7 @@
 #define SOLID_BACKENDS_HAL_GENERICINTERFACE_H
 
 #include <solid/ifaces/genericinterface.h>
+#include <solid/ifaces/backenddeviceinterface.h>
 #include <solid/genericinterface.h>
 #include "haldeviceinterface.h"
 
@@ -33,7 +34,7 @@ namespace Hal
 {
 class HalDevice;
 
-class GenericInterface : public DeviceInterface, virtual public Solid::Ifaces::GenericInterface
+class GenericInterface : public BackendDeviceInterface, virtual public Solid::Ifaces::GenericInterface
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::GenericInterface)

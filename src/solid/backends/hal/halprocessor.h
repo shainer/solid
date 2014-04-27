@@ -22,6 +22,7 @@
 #define SOLID_BACKENDS_HAL_PROCESSOR_H
 
 #include <solid/ifaces/processor.h>
+#include <solid/ifaces/backenddeviceinterface.h>
 #include "haldeviceinterface.h"
 
 namespace Solid
@@ -32,7 +33,7 @@ namespace Hal
 {
 class HalDevice;
 
-class Processor : public DeviceInterface, virtual public Solid::Ifaces::Processor
+class Processor : public BackendDeviceInterface, virtual public Solid::Ifaces::Processor
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Processor)

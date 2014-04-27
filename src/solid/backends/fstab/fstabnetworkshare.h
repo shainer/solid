@@ -23,6 +23,8 @@
 
 #include <solid/ifaces/networkshare.h>
 
+#include <solid/ifaces/backenddeviceinterface.h>
+
 #include <QtCore/QObject>
 
 namespace Solid
@@ -32,7 +34,7 @@ namespace Backends
 namespace Fstab
 {
 class FstabDevice;
-class FstabNetworkShare : public QObject, public Solid::Ifaces::NetworkShare
+class FstabNetworkShare : public BackendDeviceInterface, public Solid::Ifaces::NetworkShare
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::NetworkShare)
@@ -50,7 +52,7 @@ public:
     const Solid::Backends::Fstab::FstabDevice *fstabDevice() const;
 
 private:
-    Solid::Backends::Fstab::FstabDevice *m_fstabDevice;
+    //Solid::Backends::Fstab::FstabDevice *m_fstabDevice;
     Solid::NetworkShare::ShareType m_type;
     QUrl m_url;
 };

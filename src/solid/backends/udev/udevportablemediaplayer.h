@@ -22,7 +22,10 @@
 #define SOLID_BACKENDS_UDEV_PORTABLEMEDIAPLAYER_H
 
 #include <solid/ifaces/portablemediaplayer.h>
-#include "udevdeviceinterface.h"
+
+#include <solid/ifaces/backenddeviceinterface.h>
+
+#include "udevdevice.h"
 
 #include <QtCore/QStringList>
 
@@ -34,7 +37,7 @@ namespace UDev
 {
 class UDevDevice;
 
-class PortableMediaPlayer : public DeviceInterface, virtual public Solid::Ifaces::PortableMediaPlayer
+class PortableMediaPlayer : public BackendDeviceInterface, virtual public Solid::Ifaces::PortableMediaPlayer
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::PortableMediaPlayer)

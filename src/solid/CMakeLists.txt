@@ -77,6 +77,7 @@ set(solid_LIB_SRCS
    ifaces/opticaldrive.cpp
    ifaces/device.cpp
    ifaces/deviceinterface.cpp
+   ifaces/backenddeviceinterface.cpp
    ifaces/devicemanager.cpp
    ifaces/genericinterface.cpp
    ifaces/networkshare.cpp
@@ -114,7 +115,7 @@ if(NOT WIN32 AND NOT APPLE)
       set(solid_LIB_SRCS ${solid_LIB_SRCS}
       backends/udev/udevdevice.cpp
       backends/udev/udevmanager.cpp
-      backends/udev/udevdeviceinterface.cpp
+      #backends/udev/udevdeviceinterface.cpp
       backends/udev/udevgenericinterface.cpp
       backends/udev/cpuinfo.cpp
       backends/udev/udevprocessor.cpp
@@ -146,7 +147,7 @@ if(NOT WIN32 AND NOT APPLE)
       backends/hal/halblock.cpp
       backends/hal/halcamera.cpp
       backends/hal/halcdrom.cpp
-      backends/hal/haldeviceinterface.cpp
+      #backends/hal/haldeviceinterface.cpp
       backends/hal/halfstabhandling.cpp
       backends/hal/halgenericinterface.cpp
       backends/hal/haldevice.cpp

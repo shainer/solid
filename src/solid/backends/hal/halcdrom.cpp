@@ -68,7 +68,7 @@ Solid::OpticalDrive::MediumTypes Cdrom::supportedMedia() const
     map[Solid::OpticalDrive::HdDvdrw] = "storage.cdrom.hddvdrw";
 
     Q_FOREACH (const Solid::OpticalDrive::MediumType type, map.keys()) {
-        if (m_device->prop(map[type]).toBool()) {
+        if (static_cast<HalDevice *>(m_device)->prop(map[type]).toBool()) {
             supported |= type;
         }
     }
@@ -78,18 +78,18 @@ Solid::OpticalDrive::MediumTypes Cdrom::supportedMedia() const
 
 int Cdrom::readSpeed() const
 {
-    return m_device->prop("storage.cdrom.read_speed").toInt();
+    return static_cast<HalDevice *>(m_device)->prop("storage.cdrom.read_speed").toInt();
 }
 
 int Cdrom::writeSpeed() const
 {
-    return m_device->prop("storage.cdrom.write_speed").toInt();
+    return static_cast<HalDevice *>(m_device)->prop("storage.cdrom.write_speed").toInt();
 }
 
 QList<int> Cdrom::writeSpeeds() const
 {
     QList<int> speeds;
-    QStringList speed_strlist = m_device->prop("storage.cdrom.write_speeds").toStringList();
+    QStringList speed_strlist = static_cast<HalDevice *>(m_device)->prop("storage.cdrom.write_speeds").toStringList();
 
     Q_FOREACH (const QString &speed_str, speed_strlist) {
         speeds << speed_str.toInt();
@@ -113,7 +113,7 @@ bool Cdrom::eject()
     m_ejectInProgress = true;
     m_device->broadcastActionRequested("eject");
 
-    if (FstabHandling::isInFstab(m_device->prop("block.device").toString())) {
+    if (FstabHandling::isInFstab(static_cast<HalDevice *>(m_device)->prop("block.device").toString())) {
         return callSystemEject();
     } else {
         return callHalDriveEject();
@@ -133,7 +133,7 @@ bool Cdrom::callHalDriveEject()
 
     // HACK: Eject doesn't work on cdrom drives when there's a mounted disc,
     // let's try to workaround this by calling a child volume...
-    if (m_device->prop("storage.removable.media_available").toBool()) {
+    if (static_cast<HalDevice *>(m_device)->prop("storage.removable.media_available").toBool()) {
         QDBusInterface manager("org.freedesktop.Hal",
                                "/org/freedesktop/Hal/Manager",
                                "org.freedesktop.Hal.Manager",
@@ -163,7 +163,7 @@ bool Cdrom::callHalDriveEject()
 
 bool Solid::Backends::Hal::Cdrom::callSystemEject()
 {
-    const QString device = m_device->prop("block.device").toString();
+    const QString device = static_cast<HalDevice *>(m_device)->prop("block.device").toString();
     m_process = FstabHandling::callSystemCommand("eject", device,
                 this, SLOT(slotProcessFinished(int,QProcess::ExitStatus)));
 
@@ -173,7 +173,7 @@ bool Solid::Backends::Hal::Cdrom::callSystemEject()
 void Cdrom::slotDBusReply(const QDBusMessage &/*reply*/)
 {
     m_ejectInProgress = false;
-    m_device->broadcastActionDone("eject");
+    static_cast<HalDevice *>(m_device)->broadcastActionDone("eject");
 }
 
 void Cdrom::slotDBusError(const QDBusError &error)
@@ -181,7 +181,7 @@ void Cdrom::slotDBusError(const QDBusError &error)
     m_ejectInProgress = false;
 
     // TODO: Better error reporting here
-    m_device->broadcastActionDone("eject", Solid::UnauthorizedOperation,
+    static_cast<HalDevice *>(m_device)->broadcastActionDone("eject", Solid::UnauthorizedOperation,
                                   QString(error.name() + ": " + error.message()));
 }
 
@@ -192,9 +192,9 @@ void Solid::Backends::Hal::Cdrom::slotProcessFinished(int exitCode, QProcess::Ex
         m_ejectInProgress = false;
 
         if (exitCode == 0) {
-            m_device->broadcastActionDone("eject");
+            static_cast<HalDevice *>(m_device)->broadcastActionDone("eject");
         } else {
-            m_device->broadcastActionDone("eject", Solid::UnauthorizedOperation,
+            static_cast<HalDevice *>(m_device)->broadcastActionDone("eject", Solid::UnauthorizedOperation,
                                           m_process->readAllStandardError());
         }
     }
@@ -205,6 +205,6 @@ void Solid::Backends::Hal::Cdrom::slotProcessFinished(int exitCode, QProcess::Ex
 void Cdrom::slotEjectDone(int error, const QString &errorString)
 {
     m_ejectInProgress = false;
-    emit ejectDone(static_cast<Solid::ErrorType>(error), errorString, m_device->udi());
+    emit ejectDone(static_cast<Solid::ErrorType>(error), errorString, static_cast<HalDevice *>(m_device)->udi());
 }
 
