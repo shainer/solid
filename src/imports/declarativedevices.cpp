@@ -19,6 +19,9 @@
 #include "declarativedevices.h"
 #include "declarativedevices_p.h"
 
+#include <QDebug>
+#include <QQmlEngine>
+
 #include <solid/device.h>
 #include <solid/deviceinterface.h>
 #include <solid/devicenotifier.h>
@@ -65,6 +68,8 @@ DevicesQueryPrivate::DevicesQueryPrivate(const QString &query)
     Q_FOREACH (const Solid::Device &device, Solid::Device::listFromQuery(predicate)) {
         QObject *deviceInterface = deviceInterfaceFromUdi(device.udi());
         if (deviceInterface) {
+            // Needed otherwise QML kills it when it's done
+            QQmlEngine::setObjectOwnership(deviceInterface, QQmlEngine::CppOwnership);
             matchingDevices << deviceInterface;
             connect(deviceInterface, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
         }
@@ -106,6 +111,8 @@ void DevicesQueryPrivate::addDevice(const QString &udi)
     if (predicate.isValid() && predicate.matches(Solid::Device(udi))) {
         QObject *device = deviceInterfaceFromUdi(udi);
         if (device) {
+            // Needed otherwise QML kills it when it's done
+            QQmlEngine::setObjectOwnership(device, QQmlEngine::CppOwnership);
             matchingDevices << device;
             connect(device, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
             emit deviceAdded(device);
@@ -124,7 +131,6 @@ void DevicesQueryPrivate::deviceDestroyed(QObject *obj)
     if (index == -1) {
         return;
     }
-    matchingDevices.removeAll(obj);
     emit deviceRemovedFromModel(index);
 }
 
