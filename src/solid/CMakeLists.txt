@@ -312,6 +312,12 @@ if(WIN32)
     endif()
 endif()
 
+set(solid_LIB_SRCS ${solid_LIB_SRCS}
+    power/powermanagement.cpp
+    power/solidjob.cpp
+    power/conserveresourcesjob.cpp
+)
+
 set(solid_OPTIONAL_LIBS)
 
 if(WIN32)
