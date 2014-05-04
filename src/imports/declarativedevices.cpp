@@ -68,8 +68,6 @@ DevicesQueryPrivate::DevicesQueryPrivate(const QString &query)
     Q_FOREACH (const Solid::Device &device, Solid::Device::listFromQuery(predicate)) {
         QObject *deviceInterface = deviceInterfaceFromUdi(device.udi());
         if (deviceInterface) {
-            // Needed otherwise QML kills it when it's done
-            QQmlEngine::setObjectOwnership(deviceInterface, QQmlEngine::CppOwnership);
             matchingDevices << deviceInterface;
             connect(deviceInterface, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
         }
@@ -83,7 +81,9 @@ DevicesQueryPrivate::~DevicesQueryPrivate()
 
 #define return_conditionally_SOLID_DEVICE_INTERFACE(Type, Device) \
     if (Device.isDeviceInterface(Type)) { \
-        return Device.asDeviceInterface(Type); \
+        QObject *deviceInterface = Device.asDeviceInterface(Type); \
+        deviceInterface->setParent(this); \
+        return deviceInterface; \
     }
 
 QObject *DevicesQueryPrivate::deviceInterfaceFromUdi(const QString &udi)
@@ -111,8 +111,6 @@ void DevicesQueryPrivate::addDevice(const QString &udi)
     if (predicate.isValid() && predicate.matches(Solid::Device(udi))) {
         QObject *device = deviceInterfaceFromUdi(udi);
         if (device) {
-            // Needed otherwise QML kills it when it's done
-            QQmlEngine::setObjectOwnership(device, QQmlEngine::CppOwnership);
             matchingDevices << device;
             connect(device, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
             emit deviceAdded(device);
