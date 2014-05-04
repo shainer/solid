@@ -153,12 +153,6 @@ void DeclarativeDevices::initialize() const
             this, &DeclarativeDevices::removeDevice);
     connect(m_backend.data(), &DevicesQueryPrivate::deviceRemovedFromModel,
             this, &DeclarativeDevices::removeDeviceFromModel);
-
-    const int matchesCount = m_backend->devices().count();
-
-    if (matchesCount != 0) {
-        emit emptyChanged(false);
-    }
 }
 
 void DeclarativeDevices::reset()
@@ -168,9 +162,10 @@ void DeclarativeDevices::reset()
     }
 
     m_backend->disconnect(this);
+    beginResetModel();
     m_backend.reset();
+    endResetModel();
 
-    emit emptyChanged(true);
     emit rowCountChanged(0);
 }
 
@@ -180,16 +175,10 @@ void DeclarativeDevices::addDevice(const QObject *device)
         return;
     }
 
-    const int count = m_backend->devices().count();
-
-    if (count == 1) {
-        emit emptyChanged(false);
-    }
-
     beginInsertRows(QModelIndex(), rowCount() - 1, rowCount() - 1);
     endInsertRows();
 
-    emit rowCountChanged(count);
+    emit rowCountChanged(rowCount());
     emit deviceAdded(device);
 }
 
@@ -199,13 +188,7 @@ void DeclarativeDevices::removeDevice(const QString &udi)
         return;
     }
 
-    const int count = m_backend->devices().count();
-
-    if (count == 0) {
-        emit emptyChanged(true);
-    }
-
-    emit rowCountChanged(count);
+    emit rowCountChanged(rowCount());
     emit deviceRemoved(udi);
 }
 
@@ -222,12 +205,6 @@ DeclarativeDevices::DeclarativeDevices(QAbstractListModel *parent)
 
 DeclarativeDevices::~DeclarativeDevices()
 {
-}
-
-bool DeclarativeDevices::isEmpty() const
-{
-    initialize();
-    return rowCount() == 0;
 }
 
 int DeclarativeDevices::rowCount(const QModelIndex &parent) const

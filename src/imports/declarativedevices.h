@@ -75,7 +75,6 @@ class DeclarativeDevices: public QAbstractListModel
 
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
     Q_PROPERTY(int count READ rowCount NOTIFY rowCountChanged)
-    Q_PROPERTY(bool empty READ isEmpty NOTIFY emptyChanged)
 
 public:
     enum ModelRoles {
@@ -113,12 +112,6 @@ Q_SIGNALS:
      */
     void queryChanged(const QString &query) const;
 
-    /**
-     * Emitted when the empty property changes
-     * @param empty is the device list empty
-     */
-    void emptyChanged(bool empty) const;
-
 public:
     /**
      * Retrieves the number of the devices that
@@ -126,13 +119,6 @@ public:
      * @return device count
      */
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
-
-    /**
-     * Retrieves whether there are devices matching
-     * the specified query
-     * @return true if there are no matching devices
-     */
-    bool isEmpty() const;
 
     /**
      * Retrieves the list of UDIs of the devices that
