@@ -1,5 +1,6 @@
 /*
  *   Copyright (C) 2013 Ivan Cukic <ivan.cukic(at)kde.org>
+ *   Copyright (C) 2014 Kai Uwe Broulik <kde@privat.broulik.de>
  *
  *   This library is free software; you can redistribute it and/or
  *   modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,8 @@
 #include <solid/predicate.h>
 #include <solid/deviceinterface.h>
 
+#include <QAbstractListModel>
+#include <QList>
 #include <QSharedPointer>
 
 namespace Solid
@@ -31,12 +34,14 @@ class DeviceNotifier;
 class DevicesQueryPrivate;
 
 /**
- * A class that watches the devices known to the solid system.
+ * A class that gives access to devices known to the
+ * Solid system.
  *
- * It behaves similarly to Solid::DeviceNotifier, but
- * adds some convenience methods which allow it to
- * watch only the devices matching a specified query
- * (formatted for Solid::Predicate).
+ * It is implemented as a model and allows for easy
+ * display of devices in a ListView, for example
+ * in the Battery Monitor. Itallows to only expose
+ * devices matching a specified query (formatted for
+ * Solid::Predicate).
  *
  * It is intended to be used from QML like this:
  *
@@ -60,24 +65,25 @@ class DevicesQueryPrivate;
  *    }
  *
  *    Text {
- *        text: "NFS url: " + networkShares.device(
- *            networkShares.devices[0], "NetworkShare"
- *        ).url
+ *        text: "NFS url: " + networkShares.get(0).url
  *    }
  * </code>
  */
-class Devices: public QObject
+class DeclarativeDevices: public QAbstractListModel
 {
     Q_OBJECT
 
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int count READ rowCount NOTIFY rowCountChanged)
     Q_PROPERTY(bool empty READ isEmpty NOTIFY emptyChanged)
-    Q_PROPERTY(QStringList devices READ devices NOTIFY devicesChanged)
 
 public:
-    explicit Devices(QObject *parent = Q_NULLPTR);
-    ~Devices();
+    enum ModelRoles {
+        DeviceRole = Qt::UserRole + 1
+    };
+
+    explicit DeclarativeDevices(QAbstractListModel *parent = Q_NULLPTR);
+    ~DeclarativeDevices();
 
 Q_SIGNALS:
     /**
@@ -85,7 +91,7 @@ Q_SIGNALS:
      * query arrives
      * @param udi UDI of the new device
      */
-    void deviceAdded(const QString &udi) const;
+    void deviceAdded(const QObject *device) const;
 
     /**
      * Emitted when a device matching the specified
@@ -99,14 +105,7 @@ Q_SIGNALS:
      * match the specified query has changed
      * @param count new device count
      */
-    void countChanged(int count) const;
-
-    /**
-     * Emitted when the list of devices that
-     * match the specified query has changed
-     * @param devices list of UDIs
-     */
-    void devicesChanged(const QStringList &devices) const;
+    void rowCountChanged(int count) const;
 
     /**
      * Emitted when the query has changed
@@ -126,7 +125,7 @@ public:
      * match the specified query
      * @return device count
      */
-    int count() const;
+    int rowCount(const QModelIndex & parent = QModelIndex()) const;
 
     /**
      * Retrieves whether there are devices matching
@@ -139,7 +138,7 @@ public:
      * Retrieves the list of UDIs of the devices that
      * match the specified query
      */
-    QStringList devices() const;
+    QList<QObject *> devices() const;
 
     /**
      * Query to check the devices against. It needs
@@ -156,16 +155,36 @@ public:
 
 public Q_SLOTS:
     /**
-     * Retrieves an interface object to the specified device
-     * @param udi udi of the desired device
-     * @param type how to interpret the device
-     * @see Solid::Device::asDeviceInterface
+     * Retrieves a device from the model
+     *
+     * @param index the index of the item
+     * @return the device at the given index
      */
-    QObject *device(const QString &udi, const QString &type);
+    QObject *get(const int index) const;
 
 private Q_SLOTS:
-    void addDevice(const QString &udi);
+    /**
+     * A device was added
+     *
+     * @param device the pointer to the device
+     */
+    void addDevice(const QObject *device);
+    /**
+     * A device was removed
+     *
+     * This is to eventually tell interested parties
+     * about the UDI of the device removed
+     * @param udi udi of the device
+     */
     void removeDevice(const QString &udi);
+
+    /**
+     * A device object was destroyed
+     *
+     * This is used internally to remove the affected
+     * index from the model
+     */
+    void removeDeviceFromModel(const int index);
 
     /**
      * Initializes the backend object
@@ -177,7 +196,14 @@ private Q_SLOTS:
      */
     void reset();
 
+protected:
+    QHash<int, QByteArray> roleNames() const;
+
 private:
+    Q_DISABLE_COPY(DeclarativeDevices)
+
+    QVariant data(const QModelIndex &index, int role) const;
+
     QString m_query;
 
     mutable QSharedPointer<DevicesQueryPrivate> m_backend;

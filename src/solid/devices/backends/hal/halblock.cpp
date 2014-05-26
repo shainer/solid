@@ -25,7 +25,7 @@
 using namespace Solid::Backends::Hal;
 
 Block::Block(HalDevice *device)
-    : DeviceInterface(device)
+    : BackendDeviceInterface(device)
 {
 
 }
@@ -37,16 +37,16 @@ Block::~Block()
 
 int Block::deviceMajor() const
 {
-    return m_device->prop("block.major").toInt();
+    return static_cast<HalDevice *>(m_device)->prop("block.major").toInt();
 }
 
 int Block::deviceMinor() const
 {
-    return m_device->prop("block.minor").toInt();
+    return static_cast<HalDevice *>(m_device)->prop("block.minor").toInt();
 }
 
 QString Block::device() const
 {
-    return m_device->prop("block.device").toString();
+    return static_cast<HalDevice *>(m_device)->prop("block.device").toString();
 }
 

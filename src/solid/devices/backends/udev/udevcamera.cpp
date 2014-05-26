@@ -22,8 +22,7 @@
 
 using namespace Solid::Backends::UDev;
 
-Camera::Camera(UDevDevice *device)
-    : DeviceInterface(device)
+Camera::Camera(UDevDevice *device) : BackendDeviceInterface(device)
 {
 
 }

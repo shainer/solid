@@ -23,7 +23,7 @@
 
 #include <solid/devices/ifaces/genericinterface.h>
 #include <solid/genericinterface.h>
-#include "udevdeviceinterface.h"
+#include <solid/devices/ifaces/backenddeviceinterface.h>
 
 namespace Solid
 {
@@ -33,7 +33,7 @@ namespace UDev
 {
 class UDevDevice;
 
-class GenericInterface : public DeviceInterface, virtual public Solid::Ifaces::GenericInterface
+class GenericInterface : public BackendDeviceInterface, virtual public Solid::Ifaces::GenericInterface
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::GenericInterface)

@@ -60,6 +60,7 @@ set(solid_LIB_SRCS
     devices/frontend/battery.cpp
     devices/frontend/predicate.cpp
 
+    devices/ifaces/backenddeviceinterface.cpp
     devices/ifaces/battery.cpp
     devices/ifaces/block.cpp
     devices/ifaces/camera.cpp

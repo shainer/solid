@@ -24,19 +24,18 @@
 using namespace Solid::Backends::Fstab;
 
 FstabNetworkShare::FstabNetworkShare(Solid::Backends::Fstab::FstabDevice *device) :
-    QObject(device),
-    m_fstabDevice(device)
+    BackendDeviceInterface(device, device)
 {
     QString url;
-    if (m_fstabDevice->device().startsWith("//")) {
+    if (static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device().startsWith("//")) {
         m_type = Solid::NetworkShare::Cifs;
         url = "smb:";
-        url += m_fstabDevice->device();
-    } else if (m_fstabDevice->device().contains(":/")) {
+        url += static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device();
+    } else if (static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device().contains(":/")) {
         m_type = Solid::NetworkShare::Nfs;
         url = "nfs://";
-        url += m_fstabDevice->product();
-        url += m_fstabDevice->vendor();
+        url += static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->product();
+        url += static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->vendor();
     } else {
         m_type = Solid::NetworkShare::Unknown;
     }
@@ -59,5 +58,5 @@ QUrl FstabNetworkShare::url() const
 
 const Solid::Backends::Fstab::FstabDevice *FstabNetworkShare::fstabDevice() const
 {
-    return m_fstabDevice;
+    return static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device);
 }

@@ -22,7 +22,10 @@
 #define SOLID_BACKENDS_UDEV_CAMERA_H
 
 #include <solid/devices/ifaces/camera.h>
+#include <solid/devices/ifaces/backenddeviceinterface.h>
+
 #include "udevdeviceinterface.h"
+#include "udevdevice.h"
 
 namespace Solid
 {
@@ -30,7 +33,7 @@ namespace Backends
 {
 namespace UDev
 {
-class Camera : public DeviceInterface, virtual public Solid::Ifaces::Camera
+class Camera : public BackendDeviceInterface, virtual public Solid::Ifaces::Camera
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Camera)

@@ -22,6 +22,8 @@
 #define SOLID_BACKENDS_HAL_CAMERA_H
 
 #include <solid/devices/ifaces/camera.h>
+#include <solid/devices/ifaces/backenddeviceinterface.h>
+
 #include "haldeviceinterface.h"
 
 namespace Solid
@@ -30,7 +32,7 @@ namespace Backends
 {
 namespace Hal
 {
-class Camera : public DeviceInterface, virtual public Solid::Ifaces::Camera
+class Camera : public BackendDeviceInterface, virtual public Solid::Ifaces::Camera
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Camera)

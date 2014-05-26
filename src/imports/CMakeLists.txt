@@ -15,7 +15,7 @@ endif()
 set(solidextensionplugin_SRCS
     ${solid_common_SRCS}
     solidextensionplugin.cpp
-    devices.cpp
+    declarativedevices.cpp
     )
 
 add_library(solidextensionplugin SHARED ${solidextensionplugin_SRCS})

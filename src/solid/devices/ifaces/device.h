@@ -47,6 +47,10 @@ class Device : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(QString udi READ udi CONSTANT)
+    Q_PROPERTY(QString vendor READ vendor CONSTANT)
+    Q_PROPERTY(QString product READ product CONSTANT)
+
 public:
     /**
      * Constructs a Device

@@ -1,5 +1,5 @@
 /*
-    Copyright 2010 Kevin Ottens <ervin@kde.org>
+    Copyright 2014 Kai Uwe Broulik <kde@privat.broulik.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -18,50 +18,48 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "udevdeviceinterface.h"
+#include "backenddeviceinterface.h"
 
-using namespace Solid::Backends::UDev;
-
-DeviceInterface::DeviceInterface(UDevDevice *device)
-    : QObject(device), m_device(device)
+Solid::BackendDeviceInterface::BackendDeviceInterface(Solid::Ifaces::Device *device, QObject *parent)
+    : QObject(parent), m_device(device)
 {
 }
 
-DeviceInterface::~DeviceInterface()
+Solid::BackendDeviceInterface::~BackendDeviceInterface()
 {
 }
 
-QString DeviceInterface::udi() const
+QString Solid::BackendDeviceInterface::udi() const
 {
     return m_device->udi();
 }
 
-QString DeviceInterface::parentUdi() const
+QString Solid::BackendDeviceInterface::parentUdi() const
 {
     return m_device->parentUdi();
 }
 
-QString DeviceInterface::vendor() const
+QString Solid::BackendDeviceInterface::vendor() const
 {
     return m_device->vendor();
 }
 
-QString DeviceInterface::product() const
+QString Solid::BackendDeviceInterface::product() const
 {
     return m_device->product();
 }
 
-QString DeviceInterface::icon() const
+QString Solid::BackendDeviceInterface::icon() const
 {
     return m_device->icon();
 }
 
-QStringList DeviceInterface::emblems() const
+QStringList Solid::BackendDeviceInterface::emblems() const
 {
     return m_device->emblems();
 }
 
-QString DeviceInterface::description() const
+QString Solid::BackendDeviceInterface::description() const
 {
     return m_device->description();
 }

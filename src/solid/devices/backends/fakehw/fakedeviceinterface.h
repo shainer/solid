@@ -39,6 +39,14 @@ public:
     explicit FakeDeviceInterface(FakeDevice *device);
     ~FakeDeviceInterface();
 
+    QString udi() const;
+    QString parentUdi() const;
+    QString vendor() const;
+    QString product() const;
+    QString icon() const;
+    QStringList emblems() const;
+    QString description() const;
+
 protected:
     FakeDevice *fakeDevice() const
     {

@@ -1,5 +1,5 @@
 /*
-    Copyright 2010 Kevin Ottens <ervin@kde.org>
+    Copyright 2014 Kai Uwe Broulik <kde@privat.broulik.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -18,50 +18,36 @@
     License along with this library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "udevdeviceinterface.h"
+#ifndef SOLID_BACKENDDEVICEINTERFACE_H
+#define SOLID_BACKENDDEVICEINTERFACE_H
 
-using namespace Solid::Backends::UDev;
+#include <solid/devices/ifaces/deviceinterface.h>
+#include <solid/devices/ifaces/device.h>
 
-DeviceInterface::DeviceInterface(UDevDevice *device)
-    : QObject(device), m_device(device)
+#include <QtCore/QObject>
+#include <QtCore/QStringList>
+
+namespace Solid
 {
+class BackendDeviceInterface : public QObject, virtual public Solid::Ifaces::DeviceInterface
+{
+    Q_OBJECT
+    Q_INTERFACES(Solid::Ifaces::DeviceInterface)
+public:
+    BackendDeviceInterface(Solid::Ifaces::Device *device, QObject *parent = 0);
+    virtual ~BackendDeviceInterface();
+
+    QString udi() const;
+    QString parentUdi() const;
+    QString vendor() const;
+    QString product() const;
+    QString icon() const;
+    QStringList emblems() const;
+    QString description() const;
+
+protected:
+    Solid::Ifaces::Device *m_device;
+};
 }
 
-DeviceInterface::~DeviceInterface()
-{
-}
-
-QString DeviceInterface::udi() const
-{
-    return m_device->udi();
-}
-
-QString DeviceInterface::parentUdi() const
-{
-    return m_device->parentUdi();
-}
-
-QString DeviceInterface::vendor() const
-{
-    return m_device->vendor();
-}
-
-QString DeviceInterface::product() const
-{
-    return m_device->product();
-}
-
-QString DeviceInterface::icon() const
-{
-    return m_device->icon();
-}
-
-QStringList DeviceInterface::emblems() const
-{
-    return m_device->emblems();
-}
-
-QString DeviceInterface::description() const
-{
-    return m_device->description();
-}
+#endif // SOLID_BACKENDDEVICEINTERFACE_H

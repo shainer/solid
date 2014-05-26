@@ -22,7 +22,10 @@
 #define SOLID_BACKENDS_UDEV_PROCESSOR_H
 
 #include <solid/devices/ifaces/processor.h>
+#include <solid/devices/ifaces/backenddeviceinterface.h>
+
 #include "udevdeviceinterface.h"
+
 
 namespace Solid
 {
@@ -32,7 +35,7 @@ namespace UDev
 {
 class UDevDevice;
 
-class Processor : public DeviceInterface, virtual public Solid::Ifaces::Processor
+class Processor : public BackendDeviceInterface, virtual public Solid::Ifaces::Processor
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::Processor)

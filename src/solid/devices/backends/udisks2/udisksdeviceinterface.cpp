@@ -31,3 +31,38 @@ DeviceInterface::DeviceInterface(Device *device)
 DeviceInterface::~DeviceInterface()
 {
 }
+
+QString DeviceInterface::udi() const
+{
+    return m_device->udi();
+}
+
+QString DeviceInterface::parentUdi() const
+{
+    return m_device->parentUdi();
+}
+
+QString DeviceInterface::vendor() const
+{
+    return m_device->vendor();
+}
+
+QString DeviceInterface::product() const
+{
+    return m_device->product();
+}
+
+QString DeviceInterface::icon() const
+{
+    return m_device->icon();
+}
+
+QStringList DeviceInterface::emblems() const
+{
+    return m_device->emblems();
+}
+
+QString DeviceInterface::description() const
+{
+    return m_device->description();
+}

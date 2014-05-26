@@ -46,7 +46,7 @@ Solid::OpticalDisc::ContentTypes OpticalDisc::availableContent() const
     map[Solid::OpticalDisc::VideoBluRay] = "volume.disc.is_blurayvideo";
 
     Q_FOREACH (const Solid::OpticalDisc::ContentType type, map.keys()) {
-        if (m_device->prop(map[type]).toBool()) {
+        if (static_cast<HalDevice *>(static_cast<HalDevice *>(m_device))->prop(map[type]).toBool()) {
             content |= type;
         }
     }
@@ -56,7 +56,7 @@ Solid::OpticalDisc::ContentTypes OpticalDisc::availableContent() const
 
 Solid::OpticalDisc::DiscType OpticalDisc::discType() const
 {
-    QString type = m_device->prop("volume.disc.type").toString();
+    QString type = static_cast<HalDevice *>(static_cast<HalDevice *>(m_device))->prop("volume.disc.type").toString();
 
     if (type == "cd_rom") {
         return Solid::OpticalDisc::CdRom;
@@ -99,21 +99,21 @@ Solid::OpticalDisc::DiscType OpticalDisc::discType() const
 
 bool OpticalDisc::isAppendable() const
 {
-    return m_device->prop("volume.disc.is_appendable").toBool();
+    return static_cast<HalDevice *>(m_device)->prop("volume.disc.is_appendable").toBool();
 }
 
 bool OpticalDisc::isBlank() const
 {
-    return m_device->prop("volume.disc.is_blank").toBool();
+    return static_cast<HalDevice *>(m_device)->prop("volume.disc.is_blank").toBool();
 }
 
 bool OpticalDisc::isRewritable() const
 {
-    return m_device->prop("volume.disc.is_rewritable").toBool();
+    return static_cast<HalDevice *>(m_device)->prop("volume.disc.is_rewritable").toBool();
 }
 
 qulonglong OpticalDisc::capacity() const
 {
-    return m_device->prop("volume.disc.capacity").toULongLong();
+    return static_cast<HalDevice *>(m_device)->prop("volume.disc.capacity").toULongLong();
 }
 

@@ -67,7 +67,7 @@ static QString readMpiValue(QIODevice &file, const QString &group, const QString
 }
 
 PortableMediaPlayer::PortableMediaPlayer(UDevDevice *device)
-    : DeviceInterface(device)
+    : BackendDeviceInterface(device)
 {
 
 }

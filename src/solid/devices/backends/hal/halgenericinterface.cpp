@@ -25,7 +25,7 @@
 using namespace Solid::Backends::Hal;
 
 GenericInterface::GenericInterface(HalDevice *device)
-    : DeviceInterface(device)
+    : BackendDeviceInterface(device)
 {
     connect(device, SIGNAL(propertyChanged(QMap<QString,int>)),
             this, SIGNAL(propertyChanged(QMap<QString,int>)));
@@ -40,16 +40,16 @@ GenericInterface::~GenericInterface()
 
 QVariant GenericInterface::property(const QString &key) const
 {
-    return m_device->prop(key);
+    return static_cast<HalDevice *>(m_device)->prop(key);
 }
 
 QMap<QString, QVariant> GenericInterface::allProperties() const
 {
-    return m_device->allProperties();
+    return static_cast<HalDevice *>(m_device)->allProperties();
 }
 
 bool GenericInterface::propertyExists(const QString &key) const
 {
-    return m_device->propertyExists(key);
+    return static_cast<HalDevice *>(m_device)->propertyExists(key);
 }
 

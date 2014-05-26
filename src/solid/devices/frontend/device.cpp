@@ -60,8 +60,7 @@ Solid::Device::Device(const QString &udi)
     d = manager->findRegisteredDevice(udi);
 }
 
-Solid::Device::Device(const Device &device)
-    : d(device.d)
+Solid::Device::Device(const Device &device) : d(device.d)
 {
 }
 

@@ -22,6 +22,8 @@
 #define SOLID_BACKENDS_HAL_STORAGEACCESS_H
 
 #include <solid/devices/ifaces/storageaccess.h>
+#include <solid/devices/ifaces/backenddeviceinterface.h>
+
 #include "haldeviceinterface.h"
 
 #include <QtCore/QProcess>
@@ -35,7 +37,7 @@ namespace Backends
 {
 namespace Hal
 {
-class StorageAccess : public DeviceInterface, virtual public Solid::Ifaces::StorageAccess
+class StorageAccess : public BackendDeviceInterface, virtual public Solid::Ifaces::StorageAccess
 {
     Q_OBJECT
     Q_INTERFACES(Solid::Ifaces::StorageAccess)
