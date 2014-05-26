@@ -75,7 +75,6 @@ class DeclarativeDevices: public QAbstractListModel
 
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
     Q_PROPERTY(int count READ rowCount NOTIFY rowCountChanged)
-    Q_PROPERTY(bool empty READ isEmpty NOTIFY emptyChanged)
 
 public:
     enum ModelRoles {
@@ -113,12 +112,6 @@ Q_SIGNALS:
      */
     void queryChanged(const QString &query) const;
 
-    /**
-     * Emitted when the empty property changes
-     * @param empty is the device list empty
-     */
-    void emptyChanged(bool empty) const;
-
 public:
     /**
      * Retrieves the number of the devices that
@@ -126,13 +119,6 @@ public:
      * @return device count
      */
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
-
-    /**
-     * Retrieves whether there are devices matching
-     * the specified query
-     * @return true if there are no matching devices
-     */
-    bool isEmpty() const;
 
     /**
      * Retrieves the list of UDIs of the devices that
@@ -162,7 +148,7 @@ public Q_SLOTS:
      */
     QObject *get(const int index) const;
 
-private Q_SLOTS:
+private:
     /**
      * A device was added
      *
@@ -179,14 +165,6 @@ private Q_SLOTS:
     void removeDevice(const QString &udi);
 
     /**
-     * A device object was destroyed
-     *
-     * This is used internally to remove the affected
-     * index from the model
-     */
-    void removeDeviceFromModel(const int index);
-
-    /**
      * Initializes the backend object
      */
     void initialize() const;
@@ -196,16 +174,13 @@ private Q_SLOTS:
      */
     void reset();
 
-protected:
+    void removeDeviceFromModel(const int index);
+    void aboutToRemoveDeviceFromModel(int index);
     QHash<int, QByteArray> roleNames() const;
-
-private:
-    Q_DISABLE_COPY(DeclarativeDevices)
-
     QVariant data(const QModelIndex &index, int role) const;
 
+    Q_DISABLE_COPY(DeclarativeDevices)
     QString m_query;
-
     mutable QSharedPointer<DevicesQueryPrivate> m_backend;
 };
 

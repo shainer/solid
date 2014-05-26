@@ -68,8 +68,6 @@ DevicesQueryPrivate::DevicesQueryPrivate(const QString &query)
     Q_FOREACH (const Solid::Device &device, Solid::Device::listFromQuery(predicate)) {
         QObject *deviceInterface = deviceInterfaceFromUdi(device.udi());
         if (deviceInterface) {
-            // Needed otherwise QML kills it when it's done
-            QQmlEngine::setObjectOwnership(deviceInterface, QQmlEngine::CppOwnership);
             matchingDevices << deviceInterface;
             connect(deviceInterface, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
         }
@@ -83,7 +81,9 @@ DevicesQueryPrivate::~DevicesQueryPrivate()
 
 #define return_conditionally_SOLID_DEVICE_INTERFACE(Type, Device) \
     if (Device.isDeviceInterface(Type)) { \
-        return Device.asDeviceInterface(Type); \
+        QObject* obj = Device.asDeviceInterface(Type); \
+        obj->setParent(this);\
+        return obj; \
     }
 
 QObject *DevicesQueryPrivate::deviceInterfaceFromUdi(const QString &udi)
@@ -115,23 +115,25 @@ void DevicesQueryPrivate::addDevice(const QString &udi)
             QQmlEngine::setObjectOwnership(device, QQmlEngine::CppOwnership);
             matchingDevices << device;
             connect(device, &QObject::destroyed, this, &DevicesQueryPrivate::deviceDestroyed);
-            emit deviceAdded(device);
+            Q_EMIT deviceAdded(device);
         }
     }
 }
 
 void DevicesQueryPrivate::removeDevice(const QString &udi)
 {
-    emit deviceRemoved(udi);
+    Q_EMIT deviceRemoved(udi);
 }
 
 void DevicesQueryPrivate::deviceDestroyed(QObject *obj)
 {
     const int index = matchingDevices.indexOf(obj);
+    Q_EMIT aboutToRemoveDeviceFromModel(index);
     if (index == -1) {
         return;
     }
-    emit deviceRemovedFromModel(index);
+    matchingDevices.removeAt(index);
+    Q_EMIT removedDeviceFromModel(index);
 }
 
 QList<QObject *> DevicesQueryPrivate::devices() const
@@ -151,14 +153,12 @@ void DeclarativeDevices::initialize() const
             this, &DeclarativeDevices::addDevice);
     connect(m_backend.data(), &DevicesQueryPrivate::deviceRemoved,
             this, &DeclarativeDevices::removeDevice);
-    connect(m_backend.data(), &DevicesQueryPrivate::deviceRemovedFromModel,
+    connect(m_backend.data(), &DevicesQueryPrivate::aboutToRemoveDeviceFromModel,
+            this, &DeclarativeDevices::aboutToRemoveDeviceFromModel);
+    connect(m_backend.data(), &DevicesQueryPrivate::removedDeviceFromModel,
             this, &DeclarativeDevices::removeDeviceFromModel);
 
-    const int matchesCount = m_backend->devices().count();
-
-    if (matchesCount != 0) {
-        emit emptyChanged(false);
-    }
+    Q_EMIT rowCountChanged(m_backend->devices().count());
 }
 
 void DeclarativeDevices::reset()
@@ -167,11 +167,12 @@ void DeclarativeDevices::reset()
         return;
     }
 
+    beginResetModel();
     m_backend->disconnect(this);
-    m_backend.reset();
+    m_backend.clear();
+    endResetModel();
 
-    emit emptyChanged(true);
-    emit rowCountChanged(0);
+    Q_EMIT rowCountChanged(0);
 }
 
 void DeclarativeDevices::addDevice(const QObject *device)
@@ -182,15 +183,11 @@ void DeclarativeDevices::addDevice(const QObject *device)
 
     const int count = m_backend->devices().count();
 
-    if (count == 1) {
-        emit emptyChanged(false);
-    }
-
-    beginInsertRows(QModelIndex(), rowCount() - 1, rowCount() - 1);
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
     endInsertRows();
 
-    emit rowCountChanged(count);
-    emit deviceAdded(device);
+    Q_EMIT rowCountChanged(count);
+    Q_EMIT deviceAdded(device);
 }
 
 void DeclarativeDevices::removeDevice(const QString &udi)
@@ -201,17 +198,17 @@ void DeclarativeDevices::removeDevice(const QString &udi)
 
     const int count = m_backend->devices().count();
 
-    if (count == 0) {
-        emit emptyChanged(true);
-    }
-
-    emit rowCountChanged(count);
-    emit deviceRemoved(udi);
+    Q_EMIT rowCountChanged(count);
+    Q_EMIT deviceRemoved(udi);
 }
 
-void DeclarativeDevices::removeDeviceFromModel(const int index)
+void DeclarativeDevices::aboutToRemoveDeviceFromModel(int index)
 {
     beginRemoveRows(QModelIndex(), index, index);
+}
+
+void DeclarativeDevices::removeDeviceFromModel(int)
+{
     endRemoveRows();
 }
 
@@ -222,12 +219,6 @@ DeclarativeDevices::DeclarativeDevices(QAbstractListModel *parent)
 
 DeclarativeDevices::~DeclarativeDevices()
 {
-}
-
-bool DeclarativeDevices::isEmpty() const
-{
-    initialize();
-    return rowCount() == 0;
 }
 
 int DeclarativeDevices::rowCount(const QModelIndex &parent) const
@@ -277,7 +268,7 @@ void DeclarativeDevices::setQuery(const QString &query)
     reset();
     initialize();
 
-    emit queryChanged(query);
+    Q_EMIT queryChanged(query);
 }
 
 QHash<int, QByteArray> DeclarativeDevices::roleNames() const

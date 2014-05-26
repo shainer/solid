@@ -77,7 +77,8 @@ public:
 Q_SIGNALS:
     void deviceAdded(const QObject *device);
     void deviceRemoved(const QString &udi);
-    void deviceRemovedFromModel(const int index);
+    void aboutToRemoveDeviceFromModel(const int index);
+    void removedDeviceFromModel(const int index);
 
 public Q_SLOTS:
     void addDevice(const QString &udi);
