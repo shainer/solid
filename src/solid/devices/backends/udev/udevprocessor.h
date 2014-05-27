@@ -24,9 +24,6 @@
 #include <solid/devices/ifaces/processor.h>
 #include <solid/devices/ifaces/backenddeviceinterface.h>
 
-#include "udevdeviceinterface.h"
-
-
 namespace Solid
 {
 namespace Backends

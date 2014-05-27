@@ -24,7 +24,6 @@
 #include <solid/devices/ifaces/camera.h>
 #include <solid/devices/ifaces/backenddeviceinterface.h>
 
-#include "udevdeviceinterface.h"
 #include "udevdevice.h"
 
 namespace Solid

@@ -25,7 +25,6 @@
 #include <solid/devices/ifaces/backenddeviceinterface.h>
 
 #include "udevdevice.h"
-#include "udevdeviceinterface.h"
 
 #include <QtCore/QStringList>
 

@@ -32,6 +32,8 @@ namespace Backends
 {
 namespace UPower
 {
+//TODO: We can probably use BackendDeviceInterface here and drop UPower::DeviceInterface
+
 class Battery : public DeviceInterface, virtual public Solid::Ifaces::Battery
 {
     Q_OBJECT

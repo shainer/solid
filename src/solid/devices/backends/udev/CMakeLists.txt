@@ -1,7 +1,6 @@
 set(solid_LIB_SRCS ${solid_LIB_SRCS}
     devices/backends/udev/udevdevice.cpp
     devices/backends/udev/udevmanager.cpp
-    devices/backends/udev/udevdeviceinterface.cpp
     devices/backends/udev/udevgenericinterface.cpp
     devices/backends/udev/cpuinfo.cpp
     devices/backends/udev/udevprocessor.cpp
