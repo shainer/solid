@@ -52,7 +52,6 @@ public:
     const Solid::Backends::Fstab::FstabDevice *fstabDevice() const;
 
 private:
-    //Solid::Backends::Fstab::FstabDevice *m_fstabDevice;
     Solid::NetworkShare::ShareType m_type;
     QUrl m_url;
 };

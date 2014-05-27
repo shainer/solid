@@ -27,15 +27,16 @@ FstabNetworkShare::FstabNetworkShare(Solid::Backends::Fstab::FstabDevice *device
     BackendDeviceInterface(device, device)
 {
     QString url;
-    if (static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device().startsWith("//")) {
+    QString dev = static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device();
+    if (dev.startsWith("//")) {
         m_type = Solid::NetworkShare::Cifs;
         url = "smb:";
-        url += static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device();
-    } else if (static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->device().contains(":/")) {
+        url += dev;
+    } else if (dev.contains(":/")) {
         m_type = Solid::NetworkShare::Nfs;
         url = "nfs://";
-        url += static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->product();
-        url += static_cast<Solid::Backends::Fstab::FstabDevice *>(m_device)->vendor();
+        url += m_device->product();
+        url += m_device->vendor();
     } else {
         m_type = Solid::NetworkShare::Unknown;
     }
