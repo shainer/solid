@@ -28,9 +28,12 @@ TestCase {
 
     Solid.Devices {
         id: devices
+        query: "IS Battery"
     }
 
     function test_minimal() {
-        compare(devices.count, 0);
+        compare(devices.count, 3);
+        compare(devices.get(1).vendor, "Acme Corporation");
+        compare(devices.get(1).udi, "/org/kde/solid/fakehw/acpi_BAT0");
     }
 }
