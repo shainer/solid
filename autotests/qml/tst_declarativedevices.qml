@@ -33,7 +33,11 @@ TestCase {
 
     function test_minimal() {
         compare(devices.count, 3);
-        compare(devices.get(1).vendor, "Acme Corporation");
-        compare(devices.get(1).udi, "/org/kde/solid/fakehw/acpi_BAT0");
+        for (var i; i<devices.count; ++i) {
+            if ((devices.get(i).udi == "/org/kde/solid/fakehw/acpi_BAT0")) {
+                compare(devices.get(i).vendor, "Acme Corporation");
+                verify(devices.get(i).name, "Battery Bay");
+            }
+        }
     }
 }
