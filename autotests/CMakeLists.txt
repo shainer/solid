@@ -1,6 +1,6 @@
 include(ECMAddTests)
 
-find_package(Qt5 ${REQUIRED_QT_VERSION} CONFIG REQUIRED Concurrent Test)
+find_package(Qt5 ${REQUIRED_QT_VERSION} CONFIG REQUIRED Concurrent Test QuickTest)
 
 ########### fakehardwaretest ###############
 
@@ -37,4 +37,8 @@ if (WITH_NEW_SOLID_JOB AND WITH_NEW_POWER_ASYNC_API)
     ecm_add_test(solidpowertest.cpp LINK_LIBRARIES Qt5::Test ${LIBS} KF5Solid_static)
 endif()
 
-add_test(SOLID_FAKEHW="${CMAKE_CURRENT_SOURCE_DIR}/../src/solid/devices/backends/fakehw/fakecomputer.xml" qmltestrunner WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(soliddevicesmodeltest soliddevicesmodeltest.cpp)
+target_link_libraries(soliddevicesmodeltest PUBLIC Qt5::QuickTest)
+ecm_mark_as_test(soliddevicesmodeltest)
+target_compile_definitions(soliddevicesmodeltest PRIVATE SOLID_STATIC_DEFINE=1 FAKE_COMPUTER_XML="${CMAKE_CURRENT_SOURCE_DIR}/../src/solid/devices/backends/fakehw/fakecomputer.xml")
+add_test(soliddevicesmodeltest soliddevicesmodeltest -input "${CMAKE_CURRENT_SOURCE_DIR}/qml")
